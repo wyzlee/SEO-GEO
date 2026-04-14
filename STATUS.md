@@ -6,7 +6,8 @@
 
 - Sprint 00 — Scope & fondations docs : **terminé**
 - Sprint 01 — Scaffold Next.js 16 + Stack Auth + Neon : **terminé**
-- Sprint 02 — Data model multi-tenant : **en cours** (migrations appliquées, seed initial fait, Stack Auth à configurer)
+- Sprint 02 — Data model + auth opérationnelle : **terminé** (login email/password testé end-to-end Chrome → dashboard)
+- Sprint 03 — Moteur d'audit : **en cours** (Phase 1 `technical` implémentée + 7 tests, 10 phases restantes)
 
 ## Ce qui est en place
 
@@ -49,11 +50,23 @@
 - `GET /` → 200, `GET /dashboard` → 307 (AuthGuard)
 - 3 suites de tests passent (10 tests)
 
-## Ce qui reste — Sprint 02
+## Moteur d'audit — état
 
-- Brancher le webhook Stack Auth vers `https://seo-geo.wyzlee.cloud/api/webhooks/stack-auth` (en prod, localhost injoignable en dev) + injecter `STACK_WEBHOOK_SECRET`
-- Enrichir `app/login/page.tsx` pour supporter le magic link (user actuel n'a pas de password)
-- Puis Sprint 03 : moteur d'audit 11 phases
+- `lib/audit/types.ts` : Finding, PhaseResult, AuditInput, CrawlSnapshot…
+- `lib/audit/crawl.ts` : fetchHtml, fetchText, crawlUrl (avec robots.txt + sitemap.xml + llms.txt en parallèle, user-agent dédié, timeout 15s)
+- `lib/audit/phases/technical.ts` : **Phase 1 implémentée** (12 pts) — title, meta description, canonical, lang, viewport, charset, favicons, Open Graph (5 champs), Twitter Cards (4 champs), robots.txt (Disallow: / critical), sitemap.xml
+- `lib/audit/engine.ts` : orchestrateur avec PHASE_ORDER + PHASE_SCORE_MAX, dispatcher runPhase(key). 10 phases restantes en status `skipped`.
+- Tests `tests/audit/phases/technical.test.ts` : 7 suites (perfect page, missing title, Disallow: /, canonical cross-domain, missing robots/sitemap, missing OG, golden determinism)
+
+## Ce qui reste — Sprint 03
+
+- Phase 2 `structured_data` (15 pts)
+- Phase 3 `geo` (18 pts, poids max)
+- Phase 4 `entity`, Phase 5 `eeat`, Phase 6 `freshness`, Phase 7 `international`, Phase 8 `performance`, Phase 9 `topical`, Phase 10 `common_mistakes`, Phase 11 `synthesis`
+- `POST /api/audits` + `GET /api/audits/:id` API routes
+- Worker claim loop (SKIP LOCKED)
+- UI détail audit (Sprint 04)
+- Webhook Stack Auth prod (à configurer au deploy)
 
 ## Points d'attention
 
