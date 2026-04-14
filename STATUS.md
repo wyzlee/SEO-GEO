@@ -36,8 +36,12 @@
 
 - **Neon** : projet `hidden-rice-16181693`, région `aws-eu-central-1` (Frankfurt), Postgres 17, branch `main` (`br-odd-bar-alzt0i4e`)
 - **Migration 0000** appliquée sur `main` (8 tables, 7 FK cascade, 8 indexes métier)
-- **Seed** : org `Wyzlee` (id `93851689-012d-44d6-8175-2f97bd4ee9d3`, slug `wyzlee`, plan `agency`) présente
-- **`.env.local`** local : `DATABASE_URL` réelle + placeholders Stack Auth à remplacer
+- **Seed** :
+  - org `Wyzlee` (id `93851689-012d-44d6-8175-2f97bd4ee9d3`, slug `wyzlee`, plan `agency`)
+  - user `Olivier Podio` / `olivier.podio@pm.me` (id `48ef7a13-369b-47da-805d-76286557ddb8`)
+  - membership `owner` user → org
+- **Stack Auth** : projet dédié `seo-geo` (id `2f01f2d7-054d-4847-b4db-2348dc272f4f`), apps `Authentication + Emails + Webhooks`, auth methods `email/password + magic link + Google + GitHub`, user Olivier créé (email verified, magic link activé)
+- **`.env.local`** : `DATABASE_URL` Neon + `NEXT_PUBLIC_STACK_PROJECT_ID` + `STACK_SECRET_SERVER_KEY` en place
 
 ## Validation live
 
@@ -47,9 +51,8 @@
 
 ## Ce qui reste — Sprint 02
 
-- Remplacer les placeholders Stack Auth dans `.env.local` par les vraies keys (projet SSO Wyzlee)
-- Brancher le webhook Stack Auth vers `https://seo-geo.wyzlee.cloud/api/webhooks/stack-auth` + injecter `STACK_WEBHOOK_SECRET`
-- Créer une membership pour Olivier sur l'org `Wyzlee` une fois son user_id Stack Auth connu
+- Brancher le webhook Stack Auth vers `https://seo-geo.wyzlee.cloud/api/webhooks/stack-auth` (en prod, localhost injoignable en dev) + injecter `STACK_WEBHOOK_SECRET`
+- Enrichir `app/login/page.tsx` pour supporter le magic link (user actuel n'a pas de password)
 - Puis Sprint 03 : moteur d'audit 11 phases
 
 ## Points d'attention
