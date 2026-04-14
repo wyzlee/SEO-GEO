@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth/context'
 
 export default function LoginPage() {
-  const { login, signInWithProvider } = useAuth()
+  const { login } = useAuth()
   const router = useRouter()
   const search = useSearchParams()
   const redirect = search.get('redirect') || '/dashboard'
@@ -40,7 +40,7 @@ export default function LoginPage() {
             Se connecter
           </h1>
           <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
-            Accès Wyzlee SSO.
+            Accès interne SEO-GEO.
           </p>
         </div>
 
@@ -84,30 +84,6 @@ export default function LoginPage() {
         <button type="submit" disabled={submitting} className="btn-primary w-full">
           {submitting ? 'Connexion…' : 'Se connecter'}
         </button>
-
-        <div
-          className="text-center text-xs"
-          style={{ color: 'var(--color-muted)' }}
-        >
-          ou
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="btn-secondary flex-1"
-            onClick={() => signInWithProvider('google')}
-          >
-            Google
-          </button>
-          <button
-            type="button"
-            className="btn-secondary flex-1"
-            onClick={() => signInWithProvider('github')}
-          >
-            GitHub
-          </button>
-        </div>
       </form>
     </main>
   )

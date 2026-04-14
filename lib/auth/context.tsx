@@ -23,7 +23,6 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  signInWithProvider: (provider: 'google' | 'github') => Promise<void>
   refreshUser: () => Promise<void>
   getToken: () => Promise<string | null>
 }
@@ -121,10 +120,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null)
   }
 
-  const signInWithProvider = async (provider: 'google' | 'github') => {
-    await stackAuth.signInWithOAuth(provider)
-  }
-
   return (
     <AuthContext.Provider
       value={{
@@ -134,7 +129,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         login,
         logout,
-        signInWithProvider,
         refreshUser,
         getToken: getTokenFn,
       }}
