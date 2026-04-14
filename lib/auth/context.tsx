@@ -78,34 +78,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const init = async () => {
-      try {
-        const params = new URLSearchParams(window.location.search)
-        const ssoToken = params.get('sso_token')
-        if (ssoToken) {
-          const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
-          const secureFlag =
-            window.location.protocol === 'https:' ? '; Secure' : ''
-          document.cookie = `stack-refresh-${projectId}=${ssoToken}; path=/; max-age=31536000; SameSite=Lax${secureFlag}`
-          params.delete('sso_token')
-          const cleanUrl = params.toString()
-            ? `${window.location.pathname}?${params.toString()}`
-            : window.location.pathname
-          window.history.replaceState({}, '', cleanUrl)
-        }
+    let cancelled = false
 
-        await Promise.race([
-          refreshUser(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Auth timeout')), 5000),
-          ),
-        ])
-      } catch {
-        // unauthenticated
-      }
-      setLoading(false)
+    const ssoToken = new URLSearchParams(window.location.search).get(
+      'sso_token',
+    )
+    if (ssoToken) {
+      const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+      const secureFlag =
+        window.location.protocol === 'https:' ? '; Secure' : ''
+      document.cookie = `stack-refresh-${projectId}=${ssoToken}; path=/; max-age=31536000; SameSite=Lax${secureFlag}`
+      const params = new URLSearchParams(window.location.search)
+      params.delete('sso_token')
+      const cleanUrl = params.toString()
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname
+      window.history.replaceState({}, '', cleanUrl)
     }
-    init()
+
+    refreshUser().finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
   }, [refreshUser])
 
   const login = async (email: string, password: string) => {
