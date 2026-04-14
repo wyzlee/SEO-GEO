@@ -1,0 +1,95 @@
+# ============================================================
+# SEO-GEO — docker-compose (VPS production)
+# Domain: seo-geo.wyzlee.cloud
+# Reverse proxy: Traefik (external network `traefik`)
+# SSL: Let's Encrypt via Traefik certresolver `letsencrypt`
+# ============================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_STACK_PROJECT_ID=${NEXT_PUBLIC_STACK_PROJECT_ID}
+        - NEXT_PUBLIC_STACK_PUBLISHABLE_KEY=${NEXT_PUBLIC_STACK_PUBLISHABLE_KEY}
+        - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+    container_name: seo-geo-app
+    restart: unless-stopped
+
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - STACK_SECRET_SERVER_KEY=${STACK_SECRET_SERVER_KEY}
+      - NEXT_PUBLIC_STACK_PROJECT_ID=${NEXT_PUBLIC_STACK_PROJECT_ID}
+      - STACK_WEBHOOK_SECRET=${STACK_WEBHOOK_SECRET}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:3000/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+          cpus: "0.25"
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+    networks:
+      - traefik
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.seo-geo.rule=Host(`seo-geo.wyzlee.cloud`)"
+      - "traefik.http.routers.seo-geo.entrypoints=websecure"
+      - "traefik.http.routers.seo-geo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.seo-geo.loadbalancer.server.port=3000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: seo-geo-worker
+    restart: unless-stopped
+
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+networks:
+  traefik:
+    external: true

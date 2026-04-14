@@ -1,0 +1,58 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (secrets — never commit)
+.env
+.env.*
+!.env.template
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+
+# drizzle (journal is committed, snapshots kept for migration history)
+# drizzle/meta uncommented if we ever want ephemeral — for now we keep migrations tracked
+
+# Claude Code runtime state
+.claude/scheduled_tasks.lock
+.claude/*.lock
+
+# OS
+Thumbs.db
