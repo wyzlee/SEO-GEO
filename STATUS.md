@@ -23,11 +23,13 @@
 
 ## Validations passées
 
-- `npm install` : 691 paquets installés
+- `npm install` : 793 paquets installés
 - `npm run typecheck` : 0 erreur
 - `npm run lint` : 0 erreur / 0 warning (ESLint 9 flat config)
+- `npm run test` : 10 tests / 3 fichiers / 100% pass (Vitest + Testing Library + jsdom)
 - `npm run dev` : boot en ~500ms, landing/login rendus, dashboard gated (307 → /login)
 - `/api/health` structuré OK (503 attendu sans vraie DB, 200 une fois Neon branché)
+- `/wyzlee-stack-validate` : **53/53 (100%)** après ajout du harness Vitest et de `components.json`
 
 ## Prochain sprint — Sprint 02
 
