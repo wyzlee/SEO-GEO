@@ -147,7 +147,162 @@ export async function runCommonMistakesPhase(
     }
   }
 
-  // --- Redirect chains check impossible V1 (faudrait fetch plusieurs fois)
+  // --- Multiple <title> tags ---------------------------------------------
+  const titleCount = $('head > title, title').length
+  if (titleCount > 1) {
+    pushCheck({
+      severity: 'medium',
+      category: 'common-duplicate-title',
+      title: `${titleCount} balises <title> dans la page`,
+      description:
+        'Plusieurs balises <title> : les crawlers ne savent pas laquelle choisir et Google prend généralement la première. Signal d\'erreur de templating (layout double-inclus).',
+      recommendation: 'Conserver une seule <title> dans <head>.',
+      pointsLost: 0.5,
+      effort: 'quick',
+      metricValue: `${titleCount} <title>`,
+    })
+  }
+
+  // --- Images sans alt attribute ----------------------------------------
+  const allImgs = $('img').toArray()
+  if (allImgs.length >= 5) {
+    const missingAlt = allImgs.filter((el) => {
+      const alt = $(el).attr('alt')
+      return alt === undefined
+    })
+    const ratio = missingAlt.length / allImgs.length
+    if (ratio > 0.3) {
+      pushCheck({
+        severity: 'medium',
+        category: 'common-img-alt',
+        title: 'Images sans attribut alt',
+        description: `${missingAlt.length}/${allImgs.length} images n'ont pas d'attribut \`alt\`. Accessibilité WCAG 1.1.1 + signal SEO image search.`,
+        recommendation:
+          'Ajouter `alt=""` (décoratif) ou `alt="description concise"` sur chaque image. Jamais omettre l\'attribut.',
+        pointsLost: 0.5,
+        effort: 'medium',
+        metricValue: `${missingAlt.length}/${allImgs.length} sans alt`,
+      })
+    }
+  }
+
+  // --- Noindex + canonical contradictoires -------------------------------
+  if (/noindex/.test(robotsMeta) && canonical) {
+    try {
+      const canonicalAbsolute = new URL(canonical, finalUrl).toString()
+      const normalize = (u: string) => u.replace(/\/+$/, '')
+      if (normalize(canonicalAbsolute) === normalize(finalUrl)) {
+        pushCheck({
+          severity: 'high',
+          category: 'common-noindex-canonical',
+          title: 'noindex + canonical self-référent contradictoires',
+          description:
+            'La page est marquée `noindex` tout en ayant une canonical pointant vers elle-même. Les deux directives se contredisent ; Google peut ignorer la canonical et exclure la page des signaux.',
+          recommendation:
+            'Choisir : soit `noindex` (pas de canonical nécessaire), soit indexable avec canonical self-ref. Sur une page désindexée délibérément, la canonical doit pointer vers la version consolidée.',
+          pointsLost: 1,
+          effort: 'quick',
+        })
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // --- Navigation JS-only (aucun <a href> dans <nav>) --------------------
+  const navs = $('nav').toArray()
+  if (navs.length > 0) {
+    const navWithoutHref = navs.filter((nav) => {
+      const hrefLinks = $(nav).find('a[href]').length
+      const onclickLinks =
+        $(nav).find('[onclick], button[role="link"], [role="button"]').length
+      return hrefLinks === 0 && onclickLinks >= 3
+    })
+    if (navWithoutHref.length > 0) {
+      pushCheck({
+        severity: 'medium',
+        category: 'common-js-only-nav',
+        title: 'Navigation sans <a href> détectée',
+        description:
+          'Au moins un <nav> ne contient aucun lien <a href> mais utilise des onclick / role=button. Les crawlers et les moteurs IA n\'exécutent pas le JS client dans la majorité des cas — la navigation est invisible.',
+        recommendation:
+          'Toujours utiliser `<a href="...">` pour la navigation (même avec un onclick additionnel). Le fallback HTML est crawlable.',
+        pointsLost: 1,
+        effort: 'medium',
+      })
+    }
+  }
+
+  // --- Broken internal links (primary → subPages) ------------------------
+  const subPages = snapshot.subPages ?? []
+  if (subPages.length > 0) {
+    const origin = new URL(finalUrl).origin
+    const pathByStatus = new Map<string, number>()
+    for (const sp of subPages) {
+      try {
+        const path = new URL(sp.url).pathname.replace(/\/+$/, '') || '/'
+        pathByStatus.set(path, sp.status)
+      } catch {
+        /* ignore */
+      }
+    }
+    const broken: string[] = []
+    $('a[href]').each((_, el) => {
+      const href = $(el).attr('href') ?? ''
+      if (!href || href.startsWith('#')) return
+      try {
+        const u = new URL(href, finalUrl)
+        if (u.origin !== origin) return
+        const path = u.pathname.replace(/\/+$/, '') || '/'
+        const status = pathByStatus.get(path)
+        if (status !== undefined && status >= 400) {
+          broken.push(u.pathname)
+        }
+      } catch {
+        /* ignore */
+      }
+    })
+    const uniqueBroken = Array.from(new Set(broken))
+    if (uniqueBroken.length > 0) {
+      pushCheck({
+        severity: 'high',
+        category: 'common-broken-links',
+        title: `Liens internes cassés (${uniqueBroken.length})`,
+        description: `La page link vers des URLs internes qui retournent un code d'erreur : ${uniqueBroken.slice(0, 3).join(', ')}${uniqueBroken.length > 3 ? '…' : ''}.`,
+        recommendation:
+          'Rétablir les pages (2xx) ou rediriger en 301 vers l\'équivalent actuel. Nettoyer les références dans les menus / contenus.',
+        pointsLost: 1,
+        effort: 'medium',
+        metricValue: `${uniqueBroken.length} lien(s) cassé(s)`,
+      })
+    }
+  }
+
+  // --- Duplicate H1 / <title> across subPages ----------------------------
+  if (subPages.length >= 5) {
+    const titleCounts = new Map<string, number>()
+    for (const sp of subPages) {
+      const $sp = cheerio.load(sp.html)
+      const spTitle = $sp('head > title').first().text().trim().toLowerCase()
+      if (spTitle) {
+        titleCounts.set(spTitle, (titleCounts.get(spTitle) ?? 0) + 1)
+      }
+    }
+    const maxDup = Math.max(0, ...Array.from(titleCounts.values()))
+    if (maxDup >= 3) {
+      pushCheck({
+        severity: 'medium',
+        category: 'common-duplicate-titles',
+        title: 'Titres dupliqués entre plusieurs pages',
+        description: `${maxDup} sous-pages partagent exactement le même <title>. Problème de templating (pas de substitution du {{pageTitle}}) — cannibalisation de SERP et signal ambigu.`,
+        recommendation:
+          'Injecter un titre unique par page : {{nom produit}} | {{Marque}}, ou {{H1}} | {{Marque}}.',
+        pointsLost: 0.5,
+        effort: 'medium',
+        metricValue: `${maxDup} pages identiques`,
+      })
+    }
+  }
 
   score = Math.max(0, Math.min(SCORE_MAX, score))
 
