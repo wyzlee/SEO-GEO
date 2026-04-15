@@ -182,7 +182,8 @@ export async function processAudit(auditId: string): Promise<void> {
       Record<PhaseKey, { score: number; scoreMax: number }>
     > = {}
     const allFindings: Finding[] = []
-    let totalScore = 0
+    let effectiveScore = 0
+    let effectiveScoreMax = 0
 
     for (const key of PHASE_ORDER) {
       try {
@@ -210,13 +211,24 @@ export async function processAudit(auditId: string): Promise<void> {
           score: result.score,
           scoreMax: result.scoreMax,
         }
-        totalScore += result.score
+        // Only count phases that actually ran — skipped phases (code mode
+        // gaps, not-applicable) don't penalize the final score.
+        if (result.status !== 'skipped') {
+          effectiveScore += result.score
+          effectiveScoreMax += result.scoreMax
+        }
         allFindings.push(...result.findings)
       } catch (phaseError) {
         console.error(`[audit ${auditId}] phase ${key} failed`, phaseError)
         await markPhaseFailed(auditId, key, phaseError)
       }
     }
+
+    // Normalize to /100 based on phases that actually ran.
+    const totalScore =
+      effectiveScoreMax > 0
+        ? (effectiveScore / effectiveScoreMax) * 100
+        : 0
 
     await completeAudit(auditId, totalScore, breakdown)
   } catch (error) {
