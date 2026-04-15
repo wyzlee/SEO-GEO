@@ -99,3 +99,36 @@ export function useCreateAudit() {
     },
   })
 }
+
+export interface ReportRow {
+  id: string
+  auditId: string
+  format: string
+  language: string
+  templateVersion: string
+  shareSlug: string | null
+  shareExpiresAt: string | null
+  generatedAt: string
+}
+
+export function useAuditReports(auditId: string | undefined) {
+  return useQuery({
+    queryKey: ['audit', auditId, 'reports'],
+    enabled: !!auditId,
+    queryFn: () => apiJson<{ reports: ReportRow[] }>(`/api/audits/${auditId}/report`),
+  })
+}
+
+export function useGenerateReport(auditId: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiJson<{ id: string; shareSlug: string; shareUrl: string }>(
+        `/api/audits/${auditId}/report`,
+        { method: 'POST', body: '{}' },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['audit', auditId, 'reports'] })
+    },
+  })
+}

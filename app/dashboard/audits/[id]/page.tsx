@@ -2,10 +2,15 @@
 
 import { use } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/layout/header'
 import { ScoreBadge } from '@/components/audit/score-badge'
 import { PhaseCard } from '@/components/audit/phase-card'
-import { useAudit } from '@/lib/hooks/use-audits'
+import {
+  useAudit,
+  useAuditReports,
+  useGenerateReport,
+} from '@/lib/hooks/use-audits'
 
 const STATUS_LABEL: Record<string, string> = {
   queued: 'En file d\'attente',
@@ -21,6 +26,21 @@ export default function AuditDetailPage({
 }) {
   const { id } = use(params)
   const { data, isLoading, error } = useAudit(id)
+  const reportsQuery = useAuditReports(id)
+  const generateReport = useGenerateReport(id)
+  const lastReport = reportsQuery.data?.reports?.[0]
+
+  const onGenerate = async () => {
+    try {
+      const report = await generateReport.mutateAsync()
+      toast.success('Rapport généré')
+      if (typeof window !== 'undefined') {
+        window.open(report.shareUrl, '_blank', 'noopener,noreferrer')
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Génération impossible')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -63,6 +83,7 @@ export default function AuditDetailPage({
 
   const { audit, phases } = data
   const isRunning = audit.status === 'queued' || audit.status === 'running'
+  const isCompleted = audit.status === 'completed'
   const score = audit.scoreTotal ?? 0
 
   return (
@@ -71,9 +92,33 @@ export default function AuditDetailPage({
         title={audit.targetUrl ?? audit.id}
         description={`Audit ${audit.id} · ${STATUS_LABEL[audit.status] ?? audit.status}`}
         actions={
-          <Link href="/dashboard/audits" className="btn-secondary">
-            Liste
-          </Link>
+          <div className="flex items-center gap-2">
+            {isCompleted &&
+              (lastReport?.shareSlug ? (
+                <a
+                  href={`/r/${lastReport.shareSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary"
+                >
+                  Voir le rapport
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={onGenerate}
+                  disabled={generateReport.isPending}
+                >
+                  {generateReport.isPending
+                    ? 'Génération…'
+                    : 'Générer le rapport'}
+                </button>
+              ))}
+            <Link href="/dashboard/audits" className="btn-secondary">
+              Liste
+            </Link>
+          </div>
         }
       />
 
