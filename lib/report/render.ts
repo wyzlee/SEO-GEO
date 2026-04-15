@@ -38,6 +38,7 @@ export interface ReportFinding {
   recommendation: string
   pointsLost: number
   effort: 'quick' | 'medium' | 'heavy' | null
+  locationUrl?: string | null
 }
 
 export interface ReportInput {
@@ -247,6 +248,46 @@ export function buildExecutiveSummary(input: ReportInput): string {
   }
 
   return lines.join('\n\n')
+}
+
+/**
+ * Hotspot URLs : pages qui cumulent ≥ 3 findings sur ≥ 2 phases distinctes.
+ * Recalculé depuis les findings bruts (plutôt que de parser la description
+ * de la finding synthesis-hotspot-urls) pour un rendu propre.
+ */
+export function buildHotspotUrls(findings: ReportFinding[]): string {
+  const perUrl = new Map<
+    string,
+    { count: number; phases: Set<string>; totalPoints: number }
+  >()
+  for (const f of findings) {
+    if (!f.locationUrl || f.phaseKey === 'synthesis') continue
+    const entry = perUrl.get(f.locationUrl) ?? {
+      count: 0,
+      phases: new Set<string>(),
+      totalPoints: 0,
+    }
+    entry.count += 1
+    entry.phases.add(f.phaseKey)
+    entry.totalPoints += f.pointsLost
+    perUrl.set(f.locationUrl, entry)
+  }
+  const hotspots = Array.from(perUrl.entries())
+    .filter(([, v]) => v.count >= 3 && v.phases.size >= 2)
+    .sort((a, b) => b[1].totalPoints - a[1].totalPoints)
+    .slice(0, 5)
+
+  if (hotspots.length === 0) return ''
+
+  const rows = hotspots
+    .map(
+      ([url, v]) =>
+        `| ${url} | ${v.count} | ${v.phases.size} | ${v.totalPoints.toFixed(1)} |`,
+    )
+    .join('\n')
+  return `| URL | Constats | Phases | Pts perdus |
+|-----|----------|--------|------------|
+${rows}`
 }
 
 export function computePotentialGain(findings: ReportFinding[]): {

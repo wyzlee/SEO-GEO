@@ -59,6 +59,7 @@ async function main() {
       recommendation: f.recommendation,
       pointsLost: f.pointsLost,
       effort: f.effort as 'quick' | 'medium' | 'heavy' | null,
+      locationUrl: f.locationUrl,
     })),
   })
 

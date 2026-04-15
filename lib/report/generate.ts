@@ -5,6 +5,7 @@
 import { PHASE_LABELS_FR, formatDateFr, scoreLevel } from './labels'
 import {
   buildExecutiveSummary,
+  buildHotspotUrls,
   buildQuickWins,
   buildRoadmap,
   buildScoreBreakdown,
@@ -263,6 +264,7 @@ export function generateReport(input: ReportInput): GeneratedReport {
   const weaknesses = buildWeaknesses(phases)
   const roadmap = buildRoadmap(findings)
   const executive = buildExecutiveSummary(input)
+  const hotspots = buildHotspotUrls(findings)
 
   const phaseContextLines = phases
     .filter((p) => p.phaseKey !== 'synthesis')
@@ -298,7 +300,13 @@ ${breakdown}
 
 ${phaseContextLines}
 
-## Les points à corriger en priorité
+${hotspots ? `## Pages à fort enjeu
+
+Ces URLs concentrent plusieurs constats sur plusieurs phases — prioriser leur optimisation donne un gain transverse immédiat.
+
+${hotspots}
+
+` : ''}## Les points à corriger en priorité
 
 ${top5}
 
