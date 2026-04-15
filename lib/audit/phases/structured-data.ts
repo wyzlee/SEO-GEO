@@ -323,6 +323,156 @@ export async function runStructuredDataPhase(
     })
   }
 
+  // --- @context validation -----------------------------------------------
+  // Un vieux `http://schema.org` est toléré mais non recommandé ; pire,
+  // l'absence totale de `@context` rend le JSON-LD ambigu.
+  const contextIssues: Array<{ kind: 'missing' | 'http'; raw: string }> = []
+  for (const block of blocks) {
+    if (!block.parsed) continue
+    try {
+      const parsed = JSON.parse(block.raw)
+      const roots = Array.isArray(parsed) ? parsed : [parsed]
+      for (const root of roots) {
+        if (!root || typeof root !== 'object') continue
+        const ctx = (root as JsonLdObject)['@context']
+        if (!ctx) {
+          contextIssues.push({ kind: 'missing', raw: block.raw.slice(0, 40) })
+        } else if (typeof ctx === 'string' && ctx.startsWith('http://')) {
+          contextIssues.push({ kind: 'http', raw: ctx })
+        }
+      }
+    } catch {
+      /* déjà remonté par parseErrors */
+    }
+  }
+  if (contextIssues.some((i) => i.kind === 'missing')) {
+    pushCheck({
+      severity: 'medium',
+      category: 'schema-context',
+      title: '@context absent sur au moins un bloc JSON-LD',
+      description:
+        'Sans `@context`, les parsers ne savent pas à quel vocabulaire se rattacher. Le bloc peut être ignoré par Google Search Console et les moteurs IA.',
+      recommendation:
+        'Ajouter `"@context": "https://schema.org"` en première propriété de chaque bloc JSON-LD.',
+      pointsLost: 1,
+      effort: 'quick',
+    })
+  }
+  if (contextIssues.some((i) => i.kind === 'http')) {
+    pushCheck({
+      severity: 'low',
+      category: 'schema-context',
+      title: '@context en http:// (recommandé en https://)',
+      description:
+        'Les schemas référencent `http://schema.org` — toléré mais schema.org recommande `https://schema.org` depuis 2017.',
+      recommendation:
+        'Remplacer `"@context": "http://schema.org"` par `"@context": "https://schema.org"`.',
+      pointsLost: 0.5,
+      effort: 'quick',
+    })
+  }
+
+  // --- BreadcrumbList ----------------------------------------------------
+  const breadcrumbPresent = hasType(validObjects, 'BreadcrumbList')
+  const looksDeep = new URL(finalUrl).pathname.split('/').filter(Boolean).length >= 2
+  if (!breadcrumbPresent && looksDeep) {
+    pushCheck({
+      severity: 'medium',
+      category: 'schema-breadcrumb',
+      title: 'BreadcrumbList absent sur page profonde',
+      description:
+        'Page située à ≥ 2 niveaux de profondeur sans BreadcrumbList. Ce schema renforce la hiérarchie pour Google (breadcrumbs en SERP) et les moteurs IA (cheminement sémantique).',
+      recommendation:
+        'Ajouter un JSON-LD BreadcrumbList : `itemListElement` avec `@type: ListItem`, `position`, `name`, `item` (URL) pour chaque niveau.',
+      pointsLost: 1,
+      effort: 'quick',
+    })
+  }
+
+  // --- Article author as Person (pas juste string) -----------------------
+  if (article) {
+    const authorRaw = article.author
+    if (typeof authorRaw === 'string') {
+      pushCheck({
+        severity: 'low',
+        category: 'schema-article-author-stringly',
+        title: 'Article.author en string plutôt qu\'objet Person',
+        description:
+          'Google recommande `author` comme objet `Person` avec `name`, `url`, éventuellement `sameAs` — pas une simple chaîne de caractères. L\'objet enrichi renforce Expertise.',
+        recommendation:
+          'Remplacer `"author": "Alice"` par `"author": { "@type": "Person", "name": "Alice", "url": "https://exemple.com/auteur/alice" }`.',
+        pointsLost: 0.5,
+        effort: 'quick',
+      })
+    }
+    // Article.image en URL absolue
+    const img = article.image
+    const imgUrl =
+      typeof img === 'string'
+        ? img
+        : typeof img === 'object' && img !== null
+          ? (img as JsonLdObject).url ?? null
+          : null
+    if (imgUrl && typeof imgUrl === 'string' && !/^https?:\/\//i.test(imgUrl)) {
+      pushCheck({
+        severity: 'low',
+        category: 'schema-article-image',
+        title: 'Article.image n\'est pas une URL absolue',
+        description:
+          'Google et les moteurs IA attendent une URL absolue pour `image` (cache CDN, résolution cross-origin).',
+        recommendation: 'Passer `image` en URL absolue avec `https://`.',
+        pointsLost: 0.5,
+        effort: 'quick',
+      })
+    }
+  }
+
+  // --- Product sur URL /product|/produit ----------------------------------
+  const looksLikeProduct = /\/(product|produit|item|article|shop)\//i.test(finalUrl)
+  const hasProductSchema =
+    hasType(validObjects, 'Product') || hasType(validObjects, 'Offer')
+  if (looksLikeProduct && !hasProductSchema && !article) {
+    pushCheck({
+      severity: 'medium',
+      category: 'schema-product',
+      title: 'Page produit sans schema Product / Offer',
+      description:
+        'L\'URL suggère une fiche produit mais aucun schema Product n\'est déclaré. Indispensable pour les rich results e-commerce Google et pour l\'exposition aux moteurs IA de recherche shopping.',
+      recommendation:
+        'Ajouter un JSON-LD Product avec `name`, `image`, `description`, `offers { @type: Offer, price, priceCurrency, availability }`, `aggregateRating` si pertinent.',
+      pointsLost: 1,
+      effort: 'medium',
+    })
+  }
+
+  // --- BreadcrumbList coverage via subPages -------------------------------
+  const subPages = snapshot.subPages ?? []
+  if (subPages.length >= 10) {
+    let withBreadcrumb = 0
+    for (const sp of subPages) {
+      const spBlocks = extractJsonLdBlocks(sp.html)
+      const spObjects = spBlocks
+        .filter((b): b is { raw: string; parsed: JsonLdObject[] } => b.parsed !== null)
+        .flatMap((b) => b.parsed)
+      if (hasType(spObjects, 'BreadcrumbList')) withBreadcrumb++
+    }
+    const coverage = withBreadcrumb / subPages.length
+    if (coverage < 0.5) {
+      pushCheck({
+        severity: 'low',
+        category: 'schema-breadcrumb-coverage',
+        title: 'BreadcrumbList peu présent sur le site',
+        description: `Seules ${withBreadcrumb}/${subPages.length} pages échantillonnées exposent BreadcrumbList. Couverture < 50 %.`,
+        recommendation:
+          'Industrialiser la génération de BreadcrumbList via un composant partagé (layout Next.js, plugin Nuxt…) pour couvrir l\'ensemble du site.',
+        pointsLost: 0.5,
+        effort: 'medium',
+        metricValue: `${Math.round(coverage * 100)} %`,
+        metricTarget: '≥ 50 %',
+      })
+    }
+  }
+
   // --- FAQPage (info only, pas de déduction) -----------------------------
   if (hasType(validObjects, 'FAQPage')) {
     pushCheck({

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { runStructuredDataPhase } from '@/lib/audit/phases/structured-data'
-import type { CrawlSnapshot } from '@/lib/audit/types'
+import type { CrawlSnapshot, SubPageSnapshot } from '@/lib/audit/types'
 
 function snapshot(partial: Partial<CrawlSnapshot>): CrawlSnapshot {
   return {
@@ -139,12 +139,101 @@ describe('runStructuredDataPhase', () => {
 
   it('emits info-only finding on FAQPage', async () => {
     const faq = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [] }
-    const html = `<html><head>${jsonLd({ '@graph': [ORGANIZATION_FULL, WEBSITE_WITH_SEARCH, BREADCRUMB, faq] })}</head><body></body></html>`
+    const html = `<html><head>${jsonLd({ '@context': 'https://schema.org', '@graph': [ORGANIZATION_FULL, WEBSITE_WITH_SEARCH, BREADCRUMB, faq] })}</head><body></body></html>`
     const result = await runStructuredDataPhase(snapshot({ html }))
     const finding = result.findings.find((f) => f.category === 'schema-faqpage')
     expect(finding?.severity).toBe('info')
     expect(finding?.pointsLost).toBe(0)
     expect(result.score).toBe(15)
+  })
+
+  it('flags @context absent', async () => {
+    const orgNoContext = { '@type': 'Organization', name: 'W', url: 'https://w.com', logo: 'https://w.com/l.png', sameAs: ['a', 'b', 'c', 'd', 'e'] }
+    const html = `<html><head>${jsonLd(orgNoContext)}${jsonLd(WEBSITE_WITH_SEARCH)}${jsonLd(BREADCRUMB)}</head><body></body></html>`
+    const result = await runStructuredDataPhase(snapshot({ html }))
+    const finding = result.findings.find(
+      (f) => f.category === 'schema-context' && f.severity === 'medium',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(1)
+  })
+
+  it('flags @context in http:// (low)', async () => {
+    const org = { ...ORGANIZATION_FULL, '@context': 'http://schema.org' }
+    const html = `<html><head>${jsonLd(org)}${jsonLd(WEBSITE_WITH_SEARCH)}${jsonLd(BREADCRUMB)}</head><body></body></html>`
+    const result = await runStructuredDataPhase(snapshot({ html }))
+    const finding = result.findings.find(
+      (f) => f.category === 'schema-context' && f.severity === 'low',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
+  })
+
+  it('flags BreadcrumbList absent on deep page', async () => {
+    const html = `<html><head>${jsonLd({ '@context': 'https://schema.org', '@graph': [ORGANIZATION_FULL, WEBSITE_WITH_SEARCH] })}</head><body></body></html>`
+    const result = await runStructuredDataPhase(
+      snapshot({ html, finalUrl: 'https://example.com/category/sub/page' }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'schema-breadcrumb',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(1)
+  })
+
+  it('flags Article.author en string', async () => {
+    const article = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: 'Post',
+      datePublished: '2026-01-01',
+      dateModified: '2026-01-02',
+      author: 'Alice',
+      publisher: { '@type': 'Organization', name: 'W' },
+      image: 'https://w.com/img.jpg',
+      mainEntityOfPage: 'https://w.com/post',
+    }
+    const html = `<html><head>${jsonLd({ '@context': 'https://schema.org', '@graph': [ORGANIZATION_FULL, WEBSITE_WITH_SEARCH, BREADCRUMB, article] })}</head><body><article>Post</article></body></html>`
+    const result = await runStructuredDataPhase(
+      snapshot({ html, finalUrl: 'https://example.com/blog/post' }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'schema-article-author-stringly',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
+  })
+
+  it('flags Product schema missing on product URL', async () => {
+    const html = `<html><head>${jsonLd({ '@context': 'https://schema.org', '@graph': [ORGANIZATION_FULL, WEBSITE_WITH_SEARCH, BREADCRUMB] })}</head><body></body></html>`
+    const result = await runStructuredDataPhase(
+      snapshot({ html, finalUrl: 'https://shop.example.com/product/widget' }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'schema-product',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(1)
+  })
+
+  it('flags weak BreadcrumbList coverage across subPages', async () => {
+    const html = `<html><head>${jsonLd({ '@context': 'https://schema.org', '@graph': [ORGANIZATION_FULL, WEBSITE_WITH_SEARCH, BREADCRUMB] })}</head><body></body></html>`
+    const makeSub = (i: number, hasBreadcrumb: boolean): SubPageSnapshot => ({
+      url: `https://example.com/p/${i}`,
+      status: 200,
+      html: hasBreadcrumb
+        ? `<html><head>${jsonLd(BREADCRUMB)}</head><body></body></html>`
+        : `<html><body></body></html>`,
+      lastModified: null,
+      contentHash: `h${i}`,
+    })
+    const subPages = Array.from({ length: 10 }, (_, i) => makeSub(i, i < 3))
+    const result = await runStructuredDataPhase(snapshot({ html, subPages }))
+    const finding = result.findings.find(
+      (f) => f.category === 'schema-breadcrumb-coverage',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
   })
 
   it('is deterministic', async () => {
