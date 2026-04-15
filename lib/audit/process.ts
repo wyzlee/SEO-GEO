@@ -11,6 +11,13 @@ import { crawlUrl } from './crawl'
 import { runTechnicalPhase } from './phases/technical'
 import { runStructuredDataPhase } from './phases/structured-data'
 import { runGeoPhase } from './phases/geo'
+import { runEntityPhase } from './phases/entity'
+import { runEeatPhase } from './phases/eeat'
+import { runFreshnessPhase } from './phases/freshness'
+import { runInternationalPhase } from './phases/international'
+import { runPerformancePhase } from './phases/performance'
+import { runTopicalPhase } from './phases/topical'
+import { runCommonMistakesPhase } from './phases/common-mistakes'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
 import type { CrawlSnapshot, PhaseKey, PhaseResult } from './types'
 import {
@@ -42,13 +49,24 @@ async function runPhase(
   switch (key) {
     case 'technical':
       return crawl ? runTechnicalPhase(crawl) : skipped(key, scoreMax)
-
     case 'structured_data':
       return crawl ? runStructuredDataPhase(crawl) : skipped(key, scoreMax)
-
     case 'geo':
       return crawl ? runGeoPhase(crawl) : skipped(key, scoreMax)
-
+    case 'entity':
+      return crawl ? runEntityPhase(crawl) : skipped(key, scoreMax)
+    case 'eeat':
+      return crawl ? runEeatPhase(crawl) : skipped(key, scoreMax)
+    case 'freshness':
+      return crawl ? runFreshnessPhase(crawl) : skipped(key, scoreMax)
+    case 'international':
+      return crawl ? runInternationalPhase(crawl) : skipped(key, scoreMax)
+    case 'performance':
+      return crawl ? runPerformancePhase(crawl) : skipped(key, scoreMax)
+    case 'topical':
+      return crawl ? runTopicalPhase(crawl) : skipped(key, scoreMax)
+    case 'common_mistakes':
+      return crawl ? runCommonMistakesPhase(crawl) : skipped(key, scoreMax)
     case 'synthesis':
       return {
         phaseKey: key,
@@ -59,16 +77,8 @@ async function runPhase(
           'Synthèse — pas de scoring, livrables générés par le moteur de rapport',
         findings: [],
       }
-
     default:
-      return {
-        phaseKey: key,
-        score: 0,
-        scoreMax,
-        status: 'skipped',
-        summary: `Phase ${key} pas encore implémentée (Sprint 03 en cours)`,
-        findings: [],
-      }
+      return skipped(key, scoreMax)
   }
 }
 
