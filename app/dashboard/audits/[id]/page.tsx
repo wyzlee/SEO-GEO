@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/layout/header'
 import { ScoreBadge } from '@/components/audit/score-badge'
+import { ScoreBreakdownChart } from '@/components/audit/score-breakdown-chart'
+import { CriticalFindings } from '@/components/audit/critical-findings'
 import { PhaseCard } from '@/components/audit/phase-card'
 import {
   useAudit,
@@ -123,7 +125,7 @@ export default function AuditDetailPage({
       />
 
       <section className="p-6 space-y-6">
-        <div className="card-premium flex items-center gap-6">
+        <div className="card-premium flex flex-col md:flex-row items-start md:items-center gap-6">
           <ScoreBadge score={score} size="lg" />
           <div className="min-w-0 flex-1">
             <div
@@ -148,7 +150,23 @@ export default function AuditDetailPage({
           </div>
         </div>
 
+        {isCompleted && (
+          <div className="card-premium">
+            <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mb-4"
+              style={{ color: 'var(--color-muted)' }}>
+              Répartition du score
+            </h2>
+            <ScoreBreakdownChart phases={phases} />
+          </div>
+        )}
+
+        {isCompleted && <CriticalFindings phases={phases} />}
+
         <div className="space-y-3">
+          <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mt-2"
+            style={{ color: 'var(--color-muted)' }}>
+            Détail par phase
+          </h2>
           {phases.map((phase) => (
             <PhaseCard key={phase.id} phase={phase} />
           ))}
