@@ -212,13 +212,14 @@ export async function processAudit(auditId: string): Promise<void> {
         }
         await persistPhaseResult(auditId, result)
         breakdown[key] = result.score
-        detailedBreakdown[key] = {
-          score: result.score,
-          scoreMax: result.scoreMax,
-        }
         // Only count phases that actually ran — skipped phases (code mode
-        // gaps, not-applicable) don't penalize the final score.
+        // gaps, not-applicable) don't penalize the final score and shouldn't
+        // feed the synthesis fundamentals check either.
         if (result.status !== 'skipped') {
+          detailedBreakdown[key] = {
+            score: result.score,
+            scoreMax: result.scoreMax,
+          }
           effectiveScore += result.score
           effectiveScoreMax += result.scoreMax
         }
