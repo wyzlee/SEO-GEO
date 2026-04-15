@@ -155,7 +155,42 @@ async function runPhaseForCode(
   }
 }
 
+const DEFAULT_AUDIT_TIMEOUT_MS = Number.parseInt(
+  process.env.AUDIT_TIMEOUT_MS ?? '600000',
+  10,
+) // 10 min default
+
+class AuditTimeoutError extends Error {
+  constructor(auditId: string, ms: number) {
+    super(`Audit ${auditId} dépassé le timeout (${ms} ms)`)
+    this.name = 'AuditTimeoutError'
+  }
+}
+
 export async function processAudit(auditId: string): Promise<void> {
+  const timeoutMs = DEFAULT_AUDIT_TIMEOUT_MS
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(
+      () => reject(new AuditTimeoutError(auditId, timeoutMs)),
+      timeoutMs,
+    )
+  })
+  try {
+    await Promise.race([runProcessAudit(auditId), timeoutPromise])
+  } catch (error) {
+    if (error instanceof AuditTimeoutError) {
+      console.error(`[audit ${auditId}] timeout`, error.message)
+      await failAudit(auditId, error).catch(() => undefined)
+      return
+    }
+    throw error
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle)
+  }
+}
+
+async function runProcessAudit(auditId: string): Promise<void> {
   let cleanupPaths: string[] = []
   try {
     const rows = await db
