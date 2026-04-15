@@ -1,11 +1,17 @@
 /**
  * Phase 9 — Topical Authority (6 pts)
  *
- * V1 URL mode : single-page analyse du maillage interne et des anchors.
- * Détection pillar/cluster et pages orphelines sont V1.5 (multi-page crawl).
+ * V1.5 URL mode : maillage interne + anchors (single page) + signaux
+ * multi-page issus de `snapshot.subPages` — orphelines, thin content,
+ * couverture des clusters depuis la home.
  */
 import * as cheerio from 'cheerio'
-import type { Finding, PhaseResult, CrawlSnapshot } from '../types'
+import type {
+  Finding,
+  PhaseResult,
+  CrawlSnapshot,
+  SubPageSnapshot,
+} from '../types'
 
 const SCORE_MAX = 6
 const PHASE_KEY = 'topical' as const
@@ -34,6 +40,122 @@ const GENERIC_ANCHORS = [
   'learn more',
   'more',
 ]
+
+function normalizePath(raw: string, origin: string): string | null {
+  try {
+    const u = new URL(raw, origin)
+    if (u.origin !== origin) return null
+    const path = u.pathname.replace(/\/+$/, '')
+    return path === '' ? '/' : path
+  } catch {
+    return null
+  }
+}
+
+function extractInternalLinkPaths(html: string, origin: string): Set<string> {
+  const $ = cheerio.load(html)
+  const set = new Set<string>()
+  $('a[href]').each((_, el) => {
+    const href = $(el).attr('href') ?? ''
+    if (!href || href.startsWith('#') || href.startsWith('mailto:')) return
+    const path = normalizePath(href, origin)
+    if (path) set.add(path)
+  })
+  return set
+}
+
+function bodyWordCount(html: string): number {
+  const $ = cheerio.load(html)
+  const txt = $('body').text().replace(/\s+/g, ' ').trim()
+  if (!txt) return 0
+  return txt.split(' ').filter(Boolean).length
+}
+
+function detectUrlClusters(
+  paths: string[],
+  minSize = 4,
+): Map<string, string[]> {
+  const groups = new Map<string, string[]>()
+  for (const p of paths) {
+    const segments = p.split('/').filter(Boolean)
+    if (segments.length < 2) continue
+    const prefix = `/${segments[0]}`
+    if (!groups.has(prefix)) groups.set(prefix, [])
+    groups.get(prefix)!.push(p)
+  }
+  const clusters = new Map<string, string[]>()
+  for (const [prefix, pages] of groups) {
+    if (pages.length >= minSize) clusters.set(prefix, pages)
+  }
+  return clusters
+}
+
+const AUTHORITY_DOMAIN_PATTERNS: RegExp[] = [
+  /\.gov(\.[a-z]{2})?$/i,
+  /\.edu(\.[a-z]{2})?$/i,
+  /(^|\.)wikipedia\.org$/i,
+  /(^|\.)wikidata\.org$/i,
+  /(^|\.)britannica\.com$/i,
+  /(^|\.)who\.int$/i,
+  /(^|\.)europa\.eu$/i,
+  /(^|\.)insee\.fr$/i,
+  /(^|\.)nature\.com$/i,
+  /(^|\.)sciencedirect\.com$/i,
+  /(^|\.)nih\.gov$/i,
+  /(^|\.)ieee\.org$/i,
+  /(^|\.)acm\.org$/i,
+]
+
+function extractExternalAuthorityLinks(
+  html: string,
+  currentOrigin: string,
+): { total: number; authority: number } {
+  const $ = cheerio.load(html)
+  let total = 0
+  let authority = 0
+  $('a[href]').each((_, el) => {
+    const href = $(el).attr('href') ?? ''
+    if (!href.startsWith('http')) return
+    try {
+      const u = new URL(href)
+      if (u.origin === currentOrigin) return
+      total++
+      if (AUTHORITY_DOMAIN_PATTERNS.some((re) => re.test(u.hostname))) {
+        authority++
+      }
+    } catch {
+      /* ignore */
+    }
+  })
+  return { total, authority }
+}
+
+function computeInboundCounts(
+  primaryHtml: string,
+  subPages: SubPageSnapshot[],
+  origin: string,
+): Map<string, number> {
+  // For each subPage path, count how many OTHER documents link to it.
+  const subPagePaths = subPages
+    .map((sp) => normalizePath(sp.url, origin))
+    .filter((p): p is string => p !== null)
+  const inbound = new Map<string, number>(subPagePaths.map((p) => [p, 0]))
+
+  const addFrom = (html: string, excludePath: string | null) => {
+    const links = extractInternalLinkPaths(html, origin)
+    for (const path of links) {
+      if (excludePath && path === excludePath) continue
+      if (inbound.has(path)) inbound.set(path, inbound.get(path)! + 1)
+    }
+  }
+
+  addFrom(primaryHtml, null)
+  for (const sp of subPages) {
+    const selfPath = normalizePath(sp.url, origin)
+    addFrom(sp.html, selfPath)
+  }
+  return inbound
+}
 
 export async function runTopicalPhase(
   snapshot: CrawlSnapshot,
@@ -158,6 +280,156 @@ export async function runTopicalPhase(
       pointsLost: 0.5,
       effort: 'heavy',
     })
+  }
+
+  // --- External authority links -----------------------------------------
+  // Les moteurs IA valorisent les sources qui elles-mêmes citent de la
+  // littérature autoritaire (.gov, .edu, Wikipedia, sources scientifiques).
+  // Un site qui ne link vers aucune référence externe crédible dégrade son
+  // signal d'intégration à l'écosystème d'autorité.
+  const authorityStats = extractExternalAuthorityLinks($.html(), new URL(finalUrl).origin)
+  if (authorityStats.total >= 5 && authorityStats.authority === 0) {
+    pushCheck({
+      severity: 'low',
+      category: 'topical-authority-outbound',
+      title: 'Aucun lien sortant vers des sources d\'autorité',
+      description: `La page a ${authorityStats.total} liens externes mais aucun ne cible une source d'autorité reconnue (.gov, .edu, Wikipedia, presse scientifique). Les moteurs génératifs pondèrent positivement l'ancrage à l'écosystème académique et institutionnel.`,
+      recommendation:
+        'Citer une étude, une norme, un article Wikipedia quand c\'est pertinent. Viser 1-2 backlinks vers des sources académiques ou institutionnelles par page de fond.',
+      pointsLost: 0.5,
+      effort: 'quick',
+      metricValue: `0 / ${authorityStats.total} externes autoritaires`,
+    })
+  }
+
+  // --- Multi-page signals (V1.5 via subPages) ---------------------------
+  const subPages = snapshot.subPages ?? []
+  if (subPages.length >= 5) {
+    const origin = new URL(finalUrl).origin
+
+    // --- Orphan pages ---------------------------------------------------
+    const inbound = computeInboundCounts(snapshot.html, subPages, origin)
+    const orphans = Array.from(inbound.entries()).filter(
+      ([, count]) => count === 0,
+    )
+    const orphanRatio = orphans.length / subPages.length
+    if (orphanRatio >= 0.2) {
+      pushCheck({
+        severity: 'medium',
+        category: 'topical-orphan-pages',
+        title: 'Pages orphelines détectées',
+        description: `${orphans.length} page(s) du sitemap ne reçoivent aucun lien interne depuis la home ni depuis les autres pages crawlées. Les crawlers les découvrent mal et les moteurs IA peinent à leur associer du contexte.`,
+        recommendation:
+          'Intégrer ces pages dans la navigation principale, un hub ou des articles voisins. Pages d\'exemple : ' +
+          orphans
+            .slice(0, 3)
+            .map(([p]) => p)
+            .join(', ') +
+          (orphans.length > 3 ? '…' : ''),
+        pointsLost: 1,
+        effort: 'medium',
+        metricValue: `${orphans.length}/${subPages.length} orphelines`,
+        metricTarget: '< 20 %',
+      })
+    }
+
+    // --- Thin content site ----------------------------------------------
+    const wordCounts = subPages.map((sp) => bodyWordCount(sp.html))
+    const thinCount = wordCounts.filter((w) => w > 0 && w < 300).length
+    const coverable = wordCounts.filter((w) => w > 0).length
+    if (coverable >= 5) {
+      const thinRatio = thinCount / coverable
+      if (thinRatio >= 0.5) {
+        pushCheck({
+          severity: 'medium',
+          category: 'topical-thin-content',
+          title: 'Site à contenu majoritairement pauvre',
+          description: `${thinCount}/${coverable} pages crawlées ont moins de 300 mots de contenu. Les moteurs IA citent rarement des sources perçues comme trop courtes pour apporter un signal sémantique substantiel.`,
+          recommendation:
+            'Enrichir les pages principales : ajouter un paragraphe de contexte, une section FAQ, un exemple concret. Cibler 600-1 200 mots sur les pages-clé.',
+          pointsLost: 1,
+          effort: 'heavy',
+          metricValue: `${Math.round(thinRatio * 100)} % < 300 mots`,
+          metricTarget: '< 30 %',
+        })
+      }
+    }
+
+    // --- Pillar intra-cluster -------------------------------------------
+    // Pour chaque cluster détecté, on regarde quelle page concentre le plus
+    // de liens entrants parmi les pages du cluster. Si aucune n'atteint 30 %,
+    // le cluster est "plat" — pas de pivot éditorial identifiable.
+    const subPagePathsForPillar = subPages
+      .map((sp) => normalizePath(sp.url, origin))
+      .filter((p): p is string => p !== null)
+    const clustersForPillar = detectUrlClusters(subPagePathsForPillar)
+    const fragmented: Array<{ prefix: string; pagesInCluster: number }> = []
+    for (const [prefix, pages] of clustersForPillar) {
+      const inboundInCluster = pages.map((p) => inbound.get(p) ?? 0)
+      const totalInbound = inboundInCluster.reduce((a, b) => a + b, 0)
+      if (totalInbound === 0) continue
+      const topInbound = Math.max(...inboundInCluster)
+      const topRatio = topInbound / totalInbound
+      if (topRatio < 0.3) {
+        fragmented.push({ prefix, pagesInCluster: pages.length })
+      }
+    }
+    if (fragmented.length > 0) {
+      pushCheck({
+        severity: 'low',
+        category: 'topical-pillar-missing',
+        title: 'Clusters sans page-pivot identifiable',
+        description: `${fragmented.length} cluster(s) n'ont pas de pillar : les liens internes sont dispersés uniformément sans page-pivot qui centralise l'autorité. Les moteurs IA favorisent les architectures où un hub thématique agrège les articles satellites.`,
+        recommendation:
+          'Créer ou désigner une page pillar par cluster (ex: "Guide complet X"), puis y linker depuis chaque article du cluster. Clusters concernés : ' +
+          fragmented
+            .slice(0, 3)
+            .map((f) => f.prefix)
+            .join(', '),
+        pointsLost: 0.5,
+        effort: 'heavy',
+        metricValue: fragmented
+          .slice(0, 3)
+          .map((f) => `${f.prefix} (${f.pagesInCluster})`)
+          .join(' · '),
+      })
+    }
+
+    // --- Cluster coverage depuis la home --------------------------------
+    const subPagePaths = subPages
+      .map((sp) => normalizePath(sp.url, origin))
+      .filter((p): p is string => p !== null)
+    const clusters = detectUrlClusters(subPagePaths)
+    if (clusters.size >= 2) {
+      const homeLinks = extractInternalLinkPaths(snapshot.html, origin)
+      const clustersLinkedFromHome = Array.from(clusters.entries()).filter(
+        ([prefix, pages]) =>
+          homeLinks.has(prefix) ||
+          pages.some((p) => homeLinks.has(p) || Array.from(homeLinks).some((hl) => hl.startsWith(prefix + '/'))),
+      )
+      const coverage = clustersLinkedFromHome.length / clusters.size
+      if (coverage < 0.5) {
+        const missing = Array.from(clusters.keys())
+          .filter(
+            (prefix) =>
+              !clustersLinkedFromHome.some(([p]) => p === prefix),
+          )
+          .slice(0, 3)
+        pushCheck({
+          severity: 'low',
+          category: 'topical-cluster-coverage',
+          title: 'Clusters non reliés depuis la home',
+          description: `${clusters.size} clusters thématiques détectés mais la home n'en relie que ${clustersLinkedFromHome.length}. Signal de silo fermé — réduit la transmission d'autorité vers les sous-thèmes.`,
+          recommendation:
+            'Ajouter une section "Nos expertises" ou un méga-menu qui lie chaque cluster. Manquants : ' +
+            missing.join(', '),
+          pointsLost: 0.5,
+          effort: 'medium',
+          metricValue: `${Math.round(coverage * 100)} % liés`,
+          metricTarget: '≥ 50 %',
+        })
+      }
+    }
   }
 
   score = Math.max(0, Math.min(SCORE_MAX, score))
