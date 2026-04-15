@@ -2,17 +2,33 @@
  * Database write helpers for the audit engine.
  * Kept separate from engine.ts so the engine stays pure (unit-testable without DB).
  */
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { audits, auditPhases, findings } from '@/lib/db/schema'
 import type { Finding, PhaseKey, PhaseResult } from './types'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
 
-export async function markAuditRunning(auditId: string): Promise<void> {
-  await db
+/**
+ * Mark audit running. Succeeds when the audit is still queued or already
+ * running (worker may have pre-claimed it) ; fails when the audit is
+ * already completed or failed. Idempotent on `startedAt` via COALESCE.
+ * Returns true when the caller may safely proceed with processing.
+ */
+export async function markAuditRunning(auditId: string): Promise<boolean> {
+  const result = await db
     .update(audits)
-    .set({ status: 'running', startedAt: new Date() })
-    .where(eq(audits.id, auditId))
+    .set({
+      status: 'running',
+      startedAt: sql`COALESCE(${audits.startedAt}, now())`,
+    })
+    .where(
+      and(
+        eq(audits.id, auditId),
+        inArray(audits.status, ['queued', 'running']),
+      ),
+    )
+    .returning({ id: audits.id })
+  return result.length > 0
 }
 
 export async function seedAuditPhases(auditId: string): Promise<void> {

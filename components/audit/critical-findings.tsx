@@ -20,7 +20,11 @@ export function CriticalFindings({
 }) {
   const all = phases.flatMap((p) => p.findings)
   const critical = all
-    .filter((f) => f.severity === 'critical' || f.severity === 'high')
+    .filter(
+      (f) =>
+        (f.severity === 'critical' || f.severity === 'high') &&
+        f.phaseKey !== 'synthesis',
+    )
     .sort((a, b) => {
       const diff = SEVERITY_WEIGHT[b.severity] - SEVERITY_WEIGHT[a.severity]
       if (diff !== 0) return diff

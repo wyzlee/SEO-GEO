@@ -166,7 +166,12 @@ export async function processAudit(auditId: string): Promise<void> {
     const audit = rows[0]
     if (!audit) throw new Error(`Audit ${auditId} introuvable`)
 
-    await markAuditRunning(auditId)
+    const claimed = await markAuditRunning(auditId)
+    if (!claimed) {
+      // Another worker or handler already running this audit — skip.
+      console.log(`[audit ${auditId}] already claimed, skipping`)
+      return
+    }
     await seedAuditPhases(auditId)
 
     const ctx = await resolveInput({
