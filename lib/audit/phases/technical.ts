@@ -306,6 +306,116 @@ export async function runTechnicalPhase(
     }
   }
 
+  // --- Meta robots (noindex / nofollow) -----------------------------------
+  const metaRobots = ($('meta[name="robots"]').attr('content') || '').toLowerCase()
+  if (metaRobots) {
+    if (/\bnoindex\b/.test(metaRobots)) {
+      pushCheck({
+        severity: 'critical',
+        category: 'technical-meta-robots',
+        title: 'Page en noindex',
+        description:
+          '`<meta name="robots" content="noindex">` exclut la page de tous les moteurs de recherche. Si ce n\'est pas intentionnel, la page est invisible.',
+        recommendation:
+          'Retirer `noindex` si la page doit être indexée. Vérifier aussi les headers HTTP `X-Robots-Tag`.',
+        pointsLost: 3,
+        effort: 'quick',
+        metricValue: metaRobots,
+      })
+    } else if (/\bnofollow\b/.test(metaRobots)) {
+      pushCheck({
+        severity: 'medium',
+        category: 'technical-meta-robots',
+        title: 'Page en nofollow',
+        description:
+          '`<meta name="robots" content="nofollow">` bloque la transmission de jus SEO via les liens de la page. Rarement souhaitable sur une page standard.',
+        recommendation:
+          'Retirer `nofollow` sauf cas précis (page user-generated content sans modération).',
+        pointsLost: 1,
+        effort: 'quick',
+      })
+    }
+  }
+
+  // --- Canonical self-reference (same host but different path) ----------
+  if (canonical) {
+    try {
+      const canonicalAbsolute = new URL(canonical, finalUrl).toString()
+      const canonicalHost = new URL(canonicalAbsolute).host
+      const currentHost = new URL(finalUrl).host
+      const normalize = (u: string) =>
+        u.replace(/\/+$/, '').replace(/\?.*$/, '').replace(/#.*$/, '')
+      if (
+        canonicalHost === currentHost &&
+        normalize(canonicalAbsolute) !== normalize(finalUrl)
+      ) {
+        pushCheck({
+          severity: 'low',
+          category: 'technical-canonical-self',
+          title: 'Canonical pointe vers une autre URL du même domaine',
+          description: `La canonical (${canonicalAbsolute}) et l'URL courante (${finalUrl}) diffèrent. Si c'est intentionnel (variantes de tracking, pagination) c'est correct ; sinon la page courante ne sera pas indexée à son URL.`,
+          recommendation:
+            'Vérifier que la canonical est bien voulue (consolidation vers variante principale) ou corriger vers l\'URL auto-référente de la page.',
+          pointsLost: 0.5,
+          effort: 'quick',
+          metricValue: canonicalAbsolute,
+          metricTarget: finalUrl,
+        })
+      }
+    } catch {
+      /* already handled above */
+    }
+  }
+
+  // --- Multiple <h1> ------------------------------------------------------
+  const h1Count = $('h1').length
+  if (h1Count > 1) {
+    pushCheck({
+      severity: 'low',
+      category: 'technical-h1',
+      title: `${h1Count} balises <h1> sur la page`,
+      description:
+        'Convention classique : un seul <h1> par page, miroir du <title>. Plusieurs H1 dispersent le signal principal pour les crawlers.',
+      recommendation:
+        'Consolider en un seul <h1> en tête de page ; les titres suivants en <h2>/<h3>.',
+      pointsLost: 0.5,
+      effort: 'quick',
+      metricValue: `${h1Count} <h1>`,
+    })
+  } else if (h1Count === 0) {
+    pushCheck({
+      severity: 'medium',
+      category: 'technical-h1',
+      title: 'Aucun <h1> sur la page',
+      description:
+        'Le H1 est l\'élément de hiérarchie le plus fort pour les crawlers. Son absence floue la compréhension de la page.',
+      recommendation:
+        'Ajouter un <h1> unique, descriptif de la page, avec le mot-clé principal.',
+      pointsLost: 1,
+      effort: 'quick',
+    })
+  }
+
+  // --- HTML size ----------------------------------------------------------
+  // Buffer size — byte length approximation (UTF-8 ~ 1 byte per ASCII char,
+  // higher for accents). Threshold pragmatique.
+  const htmlBytes = Buffer.byteLength(snapshot.html, 'utf8')
+  if (htmlBytes > 500_000) {
+    pushCheck({
+      severity: 'low',
+      category: 'technical-html-size',
+      title: `HTML volumineux (${Math.round(htmlBytes / 1024)} KB)`,
+      description:
+        'Un HTML > 500 KB ralentit le parsing côté crawler et l\'affichage mobile. Souvent symptôme de trop de données inline ou de code mort non tree-shaken.',
+      recommendation:
+        'Nettoyer les scripts inline, extraire les data JSON lourds dans des fichiers séparés, tree-shaker les libs.',
+      pointsLost: 0.5,
+      effort: 'medium',
+      metricValue: `${Math.round(htmlBytes / 1024)} KB`,
+      metricTarget: '≤ 500 KB',
+    })
+  }
+
   // --- robots.txt ---------------------------------------------------------
   if (snapshot.robotsTxt === null) {
     pushCheck({
@@ -331,6 +441,52 @@ export async function runTechnicalPhase(
       pointsLost: 3,
       effort: 'quick',
     })
+  }
+
+  // --- Sitemap declaration in robots.txt ---------------------------------
+  if (snapshot.robotsTxt && snapshot.sitemapXml) {
+    const hasSitemapDeclared = /^\s*sitemap\s*:/im.test(snapshot.robotsTxt)
+    if (!hasSitemapDeclared) {
+      pushCheck({
+        severity: 'low',
+        category: 'technical-robots-sitemap',
+        title: 'robots.txt ne déclare pas le sitemap',
+        description:
+          'Un sitemap existe mais n\'est pas annoncé dans robots.txt. Google et Bing découvrent les sitemaps via cette directive en priorité.',
+        recommendation:
+          'Ajouter une ligne `Sitemap: https://<domaine>/sitemap.xml` en bas du robots.txt (hors blocs User-agent).',
+        pointsLost: 0.5,
+        effort: 'quick',
+      })
+    }
+  }
+
+  // --- Noindex sur subPages ----------------------------------------------
+  // Si on a l'échantillon multi-page, on détecte les pages noindex qui
+  // pourraient être des erreurs (commit de staging, flag débug oublié…).
+  const subPages = snapshot.subPages ?? []
+  if (subPages.length > 0) {
+    const noindexPages: string[] = []
+    for (const sp of subPages) {
+      const $sp = cheerio.load(sp.html)
+      const spRobots = ($sp('meta[name="robots"]').attr('content') || '').toLowerCase()
+      if (/\bnoindex\b/.test(spRobots)) {
+        noindexPages.push(sp.url)
+      }
+    }
+    if (noindexPages.length > 0) {
+      pushCheck({
+        severity: 'medium',
+        category: 'technical-noindex-subpages',
+        title: `${noindexPages.length} sous-page(s) en noindex`,
+        description: `Pages du sitemap marquées noindex : ${noindexPages.slice(0, 3).join(', ')}${noindexPages.length > 3 ? '…' : ''}. Si intentionnel (staging, doublon), à retirer du sitemap — sinon correction urgente.`,
+        recommendation:
+          'Vérifier chaque page : soit retirer le meta noindex si l\'indexation est souhaitée, soit retirer la page du sitemap.',
+        pointsLost: 1,
+        effort: 'medium',
+        metricValue: `${noindexPages.length} page(s)`,
+      })
+    }
   }
 
   // --- sitemap.xml --------------------------------------------------------

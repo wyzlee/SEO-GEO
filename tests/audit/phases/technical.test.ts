@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { runTechnicalPhase } from '@/lib/audit/phases/technical'
-import type { CrawlSnapshot } from '@/lib/audit/types'
+import type { CrawlSnapshot, SubPageSnapshot } from '@/lib/audit/types'
 
 function snapshot(partial: Partial<CrawlSnapshot>): CrawlSnapshot {
   return {
@@ -34,7 +34,9 @@ const PERFECT_HTML = `<!doctype html>
     <meta name="twitter:description" content="Description">
     <meta name="twitter:image" content="https://example.com/og.png">
   </head>
-  <body></body>
+  <body>
+    <h1>Titre principal</h1>
+  </body>
 </html>`
 
 const ROBOTS_OK = `User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml`
@@ -73,7 +75,7 @@ describe('runTechnicalPhase', () => {
     const result = await runTechnicalPhase(
       snapshot({
         html: PERFECT_HTML,
-        robotsTxt: 'User-agent: *\nDisallow: /',
+        robotsTxt: 'User-agent: *\nDisallow: /\nSitemap: https://example.com/sitemap.xml',
         sitemapXml: SITEMAP_OK,
       }),
     )
@@ -127,6 +129,126 @@ describe('runTechnicalPhase', () => {
     expect(ogFindings).toHaveLength(5)
     expect(ogFindings.every((f) => f.pointsLost === 1)).toBe(true)
     expect(result.score).toBe(Math.max(0, 12 - 5))
+  })
+
+  it('critically flags meta robots noindex', async () => {
+    const html = PERFECT_HTML.replace(
+      '<head>',
+      '<head><meta name="robots" content="noindex">',
+    )
+    const result = await runTechnicalPhase(
+      snapshot({ html, robotsTxt: ROBOTS_OK, sitemapXml: SITEMAP_OK }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'technical-meta-robots',
+    )
+    expect(finding?.severity).toBe('critical')
+    expect(finding?.pointsLost).toBe(3)
+  })
+
+  it('flags nofollow as medium', async () => {
+    const html = PERFECT_HTML.replace(
+      '<head>',
+      '<head><meta name="robots" content="nofollow">',
+    )
+    const result = await runTechnicalPhase(
+      snapshot({ html, robotsTxt: ROBOTS_OK, sitemapXml: SITEMAP_OK }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'technical-meta-robots',
+    )
+    expect(finding?.severity).toBe('medium')
+    expect(finding?.pointsLost).toBe(1)
+  })
+
+  it('flags canonical self-ref mismatch (same host, different URL)', async () => {
+    const html = PERFECT_HTML.replace(
+      /canonical" href="[^"]+"/,
+      'canonical" href="https://example.com/other-page"',
+    )
+    const result = await runTechnicalPhase(
+      snapshot({ html, robotsTxt: ROBOTS_OK, sitemapXml: SITEMAP_OK }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'technical-canonical-self',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
+  })
+
+  it('flags multiple H1 on the page', async () => {
+    const html = PERFECT_HTML.replace(
+      '<h1>Titre principal</h1>',
+      '<h1>Titre 1</h1><h1>Titre 2</h1>',
+    )
+    const result = await runTechnicalPhase(
+      snapshot({ html, robotsTxt: ROBOTS_OK, sitemapXml: SITEMAP_OK }),
+    )
+    const finding = result.findings.find((f) => f.category === 'technical-h1')
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
+  })
+
+  it('flags sitemap not declared in robots.txt', async () => {
+    const robotsWithoutSitemap = 'User-agent: *\nAllow: /'
+    const result = await runTechnicalPhase(
+      snapshot({
+        html: PERFECT_HTML,
+        robotsTxt: robotsWithoutSitemap,
+        sitemapXml: SITEMAP_OK,
+      }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'technical-robots-sitemap',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
+  })
+
+  it('flags subPages en noindex', async () => {
+    const subPages: SubPageSnapshot[] = [
+      {
+        url: 'https://example.com/hidden',
+        status: 200,
+        html: '<html><head><meta name="robots" content="noindex"></head><body></body></html>',
+        lastModified: null,
+        contentHash: 'a',
+      },
+      {
+        url: 'https://example.com/ok',
+        status: 200,
+        html: '<html><body></body></html>',
+        lastModified: null,
+        contentHash: 'b',
+      },
+    ]
+    const result = await runTechnicalPhase(
+      snapshot({
+        html: PERFECT_HTML,
+        robotsTxt: ROBOTS_OK,
+        sitemapXml: SITEMAP_OK,
+        subPages,
+      }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'technical-noindex-subpages',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(1)
+    expect(finding!.metricValue).toBe('1 page(s)')
+  })
+
+  it('flags oversized HTML (> 500 KB)', async () => {
+    const bulk = 'x'.repeat(600_000)
+    const html = PERFECT_HTML.replace('<body>', `<body><div>${bulk}</div>`)
+    const result = await runTechnicalPhase(
+      snapshot({ html, robotsTxt: ROBOTS_OK, sitemapXml: SITEMAP_OK }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'technical-html-size',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
   })
 
   it('is deterministic (golden test — same input, same output)', async () => {
