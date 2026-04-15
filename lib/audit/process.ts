@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { audits } from '@/lib/db/schema'
 import { crawlUrl } from './crawl'
 import { runTechnicalPhase } from './phases/technical'
+import { runGeoPhase } from './phases/geo'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
 import type { CrawlSnapshot, PhaseKey, PhaseResult } from './types'
 import {
@@ -21,42 +22,49 @@ import {
   seedAuditPhases,
 } from './persist'
 
-async function runPhase(
-  key: PhaseKey,
-  crawl?: CrawlSnapshot,
-): Promise<PhaseResult> {
-  const scoreMax = PHASE_SCORE_MAX[key]
-  if (key === 'technical') {
-    if (!crawl) {
-      return {
-        phaseKey: key,
-        score: 0,
-        scoreMax,
-        status: 'skipped',
-        summary: 'Phase technique ignorée (pas de crawl URL disponible)',
-        findings: [],
-      }
-    }
-    return runTechnicalPhase(crawl)
-  }
-  if (key === 'synthesis') {
-    return {
-      phaseKey: key,
-      score: 0,
-      scoreMax: 0,
-      status: 'completed',
-      summary:
-        'Synthèse — pas de scoring, livrables générés par le moteur de rapport',
-      findings: [],
-    }
-  }
+function skipped(key: PhaseKey, scoreMax: number): PhaseResult {
   return {
     phaseKey: key,
     score: 0,
     scoreMax,
     status: 'skipped',
-    summary: `Phase ${key} pas encore implémentée (Sprint 03 en cours)`,
+    summary: 'Phase ignorée (pas de crawl URL disponible)',
     findings: [],
+  }
+}
+
+async function runPhase(
+  key: PhaseKey,
+  crawl?: CrawlSnapshot,
+): Promise<PhaseResult> {
+  const scoreMax = PHASE_SCORE_MAX[key]
+  switch (key) {
+    case 'technical':
+      return crawl ? runTechnicalPhase(crawl) : skipped(key, scoreMax)
+
+    case 'geo':
+      return crawl ? runGeoPhase(crawl) : skipped(key, scoreMax)
+
+    case 'synthesis':
+      return {
+        phaseKey: key,
+        score: 0,
+        scoreMax: 0,
+        status: 'completed',
+        summary:
+          'Synthèse — pas de scoring, livrables générés par le moteur de rapport',
+        findings: [],
+      }
+
+    default:
+      return {
+        phaseKey: key,
+        score: 0,
+        scoreMax,
+        status: 'skipped',
+        summary: `Phase ${key} pas encore implémentée (Sprint 03 en cours)`,
+        findings: [],
+      }
   }
 }
 
