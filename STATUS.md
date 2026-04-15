@@ -1,75 +1,35 @@
 # Status
 
-**Dernière mise à jour** : 2026-04-14
+**Dernière mise à jour** : 2026-04-15
 
 ## État actuel
 
 - Sprint 00 — Scope & fondations docs : **terminé**
 - Sprint 01 — Scaffold Next.js 16 + Stack Auth + Neon : **terminé**
-- Sprint 02 — Data model + auth opérationnelle : **terminé** (login email/password testé end-to-end Chrome → dashboard)
-- Sprint 03 — Moteur d'audit : **11/11 phases implémentées**, flow end-to-end live, test live wyzlee.com = 69.5/100
+- Sprint 02 — Data model + auth opérationnelle : **terminé** (login email/password testé end-to-end)
+- Sprint 03 — Moteur d'audit : **terminé** — 11/11 phases, flow bout en bout live
+- Sprint 04 — Dashboard polish : **terminé** (breakdown chart + points critiques highlight)
+- Sprint 05 — Report generator white-label FR : **terminé** (template FR + HTML auto-contained + route publique `/r/:slug`)
 
-## Ce qui est en place
-
-- Next.js 16.2.3 + React 19 (Server Components par défaut)
-- Stack Auth singleton (`lib/auth/stack-auth.ts`), SSO cookie `tokenStore: 'cookie'`
-- Neon HTTP driver avec lazy Proxy (`lib/db/index.ts`)
-- Drizzle schema complet (`lib/db/schema.ts`) : organizations, users, memberships, audits, audit_phases, findings, reports, sources
-- `proxy.ts` (Next 16) : security headers + CSP + gating routes protégées
-- API routes : `/api/health` (DB check), `/api/webhooks/stack-auth` (sync users, HMAC-verified)
-- Design system Wyzlee : Cabinet Grotesk + Fira Code, palette sémantique CSS vars, helpers `.btn-primary` / `.input-modern` / `.card-premium`
-- Pages : `/` (landing), `/login`, `/auth/callback`, `/auth/logout`, `/dashboard`, `/dashboard/audits`, `/dashboard/audits/new`, `/dashboard/audits/[id]`, `/dashboard/settings`
-- Worker stub (`worker/index.ts`) prêt pour la boucle claim/run en Sprint 03
-- Dockerfile multi-stage `node:20-alpine` + `worker/Dockerfile`
-- `docker-compose.yml` avec labels Traefik pour `seo-geo.wyzlee.cloud`
-
-## Validations passées
-
-- `npm install` : 793 paquets installés
-- `npm run typecheck` : 0 erreur
-- `npm run lint` : 0 erreur / 0 warning (ESLint 9 flat config)
-- `npm run test` : 10 tests / 3 fichiers / 100% pass (Vitest + Testing Library + jsdom)
-- `npm run dev` : boot en ~500ms, landing/login rendus, dashboard gated (307 → /login)
-- `/api/health` structuré OK (503 attendu sans vraie DB, 200 une fois Neon branché)
-- `/wyzlee-stack-validate` : **53/53 (100%)** après ajout du harness Vitest et de `components.json`
+**MVP V1 agency mode : livrable.**
 
 ## Infra live
 
-- **Neon** : projet `hidden-rice-16181693`, région `aws-eu-central-1` (Frankfurt), Postgres 17, branch `main` (`br-odd-bar-alzt0i4e`)
-- **Migration 0000** appliquée sur `main` (8 tables, 7 FK cascade, 8 indexes métier)
-- **Seed** :
-  - org `Wyzlee` (id `93851689-012d-44d6-8175-2f97bd4ee9d3`, slug `wyzlee`, plan `agency`)
-  - user `Olivier Podio` / `olivier.podio@pm.me` (id `48ef7a13-369b-47da-805d-76286557ddb8`)
-  - membership `owner` user → org
-- **Stack Auth** : projet dédié `seo-geo` (id `2f01f2d7-054d-4847-b4db-2348dc272f4f`), apps `Authentication + Emails + Webhooks`, auth methods `email/password + magic link + Google + GitHub`, user Olivier créé (email verified, magic link activé)
-- **`.env.local`** : `DATABASE_URL` Neon + `NEXT_PUBLIC_STACK_PROJECT_ID` + `STACK_SECRET_SERVER_KEY` en place
+- **Neon** : projet `hidden-rice-16181693`, `aws-eu-central-1` (Frankfurt), Postgres 17
+- **Stack Auth** : projet dédié `seo-geo` (id `2f01f2d7-054d-4847-b4db-2348dc272f4f`), email/password only
+- Seed : org `Wyzlee` + user `olivier.podio@pm.me` (password `Almeria2`) + membership owner
+- `.env.local` : DATABASE_URL + Stack Auth keys en place
 
-## Validation live
+## Flow produit complet
 
-- `GET /api/health` → `200 OK` avec `{status: "healthy", database: {status: "ok", latencyMs: ~500}}`
-- `GET /` → 200, `GET /dashboard` → 307 (AuthGuard)
-- 3 suites de tests passent (10 tests)
+1. `/login` — email/password (Stack Auth)
+2. `/dashboard` — 5 derniers audits + CTA
+3. `/dashboard/audits/new` — form URL + client → POST 202
+4. `/dashboard/audits/:id` — polling 2s, ScoreBadge coloré, ScoreBreakdownChart 11 phases, section "Points à corriger en priorité" (top 5), détail par phase expandable avec findings
+5. Bouton "Générer le rapport" → POST `/api/audits/:id/report` → ouvre `/r/:slug` dans nouvel onglet
+6. `/r/:slug` — rapport public FR auto-contained (Cabinet Grotesk + Fira Code), expire 30j
 
-## Moteur d'audit — état
-
-- `lib/audit/types.ts` : Finding, PhaseResult, AuditInput, CrawlSnapshot…
-- `lib/audit/crawl.ts` : fetchHtml, fetchText, crawlUrl (avec robots.txt + sitemap.xml + llms.txt en parallèle, user-agent dédié, timeout 15s)
-- `lib/audit/phases/technical.ts` : **Phase 1 implémentée** (12 pts) — title, meta description, canonical, lang, viewport, charset, favicons, Open Graph (5 champs), Twitter Cards (4 champs), robots.txt (Disallow: / critical), sitemap.xml
-- `lib/audit/engine.ts` : orchestrateur avec PHASE_ORDER + PHASE_SCORE_MAX, dispatcher runPhase(key). 10 phases restantes en status `skipped`.
-- Tests `tests/audit/phases/technical.test.ts` : 7 suites (perfect page, missing title, Disallow: /, canonical cross-domain, missing robots/sitemap, missing OG, golden determinism)
-
-## Flow bout en bout validé (2026-04-15)
-
-- Dashboard `/dashboard` → liste 5 derniers audits + CTA
-- `/dashboard/audits/new` → form url + client, submit → POST /api/audits → 202 { id }
-- Redirect `/dashboard/audits/:id` avec polling 2s via React Query
-- processAudit via `after()` Next 16 (fire-and-forget, pas de blocking)
-- Phase 1 crawl HTML + robots.txt + sitemap.xml → findings persisted au fil
-- Page détail : ScoreBadge 0-100 coloré, PhaseCard expandable, FindingItem avec severity/recommandation/metrics/effort
-- Tests E2E manuel sur `https://wyzlee.com` : 15 findings remontés, score 0/12 clampé
-- Migration Neon : `points_lost`, `score`, `score_max`, `score_total` → `real` (support décimaux 0.5)
-
-## Moteur complet — phases implémentées
+## Moteur complet — phases implémentées (V1 URL mode)
 
 | # | Clé | Points | Couverture V1 |
 |---|-----|--------|---------------|
@@ -83,24 +43,61 @@
 | 8 | performance | 8 | HashRouter + SSR + images modernes + CLS + preconnect + defer |
 | 9 | topical | 6 | ratio liens + anchors diversity + anchors génériques |
 | 10 | common_mistakes | 5 | noindex + mixed content + noopener + canonical |
-| 11 | synthesis | 0 | placeholder, rapport généré en Sprint 05 |
+| 11 | synthesis | 0 | placeholder (rapport généré depuis findings) |
 
-**Tests** : 62/62 passent (13 fichiers), typecheck 0, lint 0.
-**Live wyzlee.com** : 69.5/100 (breakdown : 0 + 10 + 12 + 9 + 8 + 6.5 + 8 + 6 + 6 + 4 + 0).
+## Rapport client — structure livrée
+
+- **Page de garde** : eyebrow indigo "Audit SEO & GEO", titre client, URL, scoreBadge coloré (Excellent/Bon/À améliorer/Critique), date FR, consultant
+- **Synthèse** : score global, executive summary déterministe (forces/faiblesses détectées), gain potentiel min-max
+- **Scoring détaillé** : tableau 11 phases + résumé par phase FR
+- **Points à corriger en priorité** : top 5 findings critical/high avec impact, description, recommandation, effort
+- **Victoires rapides** : findings `effort=quick` triés par points_lost (max 10)
+- **Feuille de route 90 jours** : 3 sprints (Victoires rapides / Structurant / Stratégique) avec checkboxes et points estimés
+- **Annexes** : méthodologie 11 phases + contact
+
+## Validations
+
+- `npm run typecheck` : 0 erreur
+- `npm run lint` : 0 erreur / 0 warning
+- `npm run test` : **62/62 passent**, 13 fichiers
+- `/wyzlee-stack-validate` : 53/53 (100%)
+- Live wyzlee.com : score 70/100, 26 findings, rapport HTML 14.6 ko généré + accessible via `/r/:slug`
+
+## Commits (session)
+
+- scaffold: Next.js 16 Wyzlee format (Sprint 01)
+- test: Vitest + Testing Library + components.json
+- db: migration 0000 Drizzle + applied Neon
+- auth: Stack Auth projet dédié + seed user/membership
+- fix(auth): dashboard bloqué spinner
+- auth: cleanup email-password only
+- audit: phase 1 technical + orchestrateur
+- audit: flow bout en bout (API + UI + persistance + polling)
+- audit: phase 3 GEO (18 pts)
+- audit: phase 2 Structured Data (15 pts)
+- audit: phases 4-10 complètes
+- test: couverture tests phases 4-10
+- report: moteur de rapport white-label FR + `/r/:slug`
+- ui: polish détail audit (breakdown chart + points critiques)
 
 ## Ce qui reste — V1.5 / V2
 
-- Wikidata lookup (WebFetch) pour Phase 4
-- Crawl multi-pages pour Phase 9 (pillar/cluster) et 7 (bidirectional hreflang)
+- PDF export (Puppeteer)
+- Wikidata lookup réel (WebFetch) pour Phase 4
+- Crawl multi-pages (pages internes, hreflang bidirectional, pillar/cluster)
 - CrUX API pour LCP/INP/CLS réels (Phase 8)
-- Phantom refresh detection (Phase 6 content hash diff)
-- Worker claim loop réel (remplacer after() si audits > quelques minutes)
-- Webhook Stack Auth prod (à configurer au deploy)
-- Sprint 04 : Dashboard Olivier polish + filtres audits
-- Sprint 05 : Report generator white-label FR + PDF
+- Phantom refresh detection (Phase 6)
+- Worker claim loop séparé (remplacer after() si audits > quelques minutes)
+- Webhook Stack Auth prod (à configurer au deploy sur VPS)
+- Filtres sur la liste audits (par status, par date)
+- Branding white-label (logo agence, couleur custom)
+- Sprint 06 : upload code (zip + GitHub)
+- Sprint 07 : deploy prod sur `seo-geo.wyzlee.cloud`
+- Sprint 08 : bascule V2 self-serve (Stripe, signup public, landing marketing)
 
 ## Points d'attention
 
-- `eslint-config-next` non compatible ESLint 9 flat config (bug circular JSON) — remplacé par `typescript-eslint` natif. À ré-évaluer si Next publie une version flat-compatible.
-- `ignoreBuildErrors: false` dès le départ — aucune dette TS tolérée.
-- Versions Golden Stack exactes (zod@4, sonner@2, tailwind-merge@3) — ne pas downgrader.
+- `eslint-config-next` non compatible ESLint 9 flat config (bug circular JSON) — remplacé par `typescript-eslint` natif.
+- `ignoreBuildErrors: false` dès le départ.
+- Versions Golden Stack exactes (zod@4, sonner@2, tailwind-merge@3).
+- `processAudit` tourne dans `after()` de Next 16 (fire-and-forget). Si les audits grossissent en durée, migrer vers worker loop dédié (`worker/index.ts` déjà stubé).
