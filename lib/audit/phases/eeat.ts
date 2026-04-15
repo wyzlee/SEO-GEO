@@ -1,9 +1,16 @@
 /**
  * Phase 5 — E-E-A-T Signals (10 pts)
  *
- * Experience / Expertise / Authoritativeness / Trust. V1 URL mode : checks
- * déterministes sur la page crawlée (HTTPS, auteur, Person schema, trust
- * pages, citations externes).
+ * Experience / Expertise / Authoritativeness / Trust.
+ *
+ * V1.5 URL mode :
+ *  - HTTPS + HSTS implicite
+ *  - Pages trust (About, Contact, Mentions, Privacy) présentes ET
+ *    crawlables (statut 2xx via subPages quand on a les données)
+ *  - Auteur + Person schema complet (jobTitle + sameAs + knowsAbout)
+ *  - Reviewed-by / Fact-checked / Editorial policy
+ *  - Citations externes contextualisées (anchor text descriptif)
+ *  - Dates visibles
  */
 import * as cheerio from 'cheerio'
 import type { Finding, PhaseResult, CrawlSnapshot } from '../types'
@@ -44,13 +51,20 @@ function extractFlatJsonLd(html: string): JsonLdObject[] {
   return out
 }
 
-function hasType(objects: JsonLdObject[], type: string): boolean {
-  return objects.some((o) => {
-    const t = o['@type']
-    const types = Array.isArray(t) ? t.map(String) : t ? [String(t)] : []
-    return types.some((x) => x.toLowerCase() === type.toLowerCase())
-  })
+function findByType(
+  objects: JsonLdObject[],
+  type: string,
+): JsonLdObject | null {
+  return (
+    objects.find((o) => {
+      const t = o['@type']
+      const types = Array.isArray(t) ? t.map(String) : t ? [String(t)] : []
+      return types.some((x) => x.toLowerCase() === type.toLowerCase())
+    }) ?? null
+  )
 }
+
+const BARE_URL_REGEX = /^https?:\/\//i
 
 export async function runEeatPhase(
   snapshot: CrawlSnapshot,
@@ -162,7 +176,8 @@ export async function runEeatPhase(
   }
 
   // --- Expertise : Person schema -----------------------------------------
-  if (looksEditorial && !hasType(objects, 'Person')) {
+  const personObj = findByType(objects, 'Person')
+  if (looksEditorial && !personObj) {
     pushCheck({
       severity: 'low',
       category: 'eeat-person-schema',
@@ -174,6 +189,56 @@ export async function runEeatPhase(
       pointsLost: 1,
       effort: 'medium',
     })
+  } else if (looksEditorial && personObj) {
+    const missing: string[] = []
+    if (!personObj.jobTitle) missing.push('jobTitle')
+    const sameAs = personObj.sameAs
+    const hasSameAs =
+      typeof sameAs === 'string' ||
+      (Array.isArray(sameAs) && sameAs.length > 0)
+    if (!hasSameAs) missing.push('sameAs')
+    if (!personObj.knowsAbout) missing.push('knowsAbout')
+    if (missing.length >= 2) {
+      pushCheck({
+        severity: 'low',
+        category: 'eeat-person-shallow',
+        title: 'Schema Person incomplet',
+        description: `Le Person JSON-LD est présent mais manque ${missing.join(', ')}. Ces champs signalent Expertise et identité pro — un Person sans sameAs ni knowsAbout reste un signal faible pour les moteurs IA.`,
+        recommendation:
+          'Compléter le Person : `jobTitle` (ex: "Consultante SEO senior"), `sameAs` : [LinkedIn, Twitter/X, ORCID], `knowsAbout` : tableau de concepts maîtrisés.',
+        pointsLost: 0.5,
+        effort: 'quick',
+        metricValue: `manque ${missing.join(', ')}`,
+      })
+    }
+  }
+
+  // --- Trust : reviewed-by / fact-checked / editorial policy -------------
+  if (looksEditorial) {
+    const bodyText = $('body').text().toLowerCase()
+    const hasReviewedBy =
+      /\breviewed\s+by\b|\brelu\s+par\b|\bvérifié\s+par\b|\bfact[- ]check/i.test(
+        bodyText,
+      )
+    const editorialPolicyLink = allAnchors.some((a) => {
+      const target = `${a.href} ${a.text}`
+      return /politique[-\s]?éditoriale|editorial[-\s]?policy|m[ée]thodologie|methodology|charte\s+éditoriale/.test(
+        target,
+      )
+    })
+    if (!hasReviewedBy && !editorialPolicyLink) {
+      pushCheck({
+        severity: 'low',
+        category: 'eeat-review-policy',
+        title: 'Pas de trace de relecture ou de charte éditoriale',
+        description:
+          'Aucune mention "Relu par / Reviewed by / Fact-checked" ni lien vers une charte éditoriale / méthodologie. Google documente explicitement ces signaux dans ses Quality Rater Guidelines pour YMYL (Your Money Your Life).',
+        recommendation:
+          'Ajouter une ligne "Relu par [Nom, titre]" en pied d\'article et un lien "Notre méthodologie" en footer pointant vers une page expliquant le process éditorial.',
+        pointsLost: 0.5,
+        effort: 'medium',
+      })
+    }
   }
 
   // --- Authoritativeness : citations externes ----------------------------
@@ -203,6 +268,81 @@ export async function runEeatPhase(
         pointsLost: 1,
         effort: 'medium',
         metricValue: `${externalLinks.length} lien(s) externe(s)`,
+      })
+    }
+
+    // Bare URL detection : "https://example.com" comme anchor text = signal
+    // low-effort, moins utile à un lecteur et moins valorisé en crawl.
+    if (externalLinks.length >= 3) {
+      const bareUrlLinks = $('a[href^="http"]')
+        .toArray()
+        .filter((el) => {
+          const text = $(el).text().trim()
+          return BARE_URL_REGEX.test(text)
+        })
+      const bareRatio = bareUrlLinks.length / externalLinks.length
+      if (bareRatio > 0.5 && bareUrlLinks.length >= 3) {
+        pushCheck({
+          severity: 'low',
+          category: 'eeat-bare-urls',
+          title: 'Citations externes non contextualisées (URL brutes)',
+          description:
+            'Plus de 50 % des liens externes utilisent l\'URL brute comme anchor text. Signal low-effort — un anchor descriptif renforce le contexte sémantique et l\'autorité perçue.',
+          recommendation:
+            'Remplacer les URL brutes par des anchors descriptifs : au lieu de `<a href="...">https://site.com/étude</a>`, écrire `<a href="...">Étude de Site.com sur l\'IA et le SEO</a>`.',
+          pointsLost: 0.5,
+          effort: 'quick',
+          metricValue: `${bareUrlLinks.length}/${externalLinks.length} brutes`,
+        })
+      }
+    }
+  }
+
+  // --- Trust : reachability des pages de confiance via subPages ---------
+  // Si on a un échantillon multi-page, on vérifie que les URLs trust pointent
+  // vers des pages 2xx (pas de 404/500). Seulement quand subPages est dispo
+  // (V1.5) ; silencieux sinon.
+  const subPages = snapshot.subPages ?? []
+  if (subPages.length > 0) {
+    const origin = new URL(finalUrl).origin
+    const resolveHref = (href: string): string | null => {
+      try {
+        const u = new URL(href, finalUrl)
+        if (u.origin !== origin) return null
+        return u.pathname.replace(/\/+$/, '') || '/'
+      } catch {
+        return null
+      }
+    }
+    const subPageStatusByPath = new Map<string, number>()
+    for (const sp of subPages) {
+      const path = resolveHref(sp.url)
+      if (path) subPageStatusByPath.set(path, sp.status)
+    }
+    const broken: Array<{ name: string; href: string }> = []
+    for (const page of trustPages) {
+      const anchor = allAnchors.find((a) =>
+        page.keywords.some((k) => a.href.includes(k) || a.text.includes(k)),
+      )
+      if (!anchor?.href) continue
+      const path = resolveHref(anchor.href)
+      if (!path) continue
+      const status = subPageStatusByPath.get(path)
+      if (status !== undefined && status >= 400) {
+        broken.push({ name: page.name, href: anchor.href })
+      }
+    }
+    if (broken.length > 0) {
+      pushCheck({
+        severity: 'high',
+        category: 'eeat-trust-broken',
+        title: 'Page de confiance cassée (404/500)',
+        description: `Les pages suivantes sont linkées mais retournent un code d'erreur : ${broken.map((b) => b.name).join(', ')}. Trust signal directement compromis : un utilisateur ou un crawler tombant sur un 404 sur "Mentions légales" perd toute confiance résiduelle.`,
+        recommendation:
+          'Rétablir les pages en 2xx ou retirer les liens morts. Si migration en cours, 301 vers les nouvelles URLs.',
+        pointsLost: 1,
+        effort: 'quick',
+        metricValue: broken.map((b) => `${b.name} → ${b.href}`).join(' · '),
       })
     }
   }
