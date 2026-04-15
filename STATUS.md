@@ -2,18 +2,23 @@
 
 **Dernière mise à jour** : 2026-04-15
 
-## État actuel
+## État actuel — MVP V1 technique terminé
 
-- Sprint 00 — Scope & fondations docs : **terminé**
-- Sprint 01 — Scaffold Next.js 16 + Stack Auth + Neon : **terminé**
-- Sprint 02 — Data model + auth opérationnelle : **terminé** (login email/password testé end-to-end)
-- Sprint 03 — Moteur d'audit : **terminé** — 11/11 phases, flow bout en bout live
-- Sprint 04 — Dashboard polish : **terminé** (breakdown chart + points critiques highlight)
-- Sprint 05 — Report generator white-label FR : **terminé** (template FR + HTML auto-contained + route publique `/r/:slug`)
+| Sprint | Scope | État |
+|--------|-------|------|
+| 00 | Scope & fondations docs | ✅ |
+| 01 | Scaffold Next.js 16 + Stack Auth + Neon | ✅ |
+| 02 | Data model + auth opérationnelle | ✅ |
+| 03 | Moteur d'audit 11/11 phases (URL) | ✅ |
+| 04 | Dashboard polish (chart + critical) | ✅ |
+| 05 | Report generator white-label FR + `/r/:slug` | ✅ |
+| 06 | Upload zip + GitHub + code mode phases | ✅ |
+| 07 | Polish final (filtres, breadcrumbs, failed audit) | ✅ |
+| 08 | V2 self-serve (Stripe, signup, marketing) | ⏳ plus tard |
 
-**MVP V1 agency mode : livrable.**
+**Déploiement prod** volontairement repoussé (le projet reste en dev local).
 
-## Infra live
+## Infra live (dev)
 
 - **Neon** : projet `hidden-rice-16181693`, `aws-eu-central-1` (Frankfurt), Postgres 17
 - **Stack Auth** : projet dédié `seo-geo` (id `2f01f2d7-054d-4847-b4db-2348dc272f4f`), email/password only
@@ -24,36 +29,45 @@
 
 1. `/login` — email/password (Stack Auth)
 2. `/dashboard` — 5 derniers audits + CTA
-3. `/dashboard/audits/new` — form URL + client → POST 202
-4. `/dashboard/audits/:id` — polling 2s, ScoreBadge coloré, ScoreBreakdownChart 11 phases, section "Points à corriger en priorité" (top 5), détail par phase expandable avec findings
-5. Bouton "Générer le rapport" → POST `/api/audits/:id/report` → ouvre `/r/:slug` dans nouvel onglet
-6. `/r/:slug` — rapport public FR auto-contained (Cabinet Grotesk + Fira Code), expire 30j
+3. `/dashboard/audits` — liste avec filtres par status + recherche URL/dépôt/client + icône input
+4. `/dashboard/audits/new` — onglets **URL / Upload code / GitHub** :
+   - URL : crawl live 11 phases
+   - Upload : drag-and-drop .zip (max 50 Mo) → extract + détection stack + 3 phases code
+   - GitHub : `owner/repo[@branch]` clone shallow → 3 phases code
+5. `/dashboard/audits/:id` — polling 2s, ScoreBadge, ScoreBreakdownChart 11 phases, points critiques top 5, détail par phase expandable, bouton "Générer le rapport", breadcrumbs
+6. `/r/:slug` — rapport public FR auto-contained (HTML, expire 30j)
 
-## Moteur complet — phases implémentées (V1 URL mode)
+## Moteur d'audit — 11 phases (URL mode)
 
-| # | Clé | Points | Couverture V1 |
-|---|-----|--------|---------------|
-| 1 | technical | 12 | meta + canonical + lang + OG + Twitter + robots + sitemap |
-| 2 | structured_data | 15 | JSON-LD parse + Organization + WebSite + Article + stacking |
-| 3 | geo | 18 | llms.txt + AI bots + semantic + answer blocks + evidence |
-| 4 | entity | 10 | brand coherence + Wikidata + Wikipedia + entity linking |
-| 5 | eeat | 10 | HTTPS + trust pages + auteur + Person schema + citations |
-| 6 | freshness | 8 | dateModified + time + sitemap lastmod + tolérance par type |
-| 7 | international | 8 | hreflang + x-default + og:locale + ccTLD detection |
-| 8 | performance | 8 | HashRouter + SSR + images modernes + CLS + preconnect + defer |
-| 9 | topical | 6 | ratio liens + anchors diversity + anchors génériques |
-| 10 | common_mistakes | 5 | noindex + mixed content + noopener + canonical |
-| 11 | synthesis | 0 | placeholder (rapport généré depuis findings) |
+| # | Clé | Points | Live wyzlee.com |
+|---|-----|--------|-----------------|
+| 1 | technical | 12 | 0 |
+| 2 | structured_data | 15 | 10 |
+| 3 | geo | 18 | 12 |
+| 4 | entity | 10 | 9 |
+| 5 | eeat | 10 | 8 |
+| 6 | freshness | 8 | 6.5 |
+| 7 | international | 8 | 8 |
+| 8 | performance | 8 | 6 |
+| 9 | topical | 6 | 6 |
+| 10 | common_mistakes | 5 | 4 |
+| 11 | synthesis | 0 | — |
+| **Total** | | **100** | **70/100** |
+
+## Moteur d'audit — code mode (zip + GitHub)
+
+3 phases adaptées V1 (regex-based parsing) :
+- **technical-code** : `metadata` export, `<head>` static, robots/sitemap files (12 pts)
+- **structured-data-code** : JSON-LD dans JSX / HTML, Organization, WebSite, stacking (15 pts)
+- **geo-code** : llms.txt, AI bots dans robots.txt, paragraphe intro (18 pts)
+
+7 autres phases restent skipped en code mode (URL mode recommandé pour couverture complète).
+
+Test live GitHub `shadcn-ui/ui` : score 22/100, 12 findings en 6 secondes.
 
 ## Rapport client — structure livrée
 
-- **Page de garde** : eyebrow indigo "Audit SEO & GEO", titre client, URL, scoreBadge coloré (Excellent/Bon/À améliorer/Critique), date FR, consultant
-- **Synthèse** : score global, executive summary déterministe (forces/faiblesses détectées), gain potentiel min-max
-- **Scoring détaillé** : tableau 11 phases + résumé par phase FR
-- **Points à corriger en priorité** : top 5 findings critical/high avec impact, description, recommandation, effort
-- **Victoires rapides** : findings `effort=quick` triés par points_lost (max 10)
-- **Feuille de route 90 jours** : 3 sprints (Victoires rapides / Structurant / Stratégique) avec checkboxes et points estimés
-- **Annexes** : méthodologie 11 phases + contact
+Page de garde (eyebrow indigo, ScoreBadge coloré par palier, date FR) + Synthèse (exec summary + forces/faiblesses + gain potentiel) + Scoring détaillé (table 11 phases + résumés) + Points à corriger en priorité (top 5) + Victoires rapides (effort quick) + Feuille de route 90j (3 sprints) + Annexes (méthodologie + contact).
 
 ## Validations
 
@@ -61,43 +75,33 @@
 - `npm run lint` : 0 erreur / 0 warning
 - `npm run test` : **62/62 passent**, 13 fichiers
 - `/wyzlee-stack-validate` : 53/53 (100%)
-- Live wyzlee.com : score 70/100, 26 findings, rapport HTML 14.6 ko généré + accessible via `/r/:slug`
+- Live URL wyzlee.com : 70/100, rapport HTML généré
+- Live GitHub shadcn-ui/ui : 22/100 en 6s, 12 findings
 
-## Commits (session)
+## Commits (session complète)
 
-- scaffold: Next.js 16 Wyzlee format (Sprint 01)
-- test: Vitest + Testing Library + components.json
-- db: migration 0000 Drizzle + applied Neon
-- auth: Stack Auth projet dédié + seed user/membership
-- fix(auth): dashboard bloqué spinner
-- auth: cleanup email-password only
-- audit: phase 1 technical + orchestrateur
-- audit: flow bout en bout (API + UI + persistance + polling)
-- audit: phase 3 GEO (18 pts)
-- audit: phase 2 Structured Data (15 pts)
-- audit: phases 4-10 complètes
-- test: couverture tests phases 4-10
-- report: moteur de rapport white-label FR + `/r/:slug`
-- ui: polish détail audit (breakdown chart + points critiques)
+16 commits : scaffold Sprint 01 → upload code + polish Sprint 07.
 
-## Ce qui reste — V1.5 / V2
+## Ce qui reste hors MVP technique
 
-- PDF export (Puppeteer)
-- Wikidata lookup réel (WebFetch) pour Phase 4
-- Crawl multi-pages (pages internes, hreflang bidirectional, pillar/cluster)
-- CrUX API pour LCP/INP/CLS réels (Phase 8)
-- Phantom refresh detection (Phase 6)
-- Worker claim loop séparé (remplacer after() si audits > quelques minutes)
-- Webhook Stack Auth prod (à configurer au deploy sur VPS)
-- Filtres sur la liste audits (par status, par date)
-- Branding white-label (logo agence, couleur custom)
-- Sprint 06 : upload code (zip + GitHub)
-- Sprint 07 : deploy prod sur `seo-geo.wyzlee.cloud`
-- Sprint 08 : bascule V2 self-serve (Stripe, signup public, landing marketing)
+- **V1.5** — extensions incrémentales :
+  - AST parsing (remplacer regex dans code mode)
+  - CrUX API pour LCP/INP/CLS réels (Phase 8)
+  - Wikidata lookup (Phase 4)
+  - Crawl multi-pages (pillar/cluster, bidirectional hreflang)
+  - PDF export (Puppeteer)
+  - Branding white-label (logo agence, couleur)
+- **Infrastructure prod** :
+  - Deploy VPS `seo-geo.wyzlee.cloud` (Dockerfile + docker-compose déjà prêts)
+  - Webhook Stack Auth prod
+  - Worker loop dédié si audits > quelques minutes
+- **V2 business** :
+  - Sprint 08 : Stripe, signup public, landing marketing
 
 ## Points d'attention
 
-- `eslint-config-next` non compatible ESLint 9 flat config (bug circular JSON) — remplacé par `typescript-eslint` natif.
-- `ignoreBuildErrors: false` dès le départ.
-- Versions Golden Stack exactes (zod@4, sonner@2, tailwind-merge@3).
-- `processAudit` tourne dans `after()` de Next 16 (fire-and-forget). Si les audits grossissent en durée, migrer vers worker loop dédié (`worker/index.ts` déjà stubé).
+- `eslint-config-next` non compatible ESLint 9 flat config — remplacé par `typescript-eslint` natif
+- `processAudit` via `after()` Next 16 (fire-and-forget). Migrer vers worker dédié en prod si volume
+- `.env.local` contient les credentials — ne jamais commiter
+- Upload code : archive max 50 Mo, extracted max 500 Mo, cleanup auto après audit
+- GitHub clone : public repos only V1, skip node_modules/.git pour le size check

@@ -1,7 +1,10 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { Globe, Github, FileArchive, Search } from 'lucide-react'
 import { PageHeader } from '@/components/layout/header'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { useAudits } from '@/lib/hooks/use-audits'
 import type { AuditRow } from '@/lib/hooks/use-audits'
 
@@ -15,12 +18,54 @@ const STATUS_STYLES: Record<
   failed: { label: 'Échec', color: 'var(--color-red)' },
 }
 
+type StatusFilter = AuditRow['status'] | 'all'
+
+const INPUT_ICONS: Record<AuditRow['inputType'], typeof Globe> = {
+  url: Globe,
+  github: Github,
+  zip: FileArchive,
+}
+
 export default function AuditsListPage() {
   const { data, isLoading } = useAudits()
-  const audits = data?.audits ?? []
+  const allAudits = data?.audits ?? []
+
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [search, setSearch] = useState('')
+
+  const counts = useMemo(() => {
+    const c: Record<StatusFilter, number> = {
+      all: allAudits.length,
+      queued: 0,
+      running: 0,
+      completed: 0,
+      failed: 0,
+    }
+    for (const a of allAudits) c[a.status]++
+    return c
+  }, [allAudits])
+
+  const audits = useMemo(() => {
+    const needle = search.trim().toLowerCase()
+    return allAudits.filter((a) => {
+      if (statusFilter !== 'all' && a.status !== statusFilter) return false
+      if (!needle) return true
+      return (
+        a.targetUrl?.toLowerCase().includes(needle) ||
+        a.githubRepo?.toLowerCase().includes(needle) ||
+        a.clientName?.toLowerCase().includes(needle)
+      )
+    })
+  }, [allAudits, statusFilter, search])
 
   return (
     <div>
+      <Breadcrumbs
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Audits' },
+        ]}
+      />
       <PageHeader
         title="Audits"
         description="Historique complet des audits de votre organisation."
@@ -31,7 +76,51 @@ export default function AuditsListPage() {
         }
       />
 
-      <section className="p-6">
+      <section className="p-6 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-md flex-1 min-w-[200px]"
+            style={{
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <Search size={16} style={{ color: 'var(--color-muted)' }} />
+            <input
+              type="text"
+              placeholder="Rechercher URL, dépôt, client…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 bg-transparent text-sm font-[family-name:var(--font-sans)] outline-none"
+              style={{ color: 'var(--color-text)' }}
+            />
+          </div>
+
+          <div className="flex items-center gap-1 rounded-md p-1"
+            style={{ background: 'var(--color-bgAlt)', border: '1px solid var(--color-border)' }}>
+            {(['all', 'queued', 'running', 'completed', 'failed'] as StatusFilter[]).map((status) => {
+              const active = statusFilter === status
+              const label = status === 'all' ? 'Tous' : STATUS_STYLES[status].label
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setStatusFilter(status)}
+                  className="px-3 py-1.5 text-xs font-[family-name:var(--font-display)] rounded transition-colors"
+                  style={{
+                    background: active ? 'var(--color-surface)' : 'transparent',
+                    color: active ? 'var(--color-text)' : 'var(--color-muted)',
+                    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                  }}
+                >
+                  {label}
+                  <span className="ml-1.5 tabular-nums opacity-75">{counts[status]}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         <div className="card-premium">
           {isLoading ? (
             <p className="text-sm py-6 text-center" style={{ color: 'var(--color-muted)' }}>
@@ -39,7 +128,9 @@ export default function AuditsListPage() {
             </p>
           ) : audits.length === 0 ? (
             <p className="text-sm py-10 text-center" style={{ color: 'var(--color-muted)' }}>
-              Pas encore d&apos;audit. Lancez-en un pour remplir cette vue.
+              {allAudits.length === 0
+                ? 'Pas encore d\'audit. Lancez-en un pour remplir cette vue.'
+                : 'Aucun audit ne correspond à votre recherche.'}
             </p>
           ) : (
             <table className="w-full text-sm font-[family-name:var(--font-sans)]">
@@ -59,14 +150,24 @@ export default function AuditsListPage() {
               <tbody>
                 {audits.map((audit) => {
                   const style = STATUS_STYLES[audit.status]
+                  const Icon = INPUT_ICONS[audit.inputType] ?? Globe
+                  const target =
+                    audit.targetUrl || audit.githubRepo || 'Upload code'
                   return (
                     <tr
                       key={audit.id}
                       className="border-b"
                       style={{ borderColor: 'var(--color-border)' }}
                     >
-                      <td className="py-3 truncate max-w-[220px]">
-                        {audit.targetUrl ?? '—'}
+                      <td className="py-3 max-w-[260px]">
+                        <span className="flex items-center gap-2 truncate">
+                          <Icon
+                            size={14}
+                            className="shrink-0"
+                            style={{ color: 'var(--color-muted)' }}
+                          />
+                          <span className="truncate">{target}</span>
+                        </span>
                       </td>
                       <td className="py-3">{audit.clientName ?? '—'}</td>
                       <td className="py-3">

@@ -3,7 +3,9 @@
 import { use } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { Globe, Github, FileArchive } from 'lucide-react'
 import { PageHeader } from '@/components/layout/header'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { ScoreBadge } from '@/components/audit/score-badge'
 import { ScoreBreakdownChart } from '@/components/audit/score-breakdown-chart'
 import { CriticalFindings } from '@/components/audit/critical-findings'
@@ -86,13 +88,30 @@ export default function AuditDetailPage({
   const { audit, phases } = data
   const isRunning = audit.status === 'queued' || audit.status === 'running'
   const isCompleted = audit.status === 'completed'
+  const isFailed = audit.status === 'failed'
   const score = audit.scoreTotal ?? 0
+
+  const target =
+    audit.targetUrl ?? audit.githubRepo ?? 'Upload code'
+  const InputIcon =
+    audit.inputType === 'github'
+      ? Github
+      : audit.inputType === 'zip'
+        ? FileArchive
+        : Globe
 
   return (
     <div>
+      <Breadcrumbs
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Audits', href: '/dashboard/audits' },
+          { label: audit.id.slice(0, 8) },
+        ]}
+      />
       <PageHeader
-        title={audit.targetUrl ?? audit.id}
-        description={`Audit ${audit.id} · ${STATUS_LABEL[audit.status] ?? audit.status}`}
+        title={target}
+        description={`${audit.inputType.toUpperCase()} · ${STATUS_LABEL[audit.status] ?? audit.status}`}
         actions={
           <div className="flex items-center gap-2">
             {isCompleted &&
@@ -129,12 +148,13 @@ export default function AuditDetailPage({
           <ScoreBadge score={score} size="lg" />
           <div className="min-w-0 flex-1">
             <div
-              className="text-xs uppercase tracking-wider font-[family-name:var(--font-display)]"
+              className="flex items-center gap-2 text-xs uppercase tracking-wider font-[family-name:var(--font-display)]"
               style={{ color: 'var(--color-muted)' }}
             >
+              <InputIcon size={12} />
               {STATUS_LABEL[audit.status] ?? audit.status}
             </div>
-            <div className="font-[family-name:var(--font-display)] text-xl font-semibold">
+            <div className="font-[family-name:var(--font-display)] text-xl font-semibold mt-1">
               Score global
             </div>
             <p
@@ -143,12 +163,42 @@ export default function AuditDetailPage({
             >
               {isRunning
                 ? 'Analyse en cours — les phases s\'affichent au fil de l\'eau.'
-                : audit.status === 'failed'
-                  ? audit.errorMessage || 'L\'audit a échoué. Contactez le support.'
+                : isFailed
+                  ? audit.errorMessage || 'L\'audit a échoué.'
                   : `Lancé le ${new Date(audit.createdAt).toLocaleString('fr-FR')}`}
             </p>
           </div>
         </div>
+
+        {isFailed && (
+          <div
+            className="rounded-lg p-5"
+            style={{
+              background: 'var(--color-card)',
+              border: '1px solid var(--color-red)',
+            }}
+          >
+            <h2
+              className="font-[family-name:var(--font-display)] font-semibold"
+              style={{ color: 'var(--color-red)' }}
+            >
+              Audit en échec
+            </h2>
+            <p
+              className="mt-2 text-sm font-[family-name:var(--font-sans)]"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              {audit.errorMessage ||
+                'Le pipeline a rencontré une erreur avant la fin. Vérifier que l\'URL est accessible ou que l\'archive est valide, puis relancer un nouvel audit.'}
+            </p>
+            <Link
+              href="/dashboard/audits/new"
+              className="btn-secondary mt-4 inline-flex"
+            >
+              Relancer un audit
+            </Link>
+          </div>
+        )}
 
         {isCompleted && (
           <div className="card-premium">
