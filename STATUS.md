@@ -7,7 +7,7 @@
 - Sprint 00 — Scope & fondations docs : **terminé**
 - Sprint 01 — Scaffold Next.js 16 + Stack Auth + Neon : **terminé**
 - Sprint 02 — Data model + auth opérationnelle : **terminé** (login email/password testé end-to-end Chrome → dashboard)
-- Sprint 03 — Moteur d'audit : **flow end-to-end live** (Phase 1 `technical` + API + UI détail/liste + persistance Neon + polling 2s, 10 phases restantes en `skipped`)
+- Sprint 03 — Moteur d'audit : **11/11 phases implémentées**, flow end-to-end live, test live wyzlee.com = 69.5/100
 
 ## Ce qui est en place
 
@@ -69,13 +69,35 @@
 - Tests E2E manuel sur `https://wyzlee.com` : 15 findings remontés, score 0/12 clampé
 - Migration Neon : `points_lost`, `score`, `score_max`, `score_total` → `real` (support décimaux 0.5)
 
-## Ce qui reste — Sprint 03
+## Moteur complet — phases implémentées
 
-- Phase 3 `geo` (18 pts, poids max — différenciant produit)
-- Phase 2 `structured_data` (15 pts)
-- Phase 4 `entity`, 5 `eeat`, 6 `freshness`, 7 `international`, 8 `performance`, 9 `topical`, 10 `common_mistakes`, 11 `synthesis`
-- Worker claim loop réel (remplacer after() en prod si audits > quelques minutes)
+| # | Clé | Points | Couverture V1 |
+|---|-----|--------|---------------|
+| 1 | technical | 12 | meta + canonical + lang + OG + Twitter + robots + sitemap |
+| 2 | structured_data | 15 | JSON-LD parse + Organization + WebSite + Article + stacking |
+| 3 | geo | 18 | llms.txt + AI bots + semantic + answer blocks + evidence |
+| 4 | entity | 10 | brand coherence + Wikidata + Wikipedia + entity linking |
+| 5 | eeat | 10 | HTTPS + trust pages + auteur + Person schema + citations |
+| 6 | freshness | 8 | dateModified + time + sitemap lastmod + tolérance par type |
+| 7 | international | 8 | hreflang + x-default + og:locale + ccTLD detection |
+| 8 | performance | 8 | HashRouter + SSR + images modernes + CLS + preconnect + defer |
+| 9 | topical | 6 | ratio liens + anchors diversity + anchors génériques |
+| 10 | common_mistakes | 5 | noindex + mixed content + noopener + canonical |
+| 11 | synthesis | 0 | placeholder, rapport généré en Sprint 05 |
+
+**Tests** : 62/62 passent (13 fichiers), typecheck 0, lint 0.
+**Live wyzlee.com** : 69.5/100 (breakdown : 0 + 10 + 12 + 9 + 8 + 6.5 + 8 + 6 + 6 + 4 + 0).
+
+## Ce qui reste — V1.5 / V2
+
+- Wikidata lookup (WebFetch) pour Phase 4
+- Crawl multi-pages pour Phase 9 (pillar/cluster) et 7 (bidirectional hreflang)
+- CrUX API pour LCP/INP/CLS réels (Phase 8)
+- Phantom refresh detection (Phase 6 content hash diff)
+- Worker claim loop réel (remplacer after() si audits > quelques minutes)
 - Webhook Stack Auth prod (à configurer au deploy)
+- Sprint 04 : Dashboard Olivier polish + filtres audits
+- Sprint 05 : Report generator white-label FR + PDF
 
 ## Points d'attention
 
