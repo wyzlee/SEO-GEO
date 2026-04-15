@@ -65,6 +65,7 @@ export const audits = pgTable(
     inputType: text('input_type').notNull(),
     targetUrl: text('target_url'),
     uploadId: uuid('upload_id'),
+    uploadPath: text('upload_path'),
     githubRepo: text('github_repo'),
 
     status: text('status').notNull().default('queued'),

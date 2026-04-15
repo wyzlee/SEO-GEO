@@ -1,8 +1,6 @@
 /**
- * Full audit pipeline : crawl → 11 phases → persist at each step.
- * Called from the API route (fire-and-forget via `after()`) or from the
- * background worker. Keeps writes incremental so partial progress is visible
- * during polling.
+ * Full audit pipeline : resolveInput (crawl URL / extract zip / clone github)
+ * → 11 phases → persist at each step.
  */
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
@@ -18,6 +16,14 @@ import { runInternationalPhase } from './phases/international'
 import { runPerformancePhase } from './phases/performance'
 import { runTopicalPhase } from './phases/topical'
 import { runCommonMistakesPhase } from './phases/common-mistakes'
+import {
+  runTechnicalPhaseCode,
+  runStructuredDataPhaseCode,
+  runGeoPhaseCode,
+} from './code/phases'
+import { readCodeSnapshot, type CodeSnapshot } from './code/read'
+import { cloneGithubRepo } from './code/clone'
+import { cleanupRoot } from './upload/extract'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
 import type { CrawlSnapshot, PhaseKey, PhaseResult } from './types'
 import {
@@ -30,43 +36,78 @@ import {
   seedAuditPhases,
 } from './persist'
 
-function skipped(key: PhaseKey, scoreMax: number): PhaseResult {
+function skipped(key: PhaseKey, scoreMax: number, reason: string): PhaseResult {
   return {
     phaseKey: key,
     score: 0,
     scoreMax,
     status: 'skipped',
-    summary: 'Phase ignorée (pas de crawl URL disponible)',
+    summary: reason,
     findings: [],
   }
 }
 
-async function runPhase(
+interface PipelineContext {
+  crawl?: CrawlSnapshot
+  code?: CodeSnapshot
+  cleanupPaths: string[]
+}
+
+async function resolveInput(audit: {
+  inputType: string
+  targetUrl: string | null
+  uploadPath: string | null
+  githubRepo: string | null
+}): Promise<PipelineContext> {
+  const ctx: PipelineContext = { cleanupPaths: [] }
+
+  if (audit.inputType === 'url' && audit.targetUrl) {
+    ctx.crawl = await crawlUrl(audit.targetUrl)
+    return ctx
+  }
+
+  if (audit.inputType === 'zip' && audit.uploadPath) {
+    ctx.code = await readCodeSnapshot(audit.uploadPath)
+    ctx.cleanupPaths.push(audit.uploadPath)
+    return ctx
+  }
+
+  if (audit.inputType === 'github' && audit.githubRepo) {
+    const clone = await cloneGithubRepo(audit.githubRepo)
+    ctx.code = await readCodeSnapshot(clone.rootPath)
+    ctx.cleanupPaths.push(clone.rootPath)
+    return ctx
+  }
+
+  throw new Error(`Input non supporté : ${audit.inputType}`)
+}
+
+async function runPhaseForCrawl(
   key: PhaseKey,
-  crawl?: CrawlSnapshot,
+  crawl: CrawlSnapshot,
 ): Promise<PhaseResult> {
   const scoreMax = PHASE_SCORE_MAX[key]
   switch (key) {
     case 'technical':
-      return crawl ? runTechnicalPhase(crawl) : skipped(key, scoreMax)
+      return runTechnicalPhase(crawl)
     case 'structured_data':
-      return crawl ? runStructuredDataPhase(crawl) : skipped(key, scoreMax)
+      return runStructuredDataPhase(crawl)
     case 'geo':
-      return crawl ? runGeoPhase(crawl) : skipped(key, scoreMax)
+      return runGeoPhase(crawl)
     case 'entity':
-      return crawl ? runEntityPhase(crawl) : skipped(key, scoreMax)
+      return runEntityPhase(crawl)
     case 'eeat':
-      return crawl ? runEeatPhase(crawl) : skipped(key, scoreMax)
+      return runEeatPhase(crawl)
     case 'freshness':
-      return crawl ? runFreshnessPhase(crawl) : skipped(key, scoreMax)
+      return runFreshnessPhase(crawl)
     case 'international':
-      return crawl ? runInternationalPhase(crawl) : skipped(key, scoreMax)
+      return runInternationalPhase(crawl)
     case 'performance':
-      return crawl ? runPerformancePhase(crawl) : skipped(key, scoreMax)
+      return runPerformancePhase(crawl)
     case 'topical':
-      return crawl ? runTopicalPhase(crawl) : skipped(key, scoreMax)
+      return runTopicalPhase(crawl)
     case 'common_mistakes':
-      return crawl ? runCommonMistakesPhase(crawl) : skipped(key, scoreMax)
+      return runCommonMistakesPhase(crawl)
     case 'synthesis':
       return {
         phaseKey: key,
@@ -78,11 +119,43 @@ async function runPhase(
         findings: [],
       }
     default:
-      return skipped(key, scoreMax)
+      return skipped(key, scoreMax, `Phase ${key} non reconnue`)
+  }
+}
+
+async function runPhaseForCode(
+  key: PhaseKey,
+  code: CodeSnapshot,
+): Promise<PhaseResult> {
+  const scoreMax = PHASE_SCORE_MAX[key]
+  switch (key) {
+    case 'technical':
+      return runTechnicalPhaseCode(code)
+    case 'structured_data':
+      return runStructuredDataPhaseCode(code)
+    case 'geo':
+      return runGeoPhaseCode(code)
+    case 'synthesis':
+      return {
+        phaseKey: key,
+        score: 0,
+        scoreMax: 0,
+        status: 'completed',
+        summary:
+          'Synthèse — pas de scoring, livrables générés par le moteur de rapport',
+        findings: [],
+      }
+    default:
+      return skipped(
+        key,
+        scoreMax,
+        'Phase non disponible en mode code V1 (URL mode recommandé)',
+      )
   }
 }
 
 export async function processAudit(auditId: string): Promise<void> {
+  let cleanupPaths: string[] = []
   try {
     const rows = await db
       .select()
@@ -95,10 +168,13 @@ export async function processAudit(auditId: string): Promise<void> {
     await markAuditRunning(auditId)
     await seedAuditPhases(auditId)
 
-    let crawl: CrawlSnapshot | undefined
-    if (audit.inputType === 'url' && audit.targetUrl) {
-      crawl = await crawlUrl(audit.targetUrl)
-    }
+    const ctx = await resolveInput({
+      inputType: audit.inputType,
+      targetUrl: audit.targetUrl,
+      uploadPath: audit.uploadPath,
+      githubRepo: audit.githubRepo,
+    })
+    cleanupPaths = ctx.cleanupPaths
 
     const breakdown: Partial<Record<PhaseKey, number>> = {}
     let totalScore = 0
@@ -106,7 +182,18 @@ export async function processAudit(auditId: string): Promise<void> {
     for (const key of PHASE_ORDER) {
       try {
         await markPhaseRunning(auditId, key)
-        const result = await runPhase(key, crawl)
+        let result: PhaseResult
+        if (ctx.crawl) {
+          result = await runPhaseForCrawl(key, ctx.crawl)
+        } else if (ctx.code) {
+          result = await runPhaseForCode(key, ctx.code)
+        } else {
+          result = skipped(
+            key,
+            PHASE_SCORE_MAX[key],
+            'Pas de source disponible pour cet audit',
+          )
+        }
         await persistPhaseResult(auditId, result)
         breakdown[key] = result.score
         totalScore += result.score
@@ -120,5 +207,9 @@ export async function processAudit(auditId: string): Promise<void> {
   } catch (error) {
     console.error(`[audit ${auditId}] fatal error`, error)
     await failAudit(auditId, error).catch(() => undefined)
+  } finally {
+    for (const path of cleanupPaths) {
+      await cleanupRoot(path)
+    }
   }
 }

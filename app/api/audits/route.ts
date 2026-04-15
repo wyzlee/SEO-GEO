@@ -9,12 +9,24 @@ import { processAudit } from '@/lib/audit/process'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const createAuditBody = z.object({
-  targetUrl: z.string().url().max(2048),
-  clientName: z.string().max(200).optional(),
-  consultantName: z.string().max(200).optional(),
-  mode: z.enum(['full', 'quick']).optional().default('full'),
-})
+const createAuditBody = z
+  .object({
+    targetUrl: z.string().url().max(2048).optional(),
+    uploadPath: z.string().max(400).optional(),
+    githubRepo: z
+      .string()
+      .max(400)
+      .regex(
+        /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:@[\w./-]+)?|https?:\/\/github\.com\/[^\s]+)$/,
+      )
+      .optional(),
+    clientName: z.string().max(200).optional(),
+    consultantName: z.string().max(200).optional(),
+    mode: z.enum(['full', 'quick']).optional().default('full'),
+  })
+  .refine((data) => !!(data.targetUrl || data.uploadPath || data.githubRepo), {
+    message: 'Renseigner targetUrl OU uploadPath OU githubRepo',
+  })
 
 export async function POST(request: Request) {
   let ctx
@@ -42,13 +54,21 @@ export async function POST(request: Request) {
     )
   }
 
+  const inputType: 'url' | 'zip' | 'github' = parsed.data.githubRepo
+    ? 'github'
+    : parsed.data.uploadPath
+      ? 'zip'
+      : 'url'
+
   const inserted = await db
     .insert(audits)
     .values({
       organizationId: ctx.organizationId,
       createdBy: ctx.user.id,
-      inputType: 'url',
-      targetUrl: parsed.data.targetUrl,
+      inputType,
+      targetUrl: parsed.data.targetUrl ?? null,
+      githubRepo: parsed.data.githubRepo ?? null,
+      uploadPath: parsed.data.uploadPath ?? null,
       mode: parsed.data.mode,
       clientName: parsed.data.clientName ?? null,
       consultantName: parsed.data.consultantName ?? null,
@@ -58,9 +78,6 @@ export async function POST(request: Request) {
 
   const auditId = inserted[0].id
 
-  // Fire-and-forget: Next.js `after()` runs the callback after the response
-  // is sent, keeping the process alive until it resolves. Replaces the worker
-  // loop for the single-user dev flow; the worker will take over in prod.
   after(async () => {
     try {
       await processAudit(auditId)

@@ -1,14 +1,16 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiJson } from '@/lib/api/fetch'
+import { apiJson, authFetch } from '@/lib/api/fetch'
 
 export interface AuditRow {
   id: string
   organizationId: string
   createdBy: string
-  inputType: string
+  inputType: 'url' | 'zip' | 'github'
   targetUrl: string | null
+  uploadPath?: string | null
+  githubRepo: string | null
   status: 'queued' | 'running' | 'completed' | 'failed'
   scoreTotal: number | null
   scoreBreakdown: Record<string, number> | null
@@ -81,7 +83,9 @@ export function useAudit(id: string | undefined) {
 }
 
 export interface CreateAuditInput {
-  targetUrl: string
+  targetUrl?: string
+  uploadPath?: string
+  githubRepo?: string
   clientName?: string
   consultantName?: string
 }
@@ -96,6 +100,33 @@ export function useCreateAudit() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['audits'] })
+    },
+  })
+}
+
+export interface UploadResponse {
+  uploadPath: string
+  fileCount: number
+  skippedCount: number
+  totalBytes: number
+}
+
+export function useUploadCode() {
+  return useMutation({
+    mutationFn: async (file: File): Promise<UploadResponse> => {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await authFetch('/api/uploads/code', {
+        method: 'POST',
+        body: form,
+      })
+      if (!res.ok) {
+        const body = await res.text()
+        throw new Error(
+          `Upload échoué (${res.status}) : ${body.slice(0, 300)}`,
+        )
+      }
+      return (await res.json()) as UploadResponse
     },
   })
 }
@@ -115,7 +146,8 @@ export function useAuditReports(auditId: string | undefined) {
   return useQuery({
     queryKey: ['audit', auditId, 'reports'],
     enabled: !!auditId,
-    queryFn: () => apiJson<{ reports: ReportRow[] }>(`/api/audits/${auditId}/report`),
+    queryFn: () =>
+      apiJson<{ reports: ReportRow[] }>(`/api/audits/${auditId}/report`),
   })
 }
 
