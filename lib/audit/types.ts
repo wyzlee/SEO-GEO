@@ -41,6 +41,14 @@ export type AuditInput =
   | { type: 'zip'; extractedPath: string; stack: StackInfo }
   | { type: 'github'; clonedPath: string; stack: StackInfo; repoRef: string }
 
+export interface SubPageSnapshot {
+  url: string
+  status: number
+  html: string
+  lastModified: string | null
+  contentHash: string
+}
+
 export interface CrawlSnapshot {
   html: string
   finalUrl: string
@@ -48,6 +56,9 @@ export interface CrawlSnapshot {
   robotsTxt: string | null
   sitemapXml: string | null
   llmsTxt: string | null
+  lastModified?: string | null
+  contentHash?: string
+  subPages?: SubPageSnapshot[]
 }
 
 export interface PhaseContext {

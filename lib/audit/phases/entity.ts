@@ -10,6 +10,7 @@
  */
 import * as cheerio from 'cheerio'
 import type { Finding, PhaseResult, CrawlSnapshot } from '../types'
+import { searchWikidataEntity } from '../wikidata'
 
 const SCORE_MAX = 10
 const PHASE_KEY = 'entity' as const
@@ -141,17 +142,36 @@ export async function runEntityPhase(
     const hasWikipedia = sameAs.some((url) => /wikipedia\.org/i.test(url))
 
     if (!hasWikidata) {
-      pushCheck({
-        severity: 'medium',
-        category: 'entity-wikidata',
-        title: 'Aucun lien Wikidata dans sameAs',
-        description:
-          'Wikidata est la source de vérité d\'entité pour Google Knowledge Graph et de nombreux moteurs IA. Son absence limite la consolidation de l\'entité.',
-        recommendation:
-          'Créer (ou lier) une entité Wikidata pour la marque puis l\'ajouter dans sameAs : `https://www.wikidata.org/wiki/Q...`.',
-        pointsLost: 2,
-        effort: 'heavy',
-      })
+      // Real Wikidata lookup — if a matching entity exists, point the user
+      // straight at it ; otherwise suggest creation.
+      const brandQuery = orgName ?? siteName ?? titleText
+      const wikidataMatch = brandQuery
+        ? await searchWikidataEntity(brandQuery.replace(/[\s\-|·—].*$/, '').trim())
+        : null
+      if (wikidataMatch) {
+        pushCheck({
+          severity: 'high',
+          category: 'entity-wikidata',
+          title: `Entité Wikidata existante absente de sameAs (${wikidataMatch.id})`,
+          description: `Wikidata référence déjà une entité correspondante (${wikidataMatch.label}${wikidataMatch.description ? ' — ' + wikidataMatch.description : ''}) mais l'Organization ne la cite pas dans sameAs.`,
+          recommendation: `Ajouter \`${wikidataMatch.url}\` au tableau \`sameAs\` du JSON-LD Organization.`,
+          pointsLost: 2,
+          effort: 'quick',
+          metricValue: wikidataMatch.id,
+        })
+      } else {
+        pushCheck({
+          severity: 'medium',
+          category: 'entity-wikidata',
+          title: 'Aucun lien Wikidata dans sameAs',
+          description:
+            'Wikidata est la source de vérité d\'entité pour Google Knowledge Graph et de nombreux moteurs IA. Son absence limite la consolidation de l\'entité.',
+          recommendation:
+            'Créer une entité Wikidata pour la marque puis l\'ajouter dans sameAs : `https://www.wikidata.org/wiki/Q...`.',
+          pointsLost: 2,
+          effort: 'heavy',
+        })
+      }
     }
     if (!hasWikipedia) {
       pushCheck({

@@ -1,16 +1,13 @@
 /**
  * Phase 8 — Performance CWV 2026 (8 pts)
  *
- * Proxies statiques V1 (pas de CrUX / Lighthouse headless) :
- *  - HashRouter / SPA sans SSR (critical)
- *  - Images modernes, lazy loading, width/height
- *  - Preconnect, preload, scripts async/defer
- *
- * LCP / INP / CLS réels via CrUX arriveront V1.5 (nécessite CrUX API key ou
- * Lighthouse en worker séparé).
+ * V1.5 : intègre la CrUX API si `GOOGLE_CRUX_API_KEY` est défini (LCP/INP/CLS
+ * réels). Fallback sur les proxies statiques (HashRouter, SPA sans SSR,
+ * images modernes…) si CrUX indisponible.
  */
 import * as cheerio from 'cheerio'
 import type { Finding, PhaseResult, CrawlSnapshot } from '../types'
+import { fetchCruxMetrics } from '../crux'
 
 const SCORE_MAX = 8
 const PHASE_KEY = 'performance' as const
@@ -24,6 +21,7 @@ interface CheckSpec {
   pointsLost: number
   effort?: Finding['effort']
   metricValue?: string
+  metricTarget?: string
 }
 
 export async function runPerformancePhase(
@@ -46,8 +44,92 @@ export async function runPerformancePhase(
       effort: check.effort,
       locationUrl: finalUrl,
       metricValue: check.metricValue,
+      metricTarget: check.metricTarget,
     })
     score -= check.pointsLost
+  }
+
+  // --- CrUX API (field data) ---------------------------------------------
+  const crux = await fetchCruxMetrics(finalUrl)
+  if (crux) {
+    if (crux.lcpP75Ms !== null) {
+      if (crux.lcpP75Ms > 4000) {
+        pushCheck({
+          severity: 'high',
+          category: 'performance-lcp',
+          title: `LCP lent : ${Math.round(crux.lcpP75Ms)} ms (p75 mobile)`,
+          description:
+            'Le Largest Contentful Paint p75 dépasse 4 s — seuil "pauvre" Core Web Vitals. Impact direct sur le classement Google mobile.',
+          recommendation:
+            'Prioriser l\'image / bloc LCP : preload, dimensions explicites, fonts critiques preloadées, server render si possible.',
+          pointsLost: 3,
+          effort: 'heavy',
+          metricValue: `${Math.round(crux.lcpP75Ms)} ms`,
+          metricTarget: '≤ 2 500 ms',
+        })
+      } else if (crux.lcpP75Ms > 2500) {
+        pushCheck({
+          severity: 'medium',
+          category: 'performance-lcp',
+          title: `LCP à améliorer : ${Math.round(crux.lcpP75Ms)} ms (p75 mobile)`,
+          description:
+            'LCP p75 entre 2,5 s et 4 s — seuil "à améliorer" Core Web Vitals.',
+          recommendation:
+            'Optimiser l\'asset LCP (compression, format WebP/AVIF, preload).',
+          pointsLost: 2,
+          effort: 'medium',
+          metricValue: `${Math.round(crux.lcpP75Ms)} ms`,
+          metricTarget: '≤ 2 500 ms',
+        })
+      }
+    }
+
+    if (crux.inpP75Ms !== null) {
+      if (crux.inpP75Ms > 500) {
+        pushCheck({
+          severity: 'high',
+          category: 'performance-inp',
+          title: `INP pauvre : ${Math.round(crux.inpP75Ms)} ms (p75 mobile)`,
+          description:
+            'Interaction to Next Paint p75 > 500 ms — la page met trop de temps à réagir aux clics/tap. Signal 2024+ pour Google.',
+          recommendation:
+            'Profiler les long tasks, réduire JS sur le main thread, éviter les re-renders React massifs, code-splitter les libs lourdes.',
+          pointsLost: 3,
+          effort: 'heavy',
+          metricValue: `${Math.round(crux.inpP75Ms)} ms`,
+          metricTarget: '≤ 200 ms',
+        })
+      } else if (crux.inpP75Ms > 200) {
+        pushCheck({
+          severity: 'medium',
+          category: 'performance-inp',
+          title: `INP à améliorer : ${Math.round(crux.inpP75Ms)} ms (p75 mobile)`,
+          description: 'INP p75 entre 200 et 500 ms.',
+          recommendation:
+            'Identifier les handlers coûteux, debouncer, déférer le JS non critique.',
+          pointsLost: 2,
+          effort: 'medium',
+          metricValue: `${Math.round(crux.inpP75Ms)} ms`,
+          metricTarget: '≤ 200 ms',
+        })
+      }
+    }
+
+    if (crux.clsP75 !== null && crux.clsP75 > 0.1) {
+      pushCheck({
+        severity: crux.clsP75 > 0.25 ? 'high' : 'medium',
+        category: 'performance-cls',
+        title: `CLS élevé : ${crux.clsP75.toFixed(2)} (p75 mobile)`,
+        description:
+          'Cumulative Layout Shift > 0,1 — la page bouge pendant le chargement, expérience utilisateur dégradée.',
+        recommendation:
+          'Définir width/height sur images, réserver l\'espace des composants dynamiques (ads, chat), éviter font swap abrupt.',
+        pointsLost: 2,
+        effort: 'medium',
+        metricValue: crux.clsP75.toFixed(2),
+        metricTarget: '≤ 0,1',
+      })
+    }
   }
 
   // --- HashRouter detection (critical) -----------------------------------
