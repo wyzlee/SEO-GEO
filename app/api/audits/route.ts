@@ -5,6 +5,11 @@ import { db } from '@/lib/db'
 import { audits } from '@/lib/db/schema'
 import { authenticateAuto, AuthError } from '@/lib/auth/server'
 import { processAudit } from '@/lib/audit/process'
+import { assertSafeUrl, UnsafeUrlError } from '@/lib/security/url-guard'
+import { rateLimit } from '@/lib/security/rate-limit'
+
+const BURST_LIMIT = { name: 'audits.post.burst', max: 3, windowMs: 60_000 }
+const DAILY_LIMIT = { name: 'audits.post.daily', max: 50, windowMs: 86_400_000 }
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -51,6 +56,52 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Validation failed', issues: parsed.error.issues },
       { status: 400 },
+    )
+  }
+
+  if (parsed.data.targetUrl) {
+    try {
+      assertSafeUrl(parsed.data.targetUrl)
+    } catch (error) {
+      if (error instanceof UnsafeUrlError) {
+        return NextResponse.json(
+          { error: error.message, reason: error.reason },
+          { status: 400 },
+        )
+      }
+      throw error
+    }
+  }
+
+  const userBurst = rateLimit(BURST_LIMIT, `u:${ctx.user.id}`)
+  if (!userBurst.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Trop de requêtes. Réessayez dans un instant.',
+        retryAfterSeconds: userBurst.retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(userBurst.retryAfterSeconds),
+        },
+      },
+    )
+  }
+  const orgDaily = rateLimit(DAILY_LIMIT, `o:${ctx.organizationId}`)
+  if (!orgDaily.allowed) {
+    return NextResponse.json(
+      {
+        error:
+          'Quota quotidien atteint pour cette organisation. Contactez votre admin.',
+        retryAfterSeconds: orgDaily.retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(orgDaily.retryAfterSeconds),
+        },
+      },
     )
   }
 
