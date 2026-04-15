@@ -56,6 +56,7 @@ export interface CrawlSnapshot {
   robotsTxt: string | null
   sitemapXml: string | null
   llmsTxt: string | null
+  llmsFullTxt?: string | null
   lastModified?: string | null
   contentHash?: string
   subPages?: SubPageSnapshot[]

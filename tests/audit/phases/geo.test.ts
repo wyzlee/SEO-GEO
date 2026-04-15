@@ -20,6 +20,19 @@ const STRONG_PARAGRAPH = Array.from({ length: 150 })
 
 const QUESTION_HTML = `<!doctype html>
 <html lang="fr">
+<head>
+<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Comment configurer un audit ?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Depuis le dashboard.' },
+    },
+  ],
+})}</script>
+</head>
 <body>
 <main>
 <p>${STRONG_PARAGRAPH}</p>
@@ -78,6 +91,7 @@ describe('runGeoPhase', () => {
         html: QUESTION_HTML,
         robotsTxt: ROBOTS_OK,
         llmsTxt: VALID_LLMS_TXT,
+        llmsFullTxt: '# Exemple\n> Description complète.',
       }),
     )
     expect(result.score).toBe(18)
@@ -175,6 +189,115 @@ describe('runGeoPhase', () => {
     )
     expect(finding).toBeDefined()
     expect(finding?.pointsLost).toBe(1)
+  })
+
+  it('flags FAQPage schema missing when H2 questions are present', async () => {
+    const html = `<html><body><main>
+      <p>${STRONG_PARAGRAPH}</p>
+      <h2>Comment faire un audit ?</h2><p>Réponse courte.</p>
+      <h2>Pourquoi ça compte ?</h2><p>Réponse courte.</p>
+      <h2>Qui est concerné ?</h2><p>Réponse courte.</p>
+    </main></body></html>`
+    const result = await runGeoPhase(
+      snapshot({ html, robotsTxt: ROBOTS_OK, llmsTxt: VALID_LLMS_TXT }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'geo-faqpage-schema',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.severity).toBe('medium')
+    expect(finding!.pointsLost).toBe(1)
+  })
+
+  it('does not flag FAQPage when schema is present', async () => {
+    const result = await runGeoPhase(
+      snapshot({
+        html: QUESTION_HTML,
+        robotsTxt: ROBOTS_OK,
+        llmsTxt: VALID_LLMS_TXT,
+      }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'geo-faqpage-schema',
+    )
+    expect(finding).toBeUndefined()
+  })
+
+  it('flags HowTo schema absent on instructional URL', async () => {
+    const html = `<html><body><main><p>${STRONG_PARAGRAPH}</p></main></body></html>`
+    const result = await runGeoPhase(
+      snapshot({
+        html,
+        finalUrl: 'https://example.com/guide/comment-auditer',
+        robotsTxt: ROBOTS_OK,
+        llmsTxt: VALID_LLMS_TXT,
+      }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'geo-howto-schema',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(0.5)
+  })
+
+  it('flags semantic HTML5 missing for content pages', async () => {
+    const longPara = Array.from({ length: 500 })
+      .map((_, i) => `mot${i}`)
+      .join(' ')
+    const html = `<!doctype html><html><body><div><p>${longPara}</p></div></body></html>`
+    const result = await runGeoPhase(
+      snapshot({ html, robotsTxt: ROBOTS_OK, llmsTxt: VALID_LLMS_TXT }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'geo-semantic-html',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.pointsLost).toBe(1)
+  })
+
+  it('flags missing llms-full.txt when llms.txt exists', async () => {
+    const result = await runGeoPhase(
+      snapshot({
+        html: QUESTION_HTML,
+        robotsTxt: ROBOTS_OK,
+        llmsTxt: VALID_LLMS_TXT,
+        llmsFullTxt: null,
+      }),
+    )
+    const finding = result.findings.find(
+      (f) => f.category === 'geo-llms-full-txt',
+    )
+    expect(finding).toBeDefined()
+    expect(finding!.severity).toBe('info')
+    expect(finding!.pointsLost).toBe(0)
+  })
+
+  it('primary bot blocked yields critical severity', async () => {
+    const robots = `User-agent: GPTBot\nDisallow: /\n\nUser-agent: *\nAllow: /`
+    const result = await runGeoPhase(
+      snapshot({
+        html: QUESTION_HTML,
+        robotsTxt: robots,
+        llmsTxt: VALID_LLMS_TXT,
+      }),
+    )
+    const finding = result.findings.find((f) => f.category === 'geo-ai-bots')
+    expect(finding?.severity).toBe('critical')
+    expect(finding?.pointsLost).toBe(2)
+  })
+
+  it('only secondary bots blocked yields lower severity', async () => {
+    const robots = `User-agent: Bytespider\nDisallow: /\n\nUser-agent: YouBot\nDisallow: /\n\nUser-agent: *\nAllow: /`
+    const result = await runGeoPhase(
+      snapshot({
+        html: QUESTION_HTML,
+        robotsTxt: robots,
+        llmsTxt: VALID_LLMS_TXT,
+      }),
+    )
+    const finding = result.findings.find((f) => f.category === 'geo-ai-bots')
+    expect(finding?.severity).toBe('medium')
+    expect(finding?.pointsLost).toBe(2)
   })
 
   it('is deterministic (golden test)', async () => {

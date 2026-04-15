@@ -3,15 +3,19 @@
  *
  * Le poids le plus lourd de la rubric — cœur différenciant SEO-GEO en 2026.
  * Vérifie ce qui permet à un site d'apparaître dans les réponses des moteurs
- * génératifs (ChatGPT Search, Perplexity, Google AI Overviews, Claude).
+ * génératifs (ChatGPT Search, Perplexity, Google AI Overviews, Claude, Apple
+ * Intelligence, Meta AI, Bytespider…).
  *
- * Checks V1 (URL mode) :
- *  - /llms.txt présent + format Markdown valide
- *  - robots.txt n'exclut pas les bots IA clés
- *  - Premier paragraphe homepage : 134-167 mots auto-suffisant
+ * Checks V1.5 (URL mode) :
+ *  - /llms.txt + /llms-full.txt + format Markdown valide
+ *  - robots.txt : couverture AI bots 2026 (13 bots trackés)
+ *  - Premier paragraphe : 134-167 mots auto-suffisant
  *  - H2 formulés en questions + réponses courtes
- *  - Evidence quantifiée dans le contenu
- *  - Ton hedging (info seulement)
+ *  - FAQPage / HowTo schema (citation magnets)
+ *  - Blockquote / citations (réutilisabilité)
+ *  - Structure HTML5 sémantique (<article>, <section>, <main>, <nav>)
+ *  - Evidence quantifiée
+ *  - Ton hedging (info)
  *
  * Input type: URL.
  * Références : .claude/docs/audit-engine.md, .claude/docs/seo-geo-knowledge.md
@@ -22,11 +26,20 @@ import type { Finding, PhaseResult, CrawlSnapshot } from '../types'
 const SCORE_MAX = 18
 const PHASE_KEY = 'geo' as const
 
-const AI_BOTS_PRIMARY = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User'] as const
+// Bots IA trackés en 2026. Primary = moteurs majeurs grand public, le blocage
+// doit être exceptionnel. Secondary = moteurs émergents / régionaux / B2B.
+const AI_BOTS_PRIMARY = ['GPTBot', 'ClaudeBot', 'PerplexityBot'] as const
 const AI_BOTS_SECONDARY = [
-  'ClaudeBot',
-  'PerplexityBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
   'Google-Extended',
+  'Applebot-Extended',
+  'anthropic-ai',
+  'meta-externalagent',
+  'Bytespider',
+  'Amazonbot',
+  'cohere-ai',
+  'YouBot',
 ] as const
 const MAX_AI_BOTS_PENALTY = 6
 
@@ -132,6 +145,38 @@ function isQuestion(heading: string): boolean {
   return QUESTION_STARTERS.test(trimmed)
 }
 
+type JsonLdObject = Record<string, unknown>
+
+function extractFlatJsonLd(html: string): JsonLdObject[] {
+  const $ = cheerio.load(html)
+  const out: JsonLdObject[] = []
+  $('script[type="application/ld+json"]').each((_, el) => {
+    const raw = $(el).text().trim()
+    if (!raw) return
+    try {
+      const visit = (node: unknown) => {
+        if (!node || typeof node !== 'object') return
+        if (Array.isArray(node)) return node.forEach(visit)
+        const o = node as JsonLdObject
+        if (Array.isArray(o['@graph'])) return (o['@graph'] as unknown[]).forEach(visit)
+        out.push(o)
+      }
+      visit(JSON.parse(raw))
+    } catch {
+      /* ignore */
+    }
+  })
+  return out
+}
+
+function hasJsonLdType(objects: JsonLdObject[], type: string): boolean {
+  return objects.some((o) => {
+    const t = o['@type']
+    const types = Array.isArray(t) ? t.map(String) : t ? [String(t)] : []
+    return types.some((x) => x.toLowerCase() === type.toLowerCase())
+  })
+}
+
 function h2WithoutShortAnswer($: cheerio.CheerioAPI): number {
   let missing = 0
   $('h2').each((_, el) => {
@@ -210,22 +255,35 @@ export async function runGeoPhase(
   // --- 2. AI bots robots.txt ---------------------------------------------
   if (snapshot.robotsTxt) {
     let botsPenalty = 0
-    const blockedBots: string[] = []
-    const allBots = [...AI_BOTS_PRIMARY, ...AI_BOTS_SECONDARY]
-    for (const bot of allBots) {
+    const blockedPrimary: string[] = []
+    const blockedSecondary: string[] = []
+    for (const bot of AI_BOTS_PRIMARY) {
       if (isBotDisallowed(snapshot.robotsTxt, bot)) {
-        blockedBots.push(bot)
+        blockedPrimary.push(bot)
         botsPenalty = Math.min(MAX_AI_BOTS_PENALTY, botsPenalty + 2)
       }
     }
+    for (const bot of AI_BOTS_SECONDARY) {
+      if (isBotDisallowed(snapshot.robotsTxt, bot)) {
+        blockedSecondary.push(bot)
+        botsPenalty = Math.min(MAX_AI_BOTS_PENALTY, botsPenalty + 1)
+      }
+    }
+    const blockedBots = [...blockedPrimary, ...blockedSecondary]
     if (blockedBots.length > 0) {
+      const severity =
+        blockedPrimary.length > 0
+          ? 'critical'
+          : blockedSecondary.length >= 3
+            ? 'high'
+            : 'medium'
       pushCheck({
-        severity: 'critical',
+        severity,
         category: 'geo-ai-bots',
         title: `Bots IA bloqués par robots.txt (${blockedBots.length})`,
-        description: `Le robots.txt exclut ${blockedBots.join(', ')} — ces bots collectent le contenu pour alimenter les réponses des moteurs IA. Bloquer = invisible pour ChatGPT Search, Perplexity et consorts.`,
+        description: `Le robots.txt exclut ${blockedBots.join(', ')} — ces bots collectent le contenu pour alimenter les réponses des moteurs IA. Bloquer = invisible pour les moteurs correspondants.`,
         recommendation:
-          'Retirer les règles `Disallow: /` sur GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Google-Extended (sauf raison stratégique explicite).',
+          'Retirer les règles `Disallow: /` sur les bots souhaités. En 2026, les bots majeurs à autoriser par défaut : GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, Google-Extended, Applebot-Extended.',
         pointsLost: botsPenalty,
         effort: 'quick',
         metricValue: blockedBots.join(', '),
@@ -339,7 +397,108 @@ export async function runGeoPhase(
     })
   }
 
-  // --- 6. Authoritative tone — hedging (info only) -----------------------
+  // --- 6. FAQPage / HowTo schemas (citation magnets) ---------------------
+  const jsonLd = extractFlatJsonLd(snapshot.html)
+  const hasFaqPage = hasJsonLdType(jsonLd, 'FAQPage')
+  const hasHowTo = hasJsonLdType(jsonLd, 'HowTo')
+  const hasQAPage = hasJsonLdType(jsonLd, 'QAPage')
+
+  const looksInstructional =
+    /\/(guide|tutoriel|comment|how[- ]to|step|instructions)\b/i.test(finalUrl)
+  const h2QuestionsPresent = $('h2')
+    .toArray()
+    .some((el) => {
+      const txt = $(el).text().trim()
+      return /[?]\s*$/.test(txt) || QUESTION_STARTERS.test(txt)
+    })
+
+  if (!hasFaqPage && !hasQAPage && h2QuestionsPresent) {
+    pushCheck({
+      severity: 'medium',
+      category: 'geo-faqpage-schema',
+      title: 'FAQPage schema absent malgré des H2 en questions',
+      description:
+        'La page contient des H2 formulés en questions mais aucun schema FAQPage (ou QAPage) n\'est déclaré. FAQPage est un des formats les plus cités par les AI Overviews et ChatGPT Search.',
+      recommendation:
+        'Encapsuler les paires question/réponse dans un JSON-LD FAQPage : `{ "@type": "FAQPage", "mainEntity": [{ "@type": "Question", "name": "...", "acceptedAnswer": { "@type": "Answer", "text": "..." } }] }`.',
+      pointsLost: 1,
+      effort: 'medium',
+    })
+  }
+
+  if (looksInstructional && !hasHowTo) {
+    pushCheck({
+      severity: 'low',
+      category: 'geo-howto-schema',
+      title: 'Page instructionnelle sans schema HowTo',
+      description:
+        'L\'URL suggère une page guide/tutoriel mais aucun schema HowTo n\'est présent. HowTo structure clairement étapes + durée + matériel pour les moteurs IA.',
+      recommendation:
+        'Ajouter un JSON-LD HowTo avec `step`, `totalTime`, éventuellement `supply` et `tool`. Chaque step = `{ "@type": "HowToStep", "text": "..." }`.',
+      pointsLost: 0.5,
+      effort: 'medium',
+    })
+  }
+
+  // --- 7. Citable quotes (blockquote density) -----------------------------
+  const blockquotes = $('blockquote').length
+  const qTags = $('q').length
+  const citeTags = $('cite').length
+  const citableElements = blockquotes + qTags + citeTags
+  if (bodyWords >= 800 && citableElements === 0) {
+    pushCheck({
+      severity: 'low',
+      category: 'geo-citable-content',
+      title: 'Aucun contenu citable structuré (blockquote / q / cite)',
+      description:
+        'Les moteurs IA favorisent l\'extraction de passages balisés comme citations (<blockquote>, <q>, <cite>). Un long contenu sans blocs citables se fait moins souvent reprendre verbatim.',
+      recommendation:
+        'Encadrer les phrases-clé ou les citations d\'experts dans des <blockquote> avec <cite> pour la source. Exemple : `<blockquote><p>La GEO dépasse 30 % des requêtes en 2026.</p><cite>Gartner, 2026</cite></blockquote>`.',
+      pointsLost: 0.5,
+      effort: 'quick',
+      metricValue: '0 blockquote / q / cite',
+    })
+  }
+
+  // --- 8. Semantic HTML5 structure ----------------------------------------
+  const semanticTagsCount =
+    $('article').length +
+    $('section').length +
+    $('main').length +
+    $('nav').length +
+    $('aside').length +
+    $('header').length +
+    $('footer').length
+  if (bodyWords >= 400 && semanticTagsCount === 0) {
+    pushCheck({
+      severity: 'medium',
+      category: 'geo-semantic-html',
+      title: 'Aucune balise HTML5 sémantique',
+      description:
+        'La page utilise exclusivement des <div>/<span> sans <article>, <section>, <main>, <nav>. Les crawlers et moteurs IA s\'appuient sur la sémantique HTML5 pour identifier le contenu principal vs la navigation.',
+      recommendation:
+        'Wrapper le contenu principal dans <main><article>, les sections dans <section>, la navigation dans <nav>, le pied de page dans <footer>.',
+      pointsLost: 1,
+      effort: 'medium',
+    })
+  }
+
+  // --- 9. llms-full.txt (extended convention) -----------------------------
+  if (snapshot.llmsTxt && !snapshot.llmsFullTxt) {
+    pushCheck({
+      severity: 'info',
+      category: 'geo-llms-full-txt',
+      title: 'llms-full.txt absent (bonus GEO)',
+      description:
+        'Convention étendue à `/llms.txt` : `/llms-full.txt` expose le contenu complet du site en un seul fichier Markdown, à destination des moteurs IA qui veulent ingérer tout le contexte d\'un coup.',
+      recommendation:
+        'Générer un `/llms-full.txt` qui concatène les pages clés en Markdown (Mintlify, Readme.com proposent des outils). Optionnel mais bien vu.',
+      pointsLost: 0,
+      effort: 'medium',
+    })
+  }
+
+  // --- 10. Authoritative tone — hedging (info only) ----------------------
   const hedgingMatches = bodyText.match(HEDGING_PATTERNS) ?? []
   if (hedgingMatches.length >= 4) {
     pushCheck({

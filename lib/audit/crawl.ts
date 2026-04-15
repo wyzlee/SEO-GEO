@@ -118,10 +118,11 @@ export async function crawlUrl(targetUrl: string): Promise<CrawlSnapshot> {
   const primary = await fetchHtml(targetUrl)
   const origin = new URL(primary.finalUrl).origin
 
-  const [robotsTxt, sitemapXml, llmsTxt] = await Promise.all([
+  const [robotsTxt, sitemapXml, llmsTxt, llmsFullTxt] = await Promise.all([
     fetchText(`${origin}/robots.txt`),
     fetchText(`${origin}/sitemap.xml`),
     fetchText(`${origin}/llms.txt`),
+    fetchText(`${origin}/llms-full.txt`),
   ])
 
   const $ = cheerio.load(primary.html)
@@ -141,6 +142,7 @@ export async function crawlUrl(targetUrl: string): Promise<CrawlSnapshot> {
     robotsTxt,
     sitemapXml,
     llmsTxt,
+    llmsFullTxt,
     lastModified: primary.lastModified,
     contentHash: primaryBodyHash,
     subPages,
