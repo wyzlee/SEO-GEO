@@ -1,8 +1,9 @@
 /**
  * Phase 6 — Content Freshness (8 pts)
  *
- * V1 URL mode : dateModified JSON-LD + `<time>` + sitemap lastmod.
- * Phantom refresh detection et content hash diff sont V1.5.
+ * V1.5 URL mode : dateModified JSON-LD + `<time>` + sitemap lastmod ;
+ * phantom refresh (JSON-LD vs HTTP Last-Modified mismatch), site-wide
+ * sitemap staleness, content diversity sur les subPages échantillonnées.
  */
 import * as cheerio from 'cheerio'
 import type { Finding, PhaseResult, CrawlSnapshot } from '../types'
@@ -84,6 +85,33 @@ function extractSitemapLastmod(sitemapXml: string | null, finalUrl: string): Dat
   return null
 }
 
+interface SitemapLastmodStats {
+  total: number
+  withLastmod: number
+  recent: number // updated within 180 days
+}
+
+function computeSitemapLastmodStats(
+  sitemapXml: string | null,
+  recencyDays = 180,
+): SitemapLastmodStats | null {
+  if (!sitemapXml) return null
+  const urlBlocks = sitemapXml.match(/<url\b[\s\S]*?<\/url>/gi) ?? []
+  if (urlBlocks.length === 0) return null
+  const cutoff = Date.now() - recencyDays * 24 * 3600 * 1000
+  let withLastmod = 0
+  let recent = 0
+  for (const block of urlBlocks) {
+    const lastmod = block.match(/<lastmod>([^<]+)<\/lastmod>/i)?.[1]?.trim()
+    if (!lastmod) continue
+    const d = parseDate(lastmod)
+    if (!d) continue
+    withLastmod++
+    if (d.getTime() >= cutoff) recent++
+  }
+  return { total: urlBlocks.length, withLastmod, recent }
+}
+
 export async function runFreshnessPhase(
   snapshot: CrawlSnapshot,
 ): Promise<PhaseResult> {
@@ -155,6 +183,80 @@ export async function runFreshnessPhase(
         effort: 'medium',
         metricValue: `${age} j`,
         metricTarget: `≤ ${tolerance} j`,
+      })
+    }
+  }
+
+  // --- Phantom refresh (JSON-LD frais vs HTTP Last-Modified ancien) -----
+  // Si le serveur n'a pas servi la page depuis très longtemps mais que le
+  // JSON-LD prétend qu'elle vient d'être modifiée, c'est un signal classique
+  // de timestamp injecté dynamiquement sans vraie mise à jour du contenu.
+  const httpLastModified = parseDate(snapshot.lastModified ?? null)
+  const jsonLdDate = (() => {
+    const jsonLdCandidates = candidates.filter((c) => c.source === 'jsonld')
+    if (jsonLdCandidates.length === 0) return null
+    return jsonLdCandidates.reduce((a, b) => (a.date > b.date ? a : b)).date
+  })()
+  if (httpLastModified && jsonLdDate) {
+    const jsonLdAge = daysSince(jsonLdDate)
+    const httpAge = daysSince(httpLastModified)
+    if (jsonLdAge < 30 && httpAge > 180) {
+      pushCheck({
+        severity: 'medium',
+        category: 'freshness-phantom-refresh',
+        title: 'Phantom refresh probable (date injectée sans mise à jour réelle)',
+        description:
+          'Le JSON-LD annonce une mise à jour récente, mais le header HTTP Last-Modified indique que la page n\'a pas été re-servie depuis longtemps. Signal classique de faux rafraîchissement (template dynamique) — les moteurs IA et Google détectent ce pattern.',
+        recommendation:
+          'Mettre à jour substantiellement le contenu avant de modifier `dateModified` : ajout d\'un paragraphe, rafraîchissement des chiffres, nouvelle section FAQ. Laisser le cache HTTP refléter la vraie date.',
+        pointsLost: 1.5,
+        effort: 'medium',
+        metricValue: `JSON-LD : ${jsonLdAge} j / HTTP : ${httpAge} j`,
+      })
+    }
+  }
+
+  // --- Site-wide sitemap staleness --------------------------------------
+  const siteStats = computeSitemapLastmodStats(snapshot.sitemapXml)
+  if (siteStats && siteStats.total >= 10 && siteStats.withLastmod >= 5) {
+    const recentRatio = siteStats.recent / siteStats.withLastmod
+    if (recentRatio < 0.3) {
+      pushCheck({
+        severity: 'medium',
+        category: 'freshness-site-wide-stale',
+        title: 'Site globalement non maintenu (sitemap)',
+        description: `Moins de 30 % des pages du sitemap ont été mises à jour dans les 6 derniers mois (${siteStats.recent}/${siteStats.withLastmod}). Les moteurs IA et Google pondèrent la confiance par la "vitalité" perçue du site entier.`,
+        recommendation:
+          'Programmer un audit éditorial trimestriel : identifier les pages clés (produits, landing, guides) et les rafraîchir. Retirer ou noindexer les pages obsolètes.',
+        pointsLost: 1,
+        effort: 'heavy',
+        metricValue: `${Math.round(recentRatio * 100)} % récentes`,
+        metricTarget: '≥ 30 %',
+      })
+    }
+  }
+
+  // --- Content diversity sur subPages -----------------------------------
+  // Si plusieurs subPages retournent exactement le même contentHash, on a
+  // affaire à un site de boilerplate (template-only, texte dupliqué massif).
+  const subPages = snapshot.subPages ?? []
+  if (subPages.length >= 5) {
+    const hashCounts = new Map<string, number>()
+    for (const sp of subPages) {
+      hashCounts.set(sp.contentHash, (hashCounts.get(sp.contentHash) ?? 0) + 1)
+    }
+    const maxDuplicates = Math.max(...hashCounts.values())
+    if (maxDuplicates >= 3) {
+      pushCheck({
+        severity: 'low',
+        category: 'freshness-content-duplication',
+        title: 'Pages internes au contenu quasi-identique',
+        description: `${maxDuplicates} pages du sitemap partagent exactement le même contenu textuel. Signal de template boilerplate ou de pages auto-générées sans substance.`,
+        recommendation:
+          'Différencier chaque page : titre H1 unique, premier paragraphe spécifique, contenu factuel propre. Sinon, consolider via canonical ou 301.',
+        pointsLost: 1,
+        effort: 'medium',
+        metricValue: `${maxDuplicates} pages identiques`,
       })
     }
   }
