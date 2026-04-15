@@ -16,6 +16,7 @@ import { runInternationalPhase } from './phases/international'
 import { runPerformancePhase } from './phases/performance'
 import { runTopicalPhase } from './phases/topical'
 import { runCommonMistakesPhase } from './phases/common-mistakes'
+import { runSynthesisPhase } from './phases/synthesis'
 import {
   runTechnicalPhaseCode,
   runStructuredDataPhaseCode,
@@ -25,7 +26,7 @@ import { readCodeSnapshot, type CodeSnapshot } from './code/read'
 import { cloneGithubRepo } from './code/clone'
 import { cleanupRoot } from './upload/extract'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
-import type { CrawlSnapshot, PhaseKey, PhaseResult } from './types'
+import type { CrawlSnapshot, Finding, PhaseKey, PhaseResult } from './types'
 import {
   completeAudit,
   failAudit,
@@ -109,13 +110,13 @@ async function runPhaseForCrawl(
     case 'common_mistakes':
       return runCommonMistakesPhase(crawl)
     case 'synthesis':
+      // synthesis is handled at orchestration level (needs cross-phase data)
       return {
         phaseKey: key,
         score: 0,
         scoreMax: 0,
-        status: 'completed',
-        summary:
-          'Synthèse — pas de scoring, livrables générés par le moteur de rapport',
+        status: 'skipped',
+        summary: 'Synthesis handled by orchestrator',
         findings: [],
       }
     default:
@@ -136,13 +137,13 @@ async function runPhaseForCode(
     case 'geo':
       return runGeoPhaseCode(code)
     case 'synthesis':
+      // synthesis is handled at orchestration level (needs cross-phase data)
       return {
         phaseKey: key,
         score: 0,
         scoreMax: 0,
-        status: 'completed',
-        summary:
-          'Synthèse — pas de scoring, livrables générés par le moteur de rapport',
+        status: 'skipped',
+        summary: 'Synthesis handled by orchestrator',
         findings: [],
       }
     default:
@@ -177,13 +178,22 @@ export async function processAudit(auditId: string): Promise<void> {
     cleanupPaths = ctx.cleanupPaths
 
     const breakdown: Partial<Record<PhaseKey, number>> = {}
+    const detailedBreakdown: Partial<
+      Record<PhaseKey, { score: number; scoreMax: number }>
+    > = {}
+    const allFindings: Finding[] = []
     let totalScore = 0
 
     for (const key of PHASE_ORDER) {
       try {
         await markPhaseRunning(auditId, key)
         let result: PhaseResult
-        if (ctx.crawl) {
+        if (key === 'synthesis') {
+          result = runSynthesisPhase({
+            findings: allFindings,
+            breakdown: detailedBreakdown,
+          })
+        } else if (ctx.crawl) {
           result = await runPhaseForCrawl(key, ctx.crawl)
         } else if (ctx.code) {
           result = await runPhaseForCode(key, ctx.code)
@@ -196,7 +206,12 @@ export async function processAudit(auditId: string): Promise<void> {
         }
         await persistPhaseResult(auditId, result)
         breakdown[key] = result.score
+        detailedBreakdown[key] = {
+          score: result.score,
+          scoreMax: result.scoreMax,
+        }
         totalScore += result.score
+        allFindings.push(...result.findings)
       } catch (phaseError) {
         console.error(`[audit ${auditId}] phase ${key} failed`, phaseError)
         await markPhaseFailed(auditId, key, phaseError)
