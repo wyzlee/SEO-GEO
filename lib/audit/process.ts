@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { audits } from '@/lib/db/schema'
 import { crawlUrl } from './crawl'
 import { runTechnicalPhase } from './phases/technical'
+import { runStructuredDataPhase } from './phases/structured-data'
 import { runGeoPhase } from './phases/geo'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
 import type { CrawlSnapshot, PhaseKey, PhaseResult } from './types'
@@ -41,6 +42,9 @@ async function runPhase(
   switch (key) {
     case 'technical':
       return crawl ? runTechnicalPhase(crawl) : skipped(key, scoreMax)
+
+    case 'structured_data':
+      return crawl ? runStructuredDataPhase(crawl) : skipped(key, scoreMax)
 
     case 'geo':
       return crawl ? runGeoPhase(crawl) : skipped(key, scoreMax)
