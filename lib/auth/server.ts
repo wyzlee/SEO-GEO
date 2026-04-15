@@ -1,7 +1,7 @@
 import { jwtVerify, createRemoteJWKSet } from 'jose'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { users, memberships } from '@/lib/db/schema'
+import { users, memberships, organizations } from '@/lib/db/schema'
 
 const JWKS_URL = `https://api.stack-auth.com/api/v1/projects/${process.env.NEXT_PUBLIC_STACK_PROJECT_ID}/.well-known/jwks.json`
 
@@ -89,15 +89,7 @@ export async function authenticateWithOrg(
   const orgId = orgIdInput || request.headers.get('x-org-id') || null
   if (!orgId) throw new AuthError('Missing organization_id', 400)
 
-  const existing = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, user.id))
-    .limit(1)
-
-  if (existing.length === 0) {
-    throw new AuthError('User not provisioned locally', 403)
-  }
+  await ensureUserProvisioned(user)
 
   const memberRows = await db
     .select()
@@ -109,4 +101,88 @@ export async function authenticateWithOrg(
   if (!match) throw new AuthError('Not a member of this organization', 403)
 
   return { user, organizationId: orgId, role: match.role }
+}
+
+async function ensureUserProvisioned(user: StackAuthUser): Promise<void> {
+  const existing = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1)
+  if (existing.length > 0) return
+
+  // Webhook hasn't fired yet (dev without webhook configured). Insert minimal row.
+  await db
+    .insert(users)
+    .values({
+      id: user.id,
+      email: user.email || `${user.id}@unknown.local`,
+      displayName: null,
+      avatarUrl: null,
+    })
+    .onConflictDoNothing()
+}
+
+/**
+ * Resolve the default organization for the current user : the first membership
+ * (ordered by creation). Falls back to `x-org-id` header if provided.
+ * Designed for single-org users. Multi-org users will get a selector in V2.
+ */
+export async function authenticateAuto(
+  request: Request,
+): Promise<AuthenticatedContext> {
+  const explicit = request.headers.get('x-org-id')
+  if (explicit) return authenticateWithOrg(request, explicit)
+
+  const user = await authenticateRequest(request)
+  await ensureUserProvisioned(user)
+
+  const memberRows = await db
+    .select({
+      organizationId: memberships.organizationId,
+      role: memberships.role,
+    })
+    .from(memberships)
+    .where(eq(memberships.userId, user.id))
+    .limit(1)
+
+  if (!memberRows.length) {
+    throw new AuthError('No organization membership', 403)
+  }
+
+  return {
+    user,
+    organizationId: memberRows[0].organizationId,
+    role: memberRows[0].role,
+  }
+}
+
+export interface UserOrgsSummary {
+  user: StackAuthUser
+  memberships: Array<{
+    organizationId: string
+    organizationName: string
+    organizationSlug: string
+    role: string
+  }>
+}
+
+export async function getUserOrgsSummary(
+  request: Request,
+): Promise<UserOrgsSummary> {
+  const user = await authenticateRequest(request)
+  await ensureUserProvisioned(user)
+
+  const rows = await db
+    .select({
+      organizationId: memberships.organizationId,
+      organizationName: organizations.name,
+      organizationSlug: organizations.slug,
+      role: memberships.role,
+    })
+    .from(memberships)
+    .innerJoin(organizations, eq(memberships.organizationId, organizations.id))
+    .where(eq(memberships.userId, user.id))
+
+  return { user, memberships: rows }
 }

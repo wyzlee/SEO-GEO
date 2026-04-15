@@ -1,0 +1,101 @@
+'use client'
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { apiJson } from '@/lib/api/fetch'
+
+export interface AuditRow {
+  id: string
+  organizationId: string
+  createdBy: string
+  inputType: string
+  targetUrl: string | null
+  status: 'queued' | 'running' | 'completed' | 'failed'
+  scoreTotal: number | null
+  scoreBreakdown: Record<string, number> | null
+  clientName: string | null
+  consultantName: string | null
+  mode: string
+  createdAt: string
+  startedAt: string | null
+  finishedAt: string | null
+  errorMessage: string | null
+}
+
+export interface FindingRow {
+  id: string
+  auditId: string
+  phaseKey: string
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info'
+  category: string | null
+  title: string
+  description: string
+  recommendation: string
+  locationUrl: string | null
+  locationFile: string | null
+  locationLine: number | null
+  metricValue: string | null
+  metricTarget: string | null
+  pointsLost: number
+  effort: 'quick' | 'medium' | 'heavy' | null
+  createdAt: string
+}
+
+export interface PhaseWithFindings {
+  id: string
+  auditId: string
+  phaseKey: string
+  phaseOrder: number
+  score: number | null
+  scoreMax: number
+  status: 'pending' | 'running' | 'completed' | 'skipped' | 'failed'
+  summary: string | null
+  startedAt: string | null
+  finishedAt: string | null
+  findings: FindingRow[]
+}
+
+export interface AuditDetail {
+  audit: AuditRow
+  phases: PhaseWithFindings[]
+}
+
+export function useAudits() {
+  return useQuery({
+    queryKey: ['audits'],
+    queryFn: () => apiJson<{ audits: AuditRow[] }>('/api/audits'),
+    staleTime: 10_000,
+  })
+}
+
+export function useAudit(id: string | undefined) {
+  return useQuery({
+    queryKey: ['audit', id],
+    enabled: !!id,
+    queryFn: () => apiJson<AuditDetail>(`/api/audits/${id}`),
+    refetchInterval: (query) => {
+      const status = query.state.data?.audit.status
+      if (status === 'queued' || status === 'running') return 2000
+      return false
+    },
+  })
+}
+
+export interface CreateAuditInput {
+  targetUrl: string
+  clientName?: string
+  consultantName?: string
+}
+
+export function useCreateAudit() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateAuditInput) =>
+      apiJson<{ id: string; status: string }>('/api/audits', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['audits'] })
+    },
+  })
+}

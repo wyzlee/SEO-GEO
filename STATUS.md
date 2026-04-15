@@ -7,7 +7,7 @@
 - Sprint 00 — Scope & fondations docs : **terminé**
 - Sprint 01 — Scaffold Next.js 16 + Stack Auth + Neon : **terminé**
 - Sprint 02 — Data model + auth opérationnelle : **terminé** (login email/password testé end-to-end Chrome → dashboard)
-- Sprint 03 — Moteur d'audit : **en cours** (Phase 1 `technical` implémentée + 7 tests, 10 phases restantes)
+- Sprint 03 — Moteur d'audit : **flow end-to-end live** (Phase 1 `technical` + API + UI détail/liste + persistance Neon + polling 2s, 10 phases restantes en `skipped`)
 
 ## Ce qui est en place
 
@@ -58,14 +58,23 @@
 - `lib/audit/engine.ts` : orchestrateur avec PHASE_ORDER + PHASE_SCORE_MAX, dispatcher runPhase(key). 10 phases restantes en status `skipped`.
 - Tests `tests/audit/phases/technical.test.ts` : 7 suites (perfect page, missing title, Disallow: /, canonical cross-domain, missing robots/sitemap, missing OG, golden determinism)
 
+## Flow bout en bout validé (2026-04-15)
+
+- Dashboard `/dashboard` → liste 5 derniers audits + CTA
+- `/dashboard/audits/new` → form url + client, submit → POST /api/audits → 202 { id }
+- Redirect `/dashboard/audits/:id` avec polling 2s via React Query
+- processAudit via `after()` Next 16 (fire-and-forget, pas de blocking)
+- Phase 1 crawl HTML + robots.txt + sitemap.xml → findings persisted au fil
+- Page détail : ScoreBadge 0-100 coloré, PhaseCard expandable, FindingItem avec severity/recommandation/metrics/effort
+- Tests E2E manuel sur `https://wyzlee.com` : 15 findings remontés, score 0/12 clampé
+- Migration Neon : `points_lost`, `score`, `score_max`, `score_total` → `real` (support décimaux 0.5)
+
 ## Ce qui reste — Sprint 03
 
+- Phase 3 `geo` (18 pts, poids max — différenciant produit)
 - Phase 2 `structured_data` (15 pts)
-- Phase 3 `geo` (18 pts, poids max)
-- Phase 4 `entity`, Phase 5 `eeat`, Phase 6 `freshness`, Phase 7 `international`, Phase 8 `performance`, Phase 9 `topical`, Phase 10 `common_mistakes`, Phase 11 `synthesis`
-- `POST /api/audits` + `GET /api/audits/:id` API routes
-- Worker claim loop (SKIP LOCKED)
-- UI détail audit (Sprint 04)
+- Phase 4 `entity`, 5 `eeat`, 6 `freshness`, 7 `international`, 8 `performance`, 9 `topical`, 10 `common_mistakes`, 11 `synthesis`
+- Worker claim loop réel (remplacer after() en prod si audits > quelques minutes)
 - Webhook Stack Auth prod (à configurer au deploy)
 
 ## Points d'attention

@@ -3,6 +3,7 @@ import {
   uuid,
   text,
   integer,
+  real,
   timestamp,
   jsonb,
   date,
@@ -67,7 +68,7 @@ export const audits = pgTable(
     githubRepo: text('github_repo'),
 
     status: text('status').notNull().default('queued'),
-    scoreTotal: integer('score_total'),
+    scoreTotal: real('score_total'),
     scoreBreakdown: jsonb('score_breakdown'),
 
     clientName: text('client_name'),
@@ -102,8 +103,8 @@ export const auditPhases = pgTable(
     phaseKey: text('phase_key').notNull(),
     phaseOrder: integer('phase_order').notNull(),
 
-    score: integer('score'),
-    scoreMax: integer('score_max').notNull(),
+    score: real('score'),
+    scoreMax: real('score_max').notNull(),
     status: text('status').notNull().default('pending'),
 
     summary: text('summary'),

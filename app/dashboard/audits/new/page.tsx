@@ -1,28 +1,36 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/layout/header'
+import { useCreateAudit } from '@/lib/hooks/use-audits'
 
 export default function NewAuditPage() {
+  const router = useRouter()
+  const createAudit = useCreateAudit()
   const [url, setUrl] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [clientName, setClientName] = useState('')
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setSubmitting(true)
-    toast.info(
-      'Endpoint audit à brancher (Sprint 03). Pour l\'instant, simulation.',
-    )
-    await new Promise((r) => setTimeout(r, 500))
-    setSubmitting(false)
+    try {
+      const { id } = await createAudit.mutateAsync({
+        targetUrl: url,
+        clientName: clientName || undefined,
+      })
+      toast.success('Audit lancé')
+      router.push(`/dashboard/audits/${id}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Impossible de lancer l\'audit')
+    }
   }
 
   return (
     <div>
       <PageHeader
         title="Nouvel audit"
-        description="Renseignez l'URL du site à auditer."
+        description="Renseignez l'URL à auditer. L'analyse démarre immédiatement."
       />
 
       <section className="p-6 max-w-xl">
@@ -51,8 +59,29 @@ export default function NewAuditPage() {
             </p>
           </div>
 
-          <button type="submit" className="btn-primary" disabled={submitting}>
-            {submitting ? 'Envoi…' : 'Lancer l\'audit'}
+          <div>
+            <label
+              htmlFor="client-name"
+              className="block text-xs font-medium mb-1 font-[family-name:var(--font-display)]"
+            >
+              Nom du client (optionnel)
+            </label>
+            <input
+              id="client-name"
+              type="text"
+              placeholder="ex: Acme SA"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              className="input-modern"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={createAudit.isPending}
+          >
+            {createAudit.isPending ? 'Envoi…' : 'Lancer l\'audit'}
           </button>
         </form>
       </section>
