@@ -63,6 +63,7 @@ services:
       - "traefik.http.routers.seo-geo.entrypoints=websecure"
       - "traefik.http.routers.seo-geo.tls.certresolver=letsencrypt"
       - "traefik.http.services.seo-geo.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
 
   worker:
     build:
