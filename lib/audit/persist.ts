@@ -2,17 +2,23 @@
  * Database write helpers for the audit engine.
  * Kept separate from engine.ts so the engine stays pure (unit-testable without DB).
  */
-import { eq, and, inArray, sql } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { audits, auditPhases, findings } from '@/lib/db/schema'
 import type { Finding, PhaseKey, PhaseResult } from './types'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
 
 /**
- * Mark audit running. Succeeds when the audit is still queued or already
- * running (worker may have pre-claimed it) ; fails when the audit is
- * already completed or failed. Idempotent on `startedAt` via COALESCE.
- * Returns true when the caller may safely proceed with processing.
+ * Atomic claim : transitionne `queued` → `running` exactement une fois.
+ *
+ * Ce UPDATE conditionnel garantit qu'un seul appelant gagne le claim, même
+ * si plusieurs processus concurrents tentent de traiter le même audit (API
+ * `after()` handler + worker poll). Le perdant reçoit `false` et doit
+ * abandonner — le gagnant reçoit `true` et peut exécuter le pipeline.
+ *
+ * Pattern intentionnel : pas de FOR UPDATE / SKIP LOCKED car non supporté
+ * par le HTTP driver Neon. Le UPDATE atomique sur la condition `status =
+ * 'queued'` joue le même rôle pour notre charge (pas de session requise).
  */
 export async function markAuditRunning(auditId: string): Promise<boolean> {
   const result = await db
@@ -21,12 +27,7 @@ export async function markAuditRunning(auditId: string): Promise<boolean> {
       status: 'running',
       startedAt: sql`COALESCE(${audits.startedAt}, now())`,
     })
-    .where(
-      and(
-        eq(audits.id, auditId),
-        inArray(audits.status, ['queued', 'running']),
-      ),
-    )
+    .where(and(eq(audits.id, auditId), eq(audits.status, 'queued')))
     .returning({ id: audits.id })
   return result.length > 0
 }

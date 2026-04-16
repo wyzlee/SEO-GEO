@@ -1,13 +1,18 @@
 /**
- * SEO-GEO worker — production-ready claim loop.
+ * SEO-GEO worker — claim loop.
  *
- * Responsibility : poll `audits` table for status='queued', claim one
- * atomically via UPDATE … WHERE id IN (SELECT … FOR UPDATE SKIP LOCKED),
- * run the 11-phase pipeline via processAudit(), retry on error.
+ * Responsibility : poll `audits` table for status='queued', forward each
+ * candidate to processAudit() which handles the atomic claim via
+ * markAuditRunning(). The claim is centralized in persist.ts so the
+ * worker and the API `after()` handler use the exact same primitive
+ * (UPDATE WHERE status='queued' RETURNING id) — pas de double-exécution
+ * possible : un seul appelant gagne le UPDATE, l'autre voit `claimed=false`
+ * et abandonne proprement.
  *
  * Design notes :
- *  - Single statement for the claim → works over Neon HTTP driver
- *    (no persistent session required).
+ *  - Pas de FOR UPDATE / SKIP LOCKED : non supporté par le HTTP driver
+ *    Neon (sessions implicites). Le UPDATE conditionnel suffit pour
+ *    notre charge V1.
  *  - Backoff + jitter on empty poll to avoid hammering the DB.
  *  - Graceful shutdown on SIGINT/SIGTERM : finish the current audit
  *    (if any) before exiting.
@@ -17,8 +22,9 @@ import { config as loadEnv } from 'dotenv'
 import { resolve } from 'node:path'
 loadEnv({ path: resolve(process.cwd(), '.env.local') })
 
-import { sql } from 'drizzle-orm'
+import { eq, sql, asc } from 'drizzle-orm'
 import { db } from '@/lib/db'
+import { audits } from '@/lib/db/schema'
 import { processAudit } from '@/lib/audit/process'
 import { createLogger } from '@/lib/observability/logger'
 
@@ -34,31 +40,23 @@ async function ping(): Promise<void> {
   await db.execute(sql`select 1`)
 }
 
-interface ClaimedAudit {
+interface PendingAudit {
   id: string
 }
 
-async function claimNextAudit(): Promise<ClaimedAudit | null> {
-  // Atomic claim : pick the oldest queued audit and flip it to running in
-  // a single statement. SKIP LOCKED lets multiple workers coexist.
-  const rows = await db.execute<{ id: string }>(sql`
-    UPDATE audits
-    SET status = 'running', started_at = now()
-    WHERE id = (
-      SELECT id FROM audits
-      WHERE status = 'queued'
-      ORDER BY queued_at ASC
-      LIMIT 1
-      FOR UPDATE SKIP LOCKED
-    )
-    RETURNING id
-  `)
-  // Neon HTTP driver returns `{ rows: [] }` or an array depending on mode.
-  const list: Array<{ id: string }> = Array.isArray(rows)
-    ? (rows as Array<{ id: string }>)
-    : ((rows as { rows?: Array<{ id: string }> }).rows ?? [])
-  const first = list[0]
-  return first ? { id: first.id } : null
+/**
+ * Trouve le prochain audit `queued` à traiter. Le claim atomique se fait
+ * ensuite côté processAudit → markAuditRunning, qui sera no-op si un autre
+ * processus (ex. API after()) a déjà claim l'audit entre-temps.
+ */
+async function findNextQueuedAudit(): Promise<PendingAudit | null> {
+  const rows = await db
+    .select({ id: audits.id })
+    .from(audits)
+    .where(eq(audits.status, 'queued'))
+    .orderBy(asc(audits.queuedAt))
+    .limit(1)
+  return rows[0] ?? null
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -69,27 +67,30 @@ async function loop(): Promise<void> {
   let idleMs = POLL_MS
   while (!shuttingDown) {
     try {
-      const claimed = await claimNextAudit()
-      if (!claimed) {
+      const pending = await findNextQueuedAudit()
+      if (!pending) {
         await sleep(idleMs)
         idleMs = Math.min(IDLE_BACKOFF_MAX_MS, Math.floor(idleMs * 1.5))
         continue
       }
       idleMs = POLL_MS
-      currentAuditId = claimed.id
-      log.info('worker.audit.claimed', { audit_id: claimed.id })
+      currentAuditId = pending.id
+      log.info('worker.audit.picked', { audit_id: pending.id })
       const startedAt = Date.now()
       try {
-        await processAudit(claimed.id)
-        log.info('worker.audit.completed', {
-          audit_id: claimed.id,
+        // processAudit fait le claim atomique (markAuditRunning) ; si l'API
+        // after() handler a déjà claim, processAudit return early et le
+        // duration_ms ci-dessous reflète juste le no-op (~quelques ms).
+        await processAudit(pending.id)
+        log.info('worker.audit.processed', {
+          audit_id: pending.id,
           duration_ms: Date.now() - startedAt,
         })
       } catch (error) {
         // processAudit catches its own errors and marks audit failed ;
         // this branch covers only unexpected throws.
         log.error('worker.audit.unexpected_error', {
-          audit_id: claimed.id,
+          audit_id: pending.id,
           error,
         })
       } finally {
