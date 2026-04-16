@@ -24,6 +24,10 @@ vi.mock('@/lib/db', () => {
     for (const m of passthrough) {
       chain[m] = () => chain
     }
+    chain.returning = () => {
+      const rows = responses.shift() ?? []
+      return Promise.resolve(rows)
+    }
     chain.then = (
       resolve: (rows: unknown[]) => void,
       reject: (err: unknown) => void,
@@ -33,7 +37,12 @@ vi.mock('@/lib/db', () => {
     }
     return chain
   }
-  return { db: { select: () => makeChain() } }
+  return {
+    db: {
+      select: () => makeChain(),
+      delete: () => makeChain(),
+    },
+  }
 })
 
 async function loadGetById() {
@@ -44,6 +53,11 @@ async function loadGetById() {
 async function loadGetList() {
   const mod = await import('@/app/api/audits/route')
   return mod.GET
+}
+
+async function loadDelete() {
+  const mod = await import('@/app/api/audits/[id]/route')
+  return mod.DELETE
 }
 
 function buildRequest(url = 'http://test.local/api/audits/123') {
@@ -177,5 +191,67 @@ describe('GET /api/audits (list)', () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.audits).toEqual([])
+  })
+})
+
+describe('DELETE /api/audits/:id', () => {
+  beforeEach(() => {
+    authenticateAutoMock.mockReset()
+    responses.length = 0
+    authenticateAutoMock.mockResolvedValue({
+      user: { id: 'user-1', email: 'olivier@wyzlee.cloud' },
+      organizationId: 'org-1',
+      role: 'owner',
+    })
+  })
+
+  it('returns 401 when authentication fails', async () => {
+    authenticateAutoMock.mockRejectedValueOnce(
+      new AuthError('Missing authentication token', 401),
+    )
+    const DELETE = await loadDelete()
+    const res = await DELETE(
+      new Request('http://test.local/api/audits/audit-1', { method: 'DELETE' }),
+      { params: Promise.resolve({ id: 'audit-1' }) },
+    )
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 404 when audit not found in current org', async () => {
+    responses.push([]) // delete().returning() vide → audit absent ou autre org
+    const DELETE = await loadDelete()
+    const res = await DELETE(
+      new Request('http://test.local/api/audits/missing', { method: 'DELETE' }),
+      { params: Promise.resolve({ id: 'missing' }) },
+    )
+    expect(res.status).toBe(404)
+    const json = await res.json()
+    expect(json.error).toBe('Not found')
+  })
+
+  it('returns 200 + { deleted: true } on successful delete', async () => {
+    responses.push([{ id: 'audit-1' }]) // delete returning
+    const DELETE = await loadDelete()
+    const res = await DELETE(
+      new Request('http://test.local/api/audits/audit-1', { method: 'DELETE' }),
+      { params: Promise.resolve({ id: 'audit-1' }) },
+    )
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json).toEqual({ id: 'audit-1', deleted: true })
+  })
+
+  it('isolates orgs : un audit d\'une autre org renvoie 404 sans suppression', async () => {
+    // Le WHERE inclut organizationId = ctx.organizationId, donc le delete
+    // côté Postgres ne matche rien → returning() renvoie [] → 404.
+    responses.push([])
+    const DELETE = await loadDelete()
+    const res = await DELETE(
+      new Request('http://test.local/api/audits/audit-from-org-2', {
+        method: 'DELETE',
+      }),
+      { params: Promise.resolve({ id: 'audit-from-org-2' }) },
+    )
+    expect(res.status).toBe(404)
   })
 })

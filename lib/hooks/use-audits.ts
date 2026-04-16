@@ -104,6 +104,20 @@ export function useCreateAudit() {
   })
 }
 
+export function useDeleteAudit() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiJson<{ id: string; deleted: true }>(`/api/audits/${id}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['audits'] })
+      qc.removeQueries({ queryKey: ['audit', id] })
+    },
+  })
+}
+
 export interface UploadResponse {
   uploadPath: string
   fileCount: number

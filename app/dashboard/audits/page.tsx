@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Globe, Github, FileArchive, Search } from 'lucide-react'
+import { Globe, Github, FileArchive, Search, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/layout/header'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
-import { useAudits } from '@/lib/hooks/use-audits'
+import { useAudits, useDeleteAudit } from '@/lib/hooks/use-audits'
 import type { AuditRow } from '@/lib/hooks/use-audits'
 
 const STATUS_STYLES: Record<
@@ -29,9 +30,30 @@ const INPUT_ICONS: Record<AuditRow['inputType'], typeof Globe> = {
 export default function AuditsListPage() {
   const { data, isLoading } = useAudits()
   const allAudits = data?.audits ?? []
+  const deleteAudit = useDeleteAudit()
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+
+  const handleDelete = (id: string, label: string) => {
+    if (pendingDeleteId !== id) {
+      setPendingDeleteId(id)
+      return
+    }
+    deleteAudit.mutate(id, {
+      onSuccess: () => {
+        toast.success(`Audit supprimé : ${label}`)
+        setPendingDeleteId(null)
+      },
+      onError: (err) => {
+        toast.error(
+          `Suppression échouée : ${err instanceof Error ? err.message : 'erreur inconnue'}`,
+        )
+        setPendingDeleteId(null)
+      },
+    })
+  }
 
   const counts = useMemo(() => {
     const c: Record<StatusFilter, number> = {
@@ -145,6 +167,7 @@ export default function AuditsListPage() {
                   <th className="pb-3 font-medium">Score</th>
                   <th className="pb-3 font-medium">Créé le</th>
                   <th className="pb-3"></th>
+                  <th className="pb-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -153,6 +176,8 @@ export default function AuditsListPage() {
                   const Icon = INPUT_ICONS[audit.inputType] ?? Globe
                   const target =
                     audit.targetUrl || audit.githubRepo || 'Upload code'
+                  const isPending = pendingDeleteId === audit.id
+                  const isDeleting = deleteAudit.isPending && isPending
                   return (
                     <tr
                       key={audit.id}
@@ -205,6 +230,30 @@ export default function AuditsListPage() {
                         >
                           Détail →
                         </Link>
+                      </td>
+                      <td className="py-3 text-right pl-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(audit.id, target)}
+                          onBlur={() => {
+                            if (pendingDeleteId === audit.id && !deleteAudit.isPending) {
+                              setPendingDeleteId(null)
+                            }
+                          }}
+                          disabled={isDeleting}
+                          aria-label={isPending ? `Confirmer la suppression de ${target}` : `Supprimer l'audit ${target}`}
+                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-all font-[family-name:var(--font-sans)]"
+                          style={{
+                            color: isPending ? 'var(--color-red)' : 'var(--color-muted)',
+                            background: isPending ? 'color-mix(in srgb, var(--color-red) 10%, transparent)' : 'transparent',
+                            border: `1px solid ${isPending ? 'var(--color-red)' : 'transparent'}`,
+                            cursor: isDeleting ? 'progress' : 'pointer',
+                            opacity: isDeleting ? 0.6 : 1,
+                          }}
+                        >
+                          <Trash2 size={13} />
+                          {isPending ? (isDeleting ? 'Suppression…' : 'Confirmer ?') : 'Supprimer'}
+                        </button>
                       </td>
                     </tr>
                   )
