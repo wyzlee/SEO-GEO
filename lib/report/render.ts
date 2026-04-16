@@ -63,6 +63,33 @@ function sortFindings(findings: ReportFinding[]): ReportFinding[] {
   })
 }
 
+/**
+ * Findings "actionnables" : on exclut synthesis (méta-insights cross-phase
+ * qui ne représentent pas de constat technique propre, ils ont severity
+ * critical/high mais pointsLost=0 — ils polluent les classements).
+ */
+function actionableFindings(findings: ReportFinding[]): ReportFinding[] {
+  return findings.filter((f) => f.phaseKey !== 'synthesis')
+}
+
+/**
+ * Dédup par recommandation normalisée (lowercase + trim + premiers
+ * 80 caractères). Conserve le finding avec le pointsLost le plus élevé.
+ * Cas d'usage : 2 phases distinctes peuvent émettre des findings dont la
+ * reco est très proche (ex. ajouter datePublished/dateModified).
+ */
+function dedupeByRecommendation(findings: ReportFinding[]): ReportFinding[] {
+  const seen = new Map<string, ReportFinding>()
+  for (const f of findings) {
+    const key = f.recommendation.toLowerCase().trim().slice(0, 80)
+    const existing = seen.get(key)
+    if (!existing || f.pointsLost > existing.pointsLost) {
+      seen.set(key, f)
+    }
+  }
+  return Array.from(seen.values())
+}
+
 export function buildScoreBreakdown(phases: ReportPhase[]): string {
   const header =
     '| Catégorie | Score | Max | Ratio |\n|-----------|-------|-----|-------|'
@@ -82,8 +109,9 @@ export function buildScoreBreakdown(phases: ReportPhase[]): string {
 }
 
 export function buildTop5Issues(findings: ReportFinding[]): string {
-  const top = sortFindings(findings)
+  const top = sortFindings(actionableFindings(findings))
     .filter((f) => f.severity !== 'info')
+    .filter((f) => f.pointsLost > 0)
     .slice(0, 5)
 
   if (top.length === 0) {
@@ -93,16 +121,15 @@ export function buildTop5Issues(findings: ReportFinding[]): string {
   return top
     .map((f, idx) => {
       const severity = SEVERITY_LABELS_FR[f.severity] ?? f.severity
-      const effort = f.effort ? EFFORT_LABELS_FR[f.effort] ?? f.effort : 'Non évalué'
+      const effort = f.effort ? EFFORT_LABELS_FR[f.effort] ?? f.effort : null
+      const effortLine = effort ? `\n\n**Effort estimé** : ${effort}.` : ''
       return `### ${idx + 1}. ${f.title}
 
 **Impact** : ${severity} — coûte **${f.pointsLost} point${f.pointsLost > 1 ? 's' : ''}** dans le scoring.
 
 ${f.description}
 
-**Recommandation** : ${f.recommendation}
-
-**Effort estimé** : ${effort}.
+**Recommandation** : ${f.recommendation}${effortLine}
 
 ---`
     })
@@ -110,8 +137,10 @@ ${f.description}
 }
 
 export function buildQuickWins(findings: ReportFinding[]): string {
-  const quicks = findings
-    .filter((f) => f.effort === 'quick' && f.severity !== 'info')
+  const candidates = actionableFindings(findings).filter(
+    (f) => f.effort === 'quick' && f.severity !== 'info',
+  )
+  const quicks = dedupeByRecommendation(candidates)
     .sort((a, b) => b.pointsLost - a.pointsLost)
     .slice(0, 10)
 
@@ -168,7 +197,9 @@ export function buildWeaknesses(phases: ReportPhase[]): string {
 }
 
 export function buildRoadmap(findings: ReportFinding[]): string {
-  const rankable = findings.filter((f) => f.severity !== 'info')
+  const rankable = dedupeByRecommendation(
+    actionableFindings(findings).filter((f) => f.severity !== 'info'),
+  )
   const sorted = sortFindings(rankable)
 
   const quicks = sorted.filter((f) => f.effort === 'quick').slice(0, 5)
@@ -181,23 +212,29 @@ export function buildRoadmap(findings: ReportFinding[]): string {
   const actionLine = (f: ReportFinding) =>
     `- [ ] ${f.recommendation.replace(/\.$/, '')} (+${f.pointsLost} pt${f.pointsLost > 1 ? 's' : ''})`
 
+  const sprintBody = (
+    list: ReportFinding[],
+    emptyMsg: string,
+  ): string =>
+    list.length ? list.map(actionLine).join('\n') : `_${emptyMsg}_`
+
   return `### 🏃 Sprint 1 — Victoires rapides (Semaines 1-2)
 
 Objectif : récupérer ${sum(quicks).toFixed(1)} point${sum(quicks) > 1 ? 's' : ''} en < 10 h d'effort.
 
-${quicks.length ? quicks.map(actionLine).join('\n') : '_—_'}
+${sprintBody(quicks, 'Aucune action quick à planifier.')}
 
 ### 🔧 Sprint 2 — Structurant (Semaines 3-6)
 
 Objectif : renforcer les fondations SEO/GEO, +${sum(mediums).toFixed(1)} point${sum(mediums) > 1 ? 's' : ''} potentiels.
 
-${mediums.length ? mediums.map(actionLine).join('\n') : '_—_'}
+${sprintBody(mediums, 'Aucun chantier de moyenne ampleur identifié.')}
 
 ### 🎯 Sprint 3 — Stratégique (Semaines 7-12)
 
 Objectif : construire l'autorité long-terme, +${sum(heavys).toFixed(1)} point${sum(heavys) > 1 ? 's' : ''} potentiels.
 
-${heavys.length ? heavys.map(actionLine).join('\n') : '_—_'}`
+${sprintBody(heavys, "Aucun chantier lourd identifié — votre site est globalement bien construit sur les fondations stratégiques.")}`
 }
 
 /**
@@ -206,8 +243,9 @@ ${heavys.length ? heavys.map(actionLine).join('\n') : '_—_'}`
  */
 export function buildExecutiveSummary(input: ReportInput): string {
   const { audit, phases, findings } = input
-  const critical = findings.filter((f) => f.severity === 'critical').length
-  const highs = findings.filter((f) => f.severity === 'high').length
+  const real = actionableFindings(findings)
+  const critical = real.filter((f) => f.severity === 'critical').length
+  const highs = real.filter((f) => f.severity === 'high').length
 
   const topWeakness = [...phases]
     .filter((p) => p.phaseKey !== 'synthesis' && p.status !== 'skipped')
@@ -227,12 +265,13 @@ export function buildExecutiveSummary(input: ReportInput): string {
 
   const lines: string[] = []
   lines.push(
-    `L'analyse identifie **${findings.length} constat${findings.length > 1 ? 's' : ''}** au total, dont **${critical + highs}** avec un impact élevé ou critique.`,
+    `L'analyse identifie **${real.length} constat${real.length > 1 ? 's' : ''}** au total, dont **${critical + highs}** avec un impact élevé ou critique.`,
   )
   if (topWeakness) {
     const label = PHASE_LABELS_FR[topWeakness.phaseKey] ?? topWeakness.phaseKey
+    const context = PHASE_CONTEXT_FR[topWeakness.phaseKey] ?? ''
     lines.push(
-      `Le principal axe d'amélioration porte sur **${label}** : ${(PHASE_CONTEXT_FR[topWeakness.phaseKey] ?? '').toLowerCase()}`,
+      `Le principal axe d'amélioration porte sur **${label}**. ${context}`,
     )
   }
   if (topStrength) {
@@ -277,7 +316,10 @@ export function buildHotspotUrls(findings: ReportFinding[]): string {
     .sort((a, b) => b[1].totalPoints - a[1].totalPoints)
     .slice(0, 5)
 
-  if (hotspots.length === 0) return ''
+  // Si on a 0 ou 1 seule URL "à fort enjeu", la section perd sa valeur :
+  // soit pas assez d'URLs analysées (crawl mono-page), soit problèmes
+  // distribués. Mieux vaut masquer que rendre un tableau à 1 ligne.
+  if (hotspots.length < 2) return ''
 
   const rows = hotspots
     .map(

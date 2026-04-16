@@ -35,7 +35,10 @@ describe('buildHotspotUrls', () => {
     expect(buildHotspotUrls(findings)).toBe('')
   })
 
-  it('extracts hotspot with ≥ 3 findings sur ≥ 2 phases', () => {
+  it('returns empty string when only one URL meets the threshold (mono-page case)', () => {
+    // Une seule URL passe le seuil ≥ 3 findings × ≥ 2 phases — la section
+    // "Pages à fort enjeu" n'a pas de valeur dans ce cas (typique du crawl
+    // mono-page), on la masque entièrement.
     const findings = [
       finding({
         phaseKey: 'geo',
@@ -57,11 +60,25 @@ describe('buildHotspotUrls', () => {
         locationUrl: 'https://site.com/other',
       }),
     ]
+    expect(buildHotspotUrls(findings)).toBe('')
+  })
+
+  it('extracts hotspots when ≥ 2 URLs meet the threshold', () => {
+    const findings = [
+      // URL 1 : 3 findings × 2 phases ✓
+      finding({ phaseKey: 'geo', locationUrl: 'https://site.com/p1', pointsLost: 2 }),
+      finding({ phaseKey: 'eeat', locationUrl: 'https://site.com/p1', pointsLost: 1 }),
+      finding({ phaseKey: 'technical', locationUrl: 'https://site.com/p1', pointsLost: 0.5 }),
+      // URL 2 : 3 findings × 2 phases ✓
+      finding({ phaseKey: 'geo', locationUrl: 'https://site.com/p2', pointsLost: 1 }),
+      finding({ phaseKey: 'eeat', locationUrl: 'https://site.com/p2', pointsLost: 0.5 }),
+      finding({ phaseKey: 'technical', locationUrl: 'https://site.com/p2', pointsLost: 0.5 }),
+    ]
     const md = buildHotspotUrls(findings)
-    expect(md).toContain('https://site.com/post')
-    expect(md).toContain('| 3 |')
+    expect(md).toContain('https://site.com/p1')
+    expect(md).toContain('https://site.com/p2')
     expect(md).toContain('3.5')
-    expect(md).not.toContain('other')
+    expect(md).toContain('2.0')
   })
 
   it('sorts hotspots by total points lost desc', () => {
