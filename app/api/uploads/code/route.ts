@@ -5,6 +5,7 @@ import {
   UploadError,
   validateAndExtract,
 } from '@/lib/audit/upload/extract'
+import { logger } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -64,7 +65,10 @@ export async function POST(request: Request) {
     if (error instanceof UploadError) {
       return NextResponse.json({ error: error.message }, { status: error.status })
     }
-    console.error('[upload] extract error', error)
+    logger.error('upload.extract.error', {
+      org_id: ctx.organizationId,
+      error,
+    })
     return NextResponse.json({ error: 'Extraction échouée' }, { status: 500 })
   }
 }

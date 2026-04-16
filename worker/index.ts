@@ -15,9 +15,12 @@
 import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { processAudit } from '@/lib/audit/process'
+import { createLogger } from '@/lib/observability/logger'
 
 const POLL_MS = Number.parseInt(process.env.WORKER_POLL_MS ?? '2000', 10)
 const IDLE_BACKOFF_MAX_MS = 10_000
+
+const log = createLogger({ component: 'worker', pid: process.pid })
 
 let shuttingDown = false
 let currentAuditId: string | null = null
@@ -69,19 +72,26 @@ async function loop(): Promise<void> {
       }
       idleMs = POLL_MS
       currentAuditId = claimed.id
-      console.log(`[worker] claimed audit ${claimed.id}`)
+      log.info('worker.audit.claimed', { audit_id: claimed.id })
+      const startedAt = Date.now()
       try {
         await processAudit(claimed.id)
-        console.log(`[worker] completed audit ${claimed.id}`)
+        log.info('worker.audit.completed', {
+          audit_id: claimed.id,
+          duration_ms: Date.now() - startedAt,
+        })
       } catch (error) {
         // processAudit catches its own errors and marks audit failed ;
         // this branch covers only unexpected throws.
-        console.error(`[worker] unexpected error on audit ${claimed.id}`, error)
+        log.error('worker.audit.unexpected_error', {
+          audit_id: claimed.id,
+          error,
+        })
       } finally {
         currentAuditId = null
       }
     } catch (error) {
-      console.error('[worker] loop error', error)
+      log.error('worker.loop.error', { error })
       await sleep(POLL_MS)
     }
   }
@@ -89,12 +99,12 @@ async function loop(): Promise<void> {
 
 function installSignalHandlers(): void {
   const handle = (signal: string) => {
-    console.log(`[worker] received ${signal}, draining…`)
+    log.info('worker.signal.received', { signal })
     shuttingDown = true
     // Allow 30 s for the current audit to finish before forcing exit.
     setTimeout(() => {
       if (currentAuditId) {
-        console.warn(`[worker] forcing exit while running ${currentAuditId}`)
+        log.warn('worker.shutdown.forced', { audit_id: currentAuditId })
       }
       process.exit(0)
     }, 30_000).unref()
@@ -104,20 +114,20 @@ function installSignalHandlers(): void {
 }
 
 async function main(): Promise<void> {
-  console.log('[worker] starting SEO-GEO worker')
+  log.info('worker.start', { poll_ms: POLL_MS })
   try {
     await ping()
-    console.log('[worker] database connection OK')
+    log.info('worker.db.ok')
   } catch (error) {
-    console.error('[worker] database unreachable', error)
+    log.error('worker.db.unreachable', { error })
     process.exit(1)
   }
   installSignalHandlers()
   await loop()
-  console.log('[worker] drained, bye')
+  log.info('worker.drained')
 }
 
 main().catch((error) => {
-  console.error('[worker] fatal', error)
+  log.error('worker.fatal', { error })
   process.exit(1)
 })

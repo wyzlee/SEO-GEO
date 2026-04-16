@@ -7,6 +7,7 @@ import { authenticateAuto, AuthError } from '@/lib/auth/server'
 import { processAudit } from '@/lib/audit/process'
 import { assertSafeUrl, UnsafeUrlError } from '@/lib/security/url-guard'
 import { rateLimit } from '@/lib/security/rate-limit'
+import { logger } from '@/lib/observability/logger'
 
 const BURST_LIMIT = { name: 'audits.post.burst', max: 3, windowMs: 60_000 }
 const DAILY_LIMIT = { name: 'audits.post.daily', max: 50, windowMs: 86_400_000 }
@@ -133,7 +134,7 @@ export async function POST(request: Request) {
     try {
       await processAudit(auditId)
     } catch (error) {
-      console.error(`[audit ${auditId}] after() handler error`, error)
+      logger.error('audit.after_handler.error', { audit_id: auditId, error })
     }
   })
 

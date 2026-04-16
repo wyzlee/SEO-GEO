@@ -36,6 +36,7 @@ import {
   persistPhaseResult,
   seedAuditPhases,
 } from './persist'
+import { logger } from '@/lib/observability/logger'
 
 function skipped(key: PhaseKey, scoreMax: number, reason: string): PhaseResult {
   return {
@@ -180,7 +181,11 @@ export async function processAudit(auditId: string): Promise<void> {
     await Promise.race([runProcessAudit(auditId), timeoutPromise])
   } catch (error) {
     if (error instanceof AuditTimeoutError) {
-      console.error(`[audit ${auditId}] timeout`, error.message)
+      logger.error('audit.timeout', {
+        audit_id: auditId,
+        timeout_ms: timeoutMs,
+        error,
+      })
       await failAudit(auditId, error).catch(() => undefined)
       return
     }
@@ -204,7 +209,7 @@ async function runProcessAudit(auditId: string): Promise<void> {
     const claimed = await markAuditRunning(auditId)
     if (!claimed) {
       // Another worker or handler already running this audit — skip.
-      console.log(`[audit ${auditId}] already claimed, skipping`)
+      logger.info('audit.already_claimed', { audit_id: auditId })
       return
     }
     await seedAuditPhases(auditId)
@@ -260,7 +265,11 @@ async function runProcessAudit(auditId: string): Promise<void> {
         }
         allFindings.push(...result.findings)
       } catch (phaseError) {
-        console.error(`[audit ${auditId}] phase ${key} failed`, phaseError)
+        logger.error('audit.phase.failed', {
+          audit_id: auditId,
+          phase: key,
+          error: phaseError,
+        })
         await markPhaseFailed(auditId, key, phaseError)
       }
     }
@@ -273,7 +282,7 @@ async function runProcessAudit(auditId: string): Promise<void> {
 
     await completeAudit(auditId, totalScore, breakdown)
   } catch (error) {
-    console.error(`[audit ${auditId}] fatal error`, error)
+    logger.error('audit.fatal', { audit_id: auditId, error })
     await failAudit(auditId, error).catch(() => undefined)
   } finally {
     for (const path of cleanupPaths) {
