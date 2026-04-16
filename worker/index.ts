@@ -12,6 +12,11 @@
  *  - Graceful shutdown on SIGINT/SIGTERM : finish the current audit
  *    (if any) before exiting.
  */
+// Charge .env.local en dev (no-op en prod où les vars viennent de Docker).
+import { config as loadEnv } from 'dotenv'
+import { resolve } from 'node:path'
+loadEnv({ path: resolve(process.cwd(), '.env.local') })
+
 import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { processAudit } from '@/lib/audit/process'

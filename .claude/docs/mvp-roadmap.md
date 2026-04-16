@@ -115,13 +115,16 @@ Validation : pas de code client persisté >24h, zéro secret client logué.
 **Objectif** : ship V1 agency mode sur `seo-geo.wyzlee.cloud`.
 
 Actions :
-1. Tests E2E sur flows critiques (création audit, génération rapport, upload code)
-2. Monitoring : logs structurés (pas de PII), error tracking (Sentry compat Wyzlee)
-3. Rate limiting sur POST /api/audits (anti-abuse)
-4. Documentation onboarding pour Olivier + futur partenaire agence
-5. Premier audit "vrai" sur un prospect réel, debrief, ajustements
+
+1. [x] Tests d'intégration sur les routes critiques `/api/audits*` (22 tests : auth, validation, SSRF, rate-limit, isolation org, lifecycle rapport) — commit `3530bca`
+2. [x] Logs structurés JSON 1-ligne PII-free (`lib/observability/logger.ts`, sérialisation auto des Error, contexte propagé via `.with()`, niveaux via `LOG_LEVEL`) — commit `81543ab`. Error tracking Sentry à brancher après le 1er audit prod si nécessaire.
+3. [x] Rate limiting burst (3/min/user) + daily (50/24h/org) sur POST /api/audits — commit `f4db886`
+4. [ ] Documentation onboarding (variables d'env, lancer un audit, lire les logs JSON, générer un rapport)
+5. [ ] Premier audit "vrai" sur un prospect réel — validation locale d'abord (port ≠ 3000), puis prod
 
 Livrable : V1 en prod, 3+ audits réels livrés à des clients.
+
+État : tests E2E API + observabilité bouclés. Reste validation manuelle bout-en-bout, doc onboarding, deploy VPS.
 
 ## Sprint 08 — Bascule V2 self-serve
 
