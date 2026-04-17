@@ -23,6 +23,15 @@ services:
       - NEXT_PUBLIC_STACK_PROJECT_ID=${NEXT_PUBLIC_STACK_PROJECT_ID}
       - STACK_WEBHOOK_SECRET=${STACK_WEBHOOK_SECRET}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - EMAIL_FROM=${EMAIL_FROM:-SEO-GEO <no-reply@wyzlee.cloud>}
+      - EMAIL_REPLY_TO=${EMAIL_REPLY_TO:-contact@wyzlee.com}
+      - GOTENBERG_URL=http://gotenberg:3000
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://seo-geo.wyzlee.cloud}
+
+    depends_on:
+      gotenberg:
+        condition: service_started
 
     healthcheck:
       test:
@@ -56,6 +65,7 @@ services:
 
     networks:
       - traefik
+      - seo-geo-internal
 
     labels:
       - "traefik.enable=true"
@@ -75,6 +85,10 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - EMAIL_FROM=${EMAIL_FROM:-SEO-GEO <no-reply@wyzlee.cloud>}
+      - EMAIL_REPLY_TO=${EMAIL_REPLY_TO:-contact@wyzlee.com}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://seo-geo.wyzlee.cloud}
 
     deploy:
       resources:
@@ -91,6 +105,38 @@ services:
         max-size: "10m"
         max-file: "5"
 
+  # --------------------------------------------------------------------
+  # Gotenberg — service de rendu PDF/HTML (sidecar).
+  # Consommé par l'app Next via http://gotenberg:3000. Pas d'exposition
+  # publique — uniquement joignable depuis le réseau `seo-geo-internal`.
+  # --------------------------------------------------------------------
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: seo-geo-gotenberg
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--api-timeout=60s"
+      - "--api-body-limit=10MB"
+      - "--log-level=info"
+    networks:
+      - seo-geo-internal
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
 networks:
   traefik:
     external: true
+  seo-geo-internal:
+    driver: bridge

@@ -37,6 +37,7 @@ import {
   seedAuditPhases,
 } from './persist'
 import { logger } from '@/lib/observability/logger'
+import { notifyAuditCompleted } from '@/lib/email/notify-audit-completed'
 
 function skipped(key: PhaseKey, scoreMax: number, reason: string): PhaseResult {
   return {
@@ -281,6 +282,10 @@ async function runProcessAudit(auditId: string): Promise<void> {
         : 0
 
     await completeAudit(auditId, totalScore, breakdown)
+
+    // Best-effort : notifier l'utilisateur via email. N'interrompt jamais le
+    // pipeline — toutes les erreurs sont catchées dans notifyAuditCompleted.
+    await notifyAuditCompleted(auditId)
   } catch (error) {
     logger.error('audit.fatal', { audit_id: auditId, error })
     await failAudit(auditId, error).catch(() => undefined)
