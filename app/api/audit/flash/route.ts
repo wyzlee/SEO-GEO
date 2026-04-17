@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { runFlashAudit } from '@/lib/audit/flash'
 import { assertSafeUrl, UnsafeUrlError } from '@/lib/security/url-guard'
@@ -11,7 +11,7 @@ const BodySchema = z.object({
   url: z.string().min(1),
 })
 
-function getClientIp(req: NextRequest): string {
+function getClientIp(req: Request): string {
   return (
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     req.headers.get('x-real-ip') ??
@@ -19,7 +19,7 @@ function getClientIp(req: NextRequest): string {
   )
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const ip = getClientIp(req)
   const rl = rateLimit(FLASH_RATE_LIMIT, ip)
   if (!rl.allowed) {
