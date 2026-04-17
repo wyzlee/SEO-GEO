@@ -17,6 +17,7 @@ export interface AuditRow {
   clientName: string | null
   consultantName: string | null
   mode: string
+  previousAuditId: string | null
   createdAt: string
   startedAt: string | null
   finishedAt: string | null

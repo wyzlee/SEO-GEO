@@ -1,5 +1,5 @@
 import { NextResponse, after } from 'next/server'
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { audits } from '@/lib/db/schema'
@@ -8,6 +8,33 @@ import { processAudit } from '@/lib/audit/process'
 import { assertSafeUrl, UnsafeUrlError } from '@/lib/security/url-guard'
 import { rateLimit } from '@/lib/security/rate-limit'
 import { logger } from '@/lib/observability/logger'
+
+/**
+ * Trouve le dernier audit `completed` de la même org + même cible (targetUrl
+ * ou githubRepo) pour auto-lier le nouvel audit en tant que successeur.
+ * Retourne null si aucun antérieur — l'audit créé sera `previousAuditId = null`.
+ */
+async function findPreviousAudit(
+  organizationId: string,
+  targetUrl: string | null,
+  githubRepo: string | null,
+): Promise<string | null> {
+  if (!targetUrl && !githubRepo) return null
+  const conditions = [
+    eq(audits.organizationId, organizationId),
+    eq(audits.status, 'completed'),
+  ]
+  if (targetUrl) conditions.push(eq(audits.targetUrl, targetUrl))
+  else if (githubRepo) conditions.push(eq(audits.githubRepo, githubRepo))
+
+  const rows = await db
+    .select({ id: audits.id })
+    .from(audits)
+    .where(and(...conditions))
+    .orderBy(desc(audits.finishedAt))
+    .limit(1)
+  return rows[0]?.id ?? null
+}
 
 const BURST_LIMIT = { name: 'audits.post.burst', max: 3, windowMs: 60_000 }
 const DAILY_LIMIT = { name: 'audits.post.daily', max: 50, windowMs: 86_400_000 }
@@ -112,6 +139,12 @@ export async function POST(request: Request) {
       ? 'zip'
       : 'url'
 
+  const previousAuditId = await findPreviousAudit(
+    ctx.organizationId,
+    parsed.data.targetUrl ?? null,
+    parsed.data.githubRepo ?? null,
+  )
+
   const inserted = await db
     .insert(audits)
     .values({
@@ -125,6 +158,7 @@ export async function POST(request: Request) {
       clientName: parsed.data.clientName ?? null,
       consultantName: parsed.data.consultantName ?? null,
       status: 'queued',
+      previousAuditId,
     })
     .returning({ id: audits.id })
 

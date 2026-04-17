@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   pgTable,
   uuid,
   text,
@@ -77,6 +78,15 @@ export const audits = pgTable(
 
     mode: text('mode').notNull().default('full'),
 
+    // Self-référence pour comparaison N vs N-1 (ROI tracking).
+    // Nullable : premier audit n'a pas de prédécesseur.
+    // onDelete: 'set null' : si l'audit précédent est supprimé, on perd
+    // juste le lien — pas de cascade destructive.
+    previousAuditId: uuid('previous_audit_id').references(
+      (): AnyPgColumn => audits.id,
+      { onDelete: 'set null' },
+    ),
+
     queuedAt: timestamp('queued_at').defaultNow().notNull(),
     startedAt: timestamp('started_at'),
     finishedAt: timestamp('finished_at'),
@@ -90,6 +100,7 @@ export const audits = pgTable(
       t.status,
     ),
     idxQueued: index('audits_queued_idx').on(t.status, t.queuedAt),
+    idxPrevious: index('audits_previous_idx').on(t.previousAuditId),
   }),
 )
 

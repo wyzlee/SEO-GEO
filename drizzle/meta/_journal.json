@@ -15,6 +15,13 @@
       "when": 1776233190541,
       "tag": "0001_certain_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776400407193,
+      "tag": "0002_concerned_karnak",
+      "breakpoints": true
     }
   ]
 }

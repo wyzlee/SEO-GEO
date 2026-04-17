@@ -146,6 +146,14 @@ export default function AuditDetailPage({
                     : 'Générer le rapport'}
                 </button>
               ))}
+            {isCompleted && audit.previousAuditId ? (
+              <Link
+                href={`/dashboard/audits/${id}/compare`}
+                className="btn-secondary"
+              >
+                Voir l&apos;évolution
+              </Link>
+            ) : null}
             <Link href="/dashboard/audits" className="btn-secondary">
               Liste
             </Link>
