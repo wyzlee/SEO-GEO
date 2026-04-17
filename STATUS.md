@@ -92,7 +92,7 @@ Page de garde (eyebrow indigo, ScoreBadge coloré par palier, date FR) + Synthè
   - PDF export (Puppeteer)
   - Branding white-label (logo agence, couleur)
 - **Infrastructure prod** :
-  - Deploy VPS `seo-geo.wyzlee.cloud` (Dockerfile + docker-compose déjà prêts)
+  - Deploy VPS `seo-geo-orcin.vercel.app` (Dockerfile + docker-compose déjà prêts)
   - Webhook Stack Auth prod
   - Worker loop dédié si audits > quelques minutes
 - **V2 business** :

@@ -78,7 +78,7 @@ Retourner à l'utilisateur :
 
 ### Liens
 
-- 🌐 **Version web** (valable 30 jours) : https://seo-geo.wyzlee.cloud/r/<share_slug>
+- 🌐 **Version web** (valable 30 jours) : https://seo-geo-orcin.vercel.app/r/<share_slug>
 - 📄 **PDF** : <pdf_url> (si format inclut pdf)
 
 ### Contenu

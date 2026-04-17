@@ -1,7 +1,7 @@
 # MVP Roadmap — SEO-GEO
 
 > Sprints séquentiels. Un sprint = ~1-2 semaines. Chaque sprint livre un incrément démontrable.
-> Objectif V1 : app Wyzlee déployée sur `seo-geo.wyzlee.cloud`, Olivier lance des audits en agency mode, rapports FR livrés aux clients.
+> Objectif V1 : app Wyzlee déployée sur `seo-geo-orcin.vercel.app`, Olivier lance des audits en agency mode, rapports FR livrés aux clients.
 > Objectif V2 : bascule self-serve avec signup public + Stripe.
 
 ## Sprint 00 — Scope & fondation documentaire
@@ -33,7 +33,7 @@ Actions :
 2. Configurer Stack Auth singleton (SSO partagé Wyzlee)
 3. Configurer Neon (nouvelle DB `seo-geo`), lazy Proxy pattern dans `lib/db/index.ts`
 4. Dockerfile multi-stage + docker-compose avec labels Traefik
-5. Deploy pipeline : push → VPS → Traefik → `seo-geo.wyzlee.cloud`
+5. Deploy pipeline : push → VPS → Traefik → `seo-geo-orcin.vercel.app`
 6. `/api/health` endpoint retournant `{ status: "ok", version, db: "connected" }`
 
 Livrable : app accessible en HTTPS, Stack Auth login fonctionnel, DB connectée.
@@ -88,7 +88,7 @@ Validation : `/wyzlee-design-validate` passe.
 Actions :
 1. Agent `report-generator` (ou route API directe) consume findings → render Markdown → render HTML (template FR de `.claude/docs/report-templates.md`)
 2. PDF via Puppeteer headless (ou équivalent serverless-compatible)
-3. Web share link public `seo-geo.wyzlee.cloud/r/<slug>` (tokenisé, expirable)
+3. Web share link public `seo-geo-orcin.vercel.app/r/<slug>` (tokenisé, expirable)
 4. Branding variable : logo agence partenaire injectable
 
 Livrable : un audit → rapport FR de 15 pages max, jargon-free, variables substituées, PDF téléchargeable + lien partageable.
@@ -112,7 +112,7 @@ Validation : pas de code client persisté >24h, zéro secret client logué.
 
 ## Sprint 07 — Polish V1 + deploy prod
 
-**Objectif** : ship V1 agency mode sur `seo-geo.wyzlee.cloud`.
+**Objectif** : ship V1 agency mode sur `seo-geo-orcin.vercel.app`.
 
 Actions :
 
@@ -137,7 +137,7 @@ Actions :
 4. Landing page marketing (copy, témoignages, CTA)
 5. Mise en conformité RGPD (CGU, politique confidentialité, DPA template)
 
-Livrable : `seo-geo.wyzlee.cloud` ouvert au public, premiers signups organiques.
+Livrable : `seo-geo-orcin.vercel.app` ouvert au public, premiers signups organiques.
 
 **Important** : sprints 00-07 doivent avoir validé que l'audit engine est robuste et que les rapports sont de qualité AVANT d'ouvrir au public. Pas de bascule V2 prématurée.
 

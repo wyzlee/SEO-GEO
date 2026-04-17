@@ -35,14 +35,14 @@ Copier de `wyz-scrib` vers le projet courant, en nettoyant :
 - `.env.template` — copier + adapter avec vars du projet (voir `security.md`)
 - `proxy.ts` — copier (pattern Next 16)
 - `Dockerfile` — multi-stage `node:20-alpine` (adapter image name à `seo-geo`)
-- `docker-compose.yml` — labels Traefik (route `seo-geo.wyzlee.cloud`)
+- `docker-compose.yml` — labels Traefik (route `seo-geo-orcin.vercel.app`)
 
 ### Étape 2 — Personnaliser pour SEO-GEO
 
 Remplacer dans tous les fichiers copiés :
 - `wyz-scrib` → `seo-geo`
 - `WyzScrib` → `SEO-GEO`
-- `wyzscrib.wyzlee.cloud` → `seo-geo.wyzlee.cloud`
+- `wyzscrib.wyzlee.cloud` → `seo-geo-orcin.vercel.app`
 - Name in `package.json` → `seo-geo`
 - Description in `package.json` → "SEO & GEO audit platform for 2026"
 

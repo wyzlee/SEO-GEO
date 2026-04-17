@@ -392,7 +392,7 @@ Cet audit couvre 11 phases d'analyse alignées avec les standards 2026 :
 
 ### Contact
 
-${audit.consultantName ? `**${audit.consultantName}**\n` : ''}Audit généré par Wyzlee — seo-geo.wyzlee.cloud
+${audit.consultantName ? `**${audit.consultantName}**\n` : ''}Audit généré par Wyzlee — seo-geo-orcin.vercel.app
 `
 
   // Pass finale de normalisation : force la casse canonique des noms propres

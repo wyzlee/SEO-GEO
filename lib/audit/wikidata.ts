@@ -45,7 +45,7 @@ export async function searchWikidataEntity(
       {
         headers: {
           'User-Agent':
-            'SEO-GEO-Audit/0.1 (+https://seo-geo.wyzlee.cloud; respectful one-shot lookup)',
+            'SEO-GEO-Audit/0.1 (+https://seo-geo-orcin.vercel.app; respectful one-shot lookup)',
         },
         signal: AbortSignal.timeout(5_000),
       },

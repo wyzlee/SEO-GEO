@@ -33,7 +33,7 @@ function shell({
   bodyHtml,
   primaryAction,
   footerCompany = 'Wyzlee',
-  appUrl = 'https://seo-geo.wyzlee.cloud',
+  appUrl = 'https://seo-geo-orcin.vercel.app',
 }: EmailShellInput): string {
   const actionBlock = primaryAction
     ? `
@@ -147,7 +147,7 @@ export function auditCompletedEmail(input: AuditCompletedEmailInput): {
       url: input.auditUrl,
     },
     footerCompany: input.companyName || 'Wyzlee',
-    appUrl: input.appUrl || 'https://seo-geo.wyzlee.cloud',
+    appUrl: input.appUrl || 'https://seo-geo-orcin.vercel.app',
   })
 
   const subject = `Audit terminé — ${auditLabel} (${scoreRounded}/100)`

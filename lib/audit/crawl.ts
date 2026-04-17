@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio'
 import type { CrawlSnapshot, SubPageSnapshot } from './types'
 
 const USER_AGENT =
-  'SEO-GEO-Audit/0.1 (+https://seo-geo.wyzlee.cloud; audit respectful, rate-limited)'
+  'SEO-GEO-Audit/0.1 (+https://seo-geo-orcin.vercel.app; audit respectful, rate-limited)'
 const DEFAULT_TIMEOUT_MS = 15_000
 const MAX_SUB_PAGES = 20
 const SUB_PAGES_CONCURRENCY = 4

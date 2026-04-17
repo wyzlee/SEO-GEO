@@ -26,9 +26,9 @@
 
 **But** : Olivier peut signer et livrer un premier contrat. Audit + rapport manuel, facturation Pennylane manuelle, mais **livrable client irréprochable**.
 
-### 1.1 — Déploiement reproductible sur `seo-geo.wyzlee.cloud` — M
+### 1.1 — Déploiement reproductible sur `seo-geo-orcin.vercel.app` — M
 - `scripts/deploy.sh` (build image, push registry, SSH pull, `docker compose up -d`, healthcheck `/api/health`, rollback si 5xx).
-- `docker-compose.prod.yml` : service `app` + service `worker` dédié + labels Traefik `seo-geo.wyzlee.cloud`.
+- `docker-compose.prod.yml` : service `app` + service `worker` dédié + labels Traefik `seo-geo-orcin.vercel.app`.
 - `.env.production.example` avec toutes les vars documentées.
 - Migrations via `/db-migrate` sur branche Neon d'abord.
 - **Risque** : secrets via Doppler ou Traefik secrets (pas `.env` en clair).
@@ -220,7 +220,7 @@ Les 5 défauts corrigés à la main par Olivier le 16/04 doivent être codifiés
 ## Verification (comment tester end-to-end)
 
 **Vague 1** :
-- `./scripts/deploy.sh` → `seo-geo.wyzlee.cloud/api/health` = 200 OK.
+- `./scripts/deploy.sh` → `seo-geo-orcin.vercel.app/api/health` = 200 OK.
 - Créer audit via UI → email reçu en fin de pipeline.
 - Bouton « Télécharger PDF » → fichier avec branding org.
 - Pages `/legal/cgu|privacy|mentions|dpa` rendues.

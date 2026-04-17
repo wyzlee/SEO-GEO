@@ -76,7 +76,7 @@ async function deliverOnce(
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'user-agent': 'SEO-GEO-Webhooks/1 (+https://seo-geo.wyzlee.cloud)',
+        'user-agent': 'SEO-GEO-Webhooks/1 (+https://seo-geo-orcin.vercel.app)',
         'x-seogeo-signature': signBody(secret, body),
         'x-seogeo-event-id': eventId,
         'x-seogeo-attempt': String(attempt),

@@ -16,7 +16,7 @@ import {
 import { logger } from '@/lib/observability/logger'
 
 function appUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || 'https://seo-geo.wyzlee.cloud'
+  return process.env.NEXT_PUBLIC_APP_URL || 'https://seo-geo-orcin.vercel.app'
 }
 
 export async function notifyAuditCompleted(auditId: string): Promise<void> {

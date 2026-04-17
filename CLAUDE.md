@@ -1,7 +1,7 @@
 # CLAUDE.md — SEO-GEO
 
 > **Projet** : App SaaS d'audit SEO / GEO (Generative Engine Optimization) format Wyzlee.
-> **Cible déploiement** : Vercel (projet `seo-geo-wyzlee`), domaine `seo-geo.wyzlee.cloud`.
+> **Cible déploiement** : Vercel (projet `seo-geo-wyzlee`), domaine `seo-geo-orcin.vercel.app`.
 > **Modèle commercial** : hybride progressif — agency tool V1, self-serve V2.
 > **Clients** : agences SEO, dir marketing B2B SaaS, studios dev voulant auditer leurs sites / code source avant release.
 

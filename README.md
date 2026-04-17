@@ -1,7 +1,7 @@
 # SEO-GEO
 
 > App SaaS d'audit SEO & GEO (Generative Engine Optimization) conçue pour 2026. Format Wyzlee.
-> **Cible** : `seo-geo.wyzlee.cloud`.
+> **Cible** : `seo-geo-orcin.vercel.app`.
 
 ## Qu'est-ce que c'est
 

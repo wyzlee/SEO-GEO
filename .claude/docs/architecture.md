@@ -11,7 +11,7 @@
                         │ HTTPS                    │ HTTPS
                         ▼                          ▼
             ┌─────────────────────┐      ┌──────────────────────┐
-            │  seo-geo.wyzlee.cloud│      │  auth.wyzlee.com     │
+            │  seo-geo-orcin.vercel.app│      │  auth.wyzlee.com     │
             │  (Traefik + Docker)  │      │  (Stack Auth SSO)    │
             │  Next.js 16 standalone│     │  shared across Wyz*  │
             └───────────┬──────────┘      └──────────────────────┘
@@ -150,7 +150,7 @@ Un user peut être membre de plusieurs orgs (table `memberships` avec role). L'o
 
 - Dockerfile multi-stage : `deps → builder → runner`, base `node:20-alpine`
 - `output: 'standalone'` dans `next.config.ts`
-- docker-compose.yml avec labels Traefik (route `seo-geo.wyzlee.cloud`, Let's Encrypt auto)
+- docker-compose.yml avec labels Traefik (route `seo-geo-orcin.vercel.app`, Let's Encrypt auto)
 - Worker : container séparé, même image, `CMD ["node", "dist/worker/index.js"]`
 - Secrets : env vars injectés par docker-compose depuis `.env` VPS (git-ignored)
 

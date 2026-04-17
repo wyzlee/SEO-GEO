@@ -5,7 +5,7 @@
 
 ## Format de livraison
 
-- **Web** : page publique `seo-geo.wyzlee.cloud/r/<slug>` (lien tokenisé, expire 30 jours par défaut)
+- **Web** : page publique `seo-geo-orcin.vercel.app/r/<slug>` (lien tokenisé, expire 30 jours par défaut)
 - **PDF** : version imprimable, généré via Puppeteer headless à partir du HTML
 - **Longueur cible** : 10-15 pages
 
@@ -227,7 +227,7 @@ Disponible pour échanger sur les recommandations ou pour un accompagnement opé
 Si `organizations.branding` défini :
 - `logo_url` → injecté en haut de page de garde (fallback : logo Wyzlee)
 - `primary_color` → CSS var `--brand-primary` override
-- `footer_text` → texte footer custom (fallback : "Audit généré par Wyzlee — seo-geo.wyzlee.cloud")
+- `footer_text` → texte footer custom (fallback : "Audit généré par Wyzlee — seo-geo-orcin.vercel.app")
 
 Si pas de branding → défaut Wyzlee (logo + couleurs indigo/violet).
 

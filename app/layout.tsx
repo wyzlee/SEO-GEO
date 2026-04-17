@@ -56,7 +56,7 @@ export const viewport: Viewport = {
 }
 
 const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL || 'https://seo-geo.wyzlee.cloud'
+  process.env.NEXT_PUBLIC_APP_URL || 'https://seo-geo-orcin.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
