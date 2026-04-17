@@ -89,6 +89,7 @@ export interface CreateAuditInput {
   githubRepo?: string
   clientName?: string
   consultantName?: string
+  mode?: 'full' | 'standard'
 }
 
 export function useCreateAudit() {
