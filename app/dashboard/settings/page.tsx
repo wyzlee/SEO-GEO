@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/layout/header'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
@@ -73,8 +74,31 @@ export default function SettingsPage() {
         description="Branding white-label appliqué à vos rapports livrés aux clients."
       />
 
-      <section className="p-6">
-        <div className="card-premium max-w-2xl">
+      <section className="p-6 space-y-4 max-w-2xl">
+        <div
+          className="flex flex-wrap gap-3 text-sm font-[family-name:var(--font-sans)]"
+        >
+          <Link
+            href="/dashboard/settings"
+            aria-current="page"
+            className="px-3 py-1.5 rounded"
+            style={{
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text)',
+            }}
+          >
+            Branding
+          </Link>
+          <Link
+            href="/dashboard/settings/webhooks"
+            className="px-3 py-1.5 rounded"
+            style={{ color: 'var(--color-muted)' }}
+          >
+            Webhooks
+          </Link>
+        </div>
+        <div className="card-premium">
           {isLoading ? (
             <p
               className="text-sm py-6 text-center"

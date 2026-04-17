@@ -38,6 +38,7 @@ import {
 } from './persist'
 import { logger } from '@/lib/observability/logger'
 import { notifyAuditCompleted } from '@/lib/email/notify-audit-completed'
+import { dispatchWebhookEvent } from '@/lib/webhooks/dispatch'
 
 function skipped(key: PhaseKey, scoreMax: number, reason: string): PhaseResult {
   return {
@@ -286,6 +287,43 @@ async function runProcessAudit(auditId: string): Promise<void> {
     // Best-effort : notifier l'utilisateur via email. N'interrompt jamais le
     // pipeline — toutes les erreurs sont catchées dans notifyAuditCompleted.
     await notifyAuditCompleted(auditId)
+
+    // Dispatch aux webhooks sortants actifs de l'org (intégration CRM / n8n
+    // / Slack). Best-effort également — erreurs catchées dans dispatch.
+    try {
+      const [row] = await db
+        .select({
+          id: audits.id,
+          organizationId: audits.organizationId,
+          targetUrl: audits.targetUrl,
+          clientName: audits.clientName,
+          scoreTotal: audits.scoreTotal,
+          finishedAt: audits.finishedAt,
+        })
+        .from(audits)
+        .where(eq(audits.id, auditId))
+        .limit(1)
+      if (row) {
+        await dispatchWebhookEvent({
+          event: 'audit.completed',
+          audit: {
+            id: row.id,
+            organizationId: row.organizationId,
+            targetUrl: row.targetUrl,
+            clientName: row.clientName,
+            scoreTotal: row.scoreTotal,
+            finishedAt: row.finishedAt?.toISOString() ?? null,
+            shareUrl: null,
+          },
+          emittedAt: new Date().toISOString(),
+        })
+      }
+    } catch (error) {
+      logger.warn('audit.webhooks.dispatch_failed', {
+        audit_id: auditId,
+        error,
+      })
+    }
   } catch (error) {
     logger.error('audit.fatal', { audit_id: auditId, error })
     await failAudit(auditId, error).catch(() => undefined)

@@ -192,6 +192,31 @@ export const reports = pgTable(
   }),
 )
 
+export const webhooks = pgTable(
+  'webhooks',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    url: text('url').notNull(),
+    // Secret HMAC-SHA256 (base64url). Régénéré côté API à la création.
+    secret: text('secret').notNull(),
+    // Events listés en texte séparés virgule (ex: "audit.completed,audit.failed").
+    // V1 n'expose que `audit.completed` ; on garde un champ ouvert pour V2.
+    events: text('events').notNull().default('audit.completed'),
+    active: integer('active').notNull().default(1),
+    lastSuccessAt: timestamp('last_success_at'),
+    lastErrorAt: timestamp('last_error_at'),
+    lastErrorMessage: text('last_error_message'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    idxOrg: index('webhooks_org_idx').on(t.organizationId),
+  }),
+)
+
 export const sourcesTable = pgTable('sources', {
   id: text('id').primaryKey(),
   claim: text('claim').notNull(),
@@ -210,3 +235,5 @@ export type AuditPhase = typeof auditPhases.$inferSelect
 export type Finding = typeof findings.$inferSelect
 export type NewFinding = typeof findings.$inferInsert
 export type Report = typeof reports.$inferSelect
+export type Webhook = typeof webhooks.$inferSelect
+export type NewWebhook = typeof webhooks.$inferInsert
