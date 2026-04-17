@@ -49,6 +49,7 @@ export default async function proxy(request: NextRequest) {
     '/auth/callback',
     '/auth/logout',
     '/r',
+    '/legal',
     '/api/health',
     '/api/webhooks',
   ]
