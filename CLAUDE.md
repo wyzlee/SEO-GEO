@@ -1,7 +1,7 @@
 # CLAUDE.md — SEO-GEO
 
 > **Projet** : App SaaS d'audit SEO / GEO (Generative Engine Optimization) format Wyzlee.
-> **Cible déploiement** : `seo-geo.wyzlee.cloud` (VPS Wyzlee, Traefik).
+> **Cible déploiement** : Vercel (projet `seo-geo-wyzlee`), domaine `seo-geo.wyzlee.cloud`.
 > **Modèle commercial** : hybride progressif — agency tool V1, self-serve V2.
 > **Clients** : agences SEO, dir marketing B2B SaaS, studios dev voulant auditer leurs sites / code source avant release.
 
@@ -26,7 +26,7 @@ Toutes les règles de stack sont définies dans **`/Users/olivier/Developer/wyz-
 - `sonner@^2.0.7` — seule lib de toasts autorisée
 - `tailwind-merge@^3.5.0`
 
-**Infra déploiement** : Dockerfile `node:20-alpine` multi-stage (`deps → builder → runner`), `output: 'standalone'`, Traefik labels, `/api/health` endpoint 200 OK.
+**Infra déploiement** : Vercel (Next.js natif), `output: 'standalone'` désactivé pour Vercel, `/api/health` endpoint 200 OK.
 
 **DB par app** : chaque app Wyzlee a sa propre DB Neon (jamais partagée). Connexion via HTTP driver serverless.
 
@@ -64,10 +64,9 @@ Références dans **`/Users/olivier/Developer/wyz-hub/.claude/docs/design-system
 - Jamais de `--no-verify` ni bypass pre-commit hooks
 
 **Déploiement** :
-- Workflow obligatoire : `git commit` → `git push origin main` → `./scripts/deploy.sh`
-- Lancer le script via `! ./scripts/deploy.sh` dans Claude Code (exécution directe dans la session)
-- Le script fait : lint + typecheck + tests → build Docker → rsync → migrations → `docker compose up -d` → healthcheck
-- Ne jamais tenter SSH direct ou déploiement via Chrome/browser — passer exclusivement par ce script
+- Workflow : `git commit` → `git push origin main` → Vercel déploie automatiquement
+- Variables d'env à configurer dans le dashboard Vercel (jamais dans le code)
+- Preview deployments sur chaque branche/PR automatiquement
 
 ---
 
@@ -117,7 +116,6 @@ Détails complets dans `.claude/docs/architecture.md`, `.claude/docs/data-model.
 | `/new-api-route` | Route API Next.js 16 avec `authenticateRequest` + Zod |
 | `/new-feature` | End-to-end schema → migration → API → hook → UI → test |
 | `/db-migrate` | Workflow Drizzle (generate → review → apply dev/prod) |
-| `/deploy-vps` | Build Docker + push + Traefik + rollback |
 | `/refresh-sources` | Refresh trimestriel des URLs dans `sources.md` |
 | `/client-report` | Génère rapport white-label FR pour un `audit_id` |
 
