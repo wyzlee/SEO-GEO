@@ -116,14 +116,24 @@ export default function AuditDetailPage({
           <div className="flex items-center gap-2">
             {isCompleted &&
               (lastReport?.shareSlug ? (
-                <a
-                  href={`/r/${lastReport.shareSlug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-secondary"
-                >
-                  Voir le rapport
-                </a>
+                <>
+                  <a
+                    href={`/r/${lastReport.shareSlug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary"
+                  >
+                    Voir le rapport
+                  </a>
+                  <a
+                    href={`/api/audits/${id}/report/pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary"
+                  >
+                    Télécharger PDF
+                  </a>
+                </>
               ) : (
                 <button
                   type="button"

@@ -8,6 +8,8 @@ import {
   PHASE_LABELS_FR,
   SEVERITY_LABELS_FR,
 } from './labels'
+import { dedupeFindings } from './dedup'
+import { capitalizeProperNouns } from './proper-nouns'
 import { PHASE_ORDER, PHASE_SCORE_MAX } from '@/lib/audit/engine'
 import type { PhaseKey } from '@/lib/audit/types'
 
@@ -41,10 +43,18 @@ export interface ReportFinding {
   locationUrl?: string | null
 }
 
+export interface ReportBranding {
+  logoUrl?: string | null
+  primaryColor?: string | null
+  accentColor?: string | null
+  companyName?: string | null
+}
+
 export interface ReportInput {
   audit: ReportAudit
   phases: ReportPhase[]
   findings: ReportFinding[]
+  branding?: ReportBranding | null
 }
 
 const SEVERITY_WEIGHT: Record<ReportFinding['severity'], number> = {
@@ -73,21 +83,14 @@ function actionableFindings(findings: ReportFinding[]): ReportFinding[] {
 }
 
 /**
- * Dédup par recommandation normalisée (lowercase + trim + premiers
- * 80 caractères). Conserve le finding avec le pointsLost le plus élevé.
- * Cas d'usage : 2 phases distinctes peuvent émettre des findings dont la
- * reco est très proche (ex. ajouter datePublished/dateModified).
+ * Dédup sémantique (v2). Délègue à `dedupeFindings` qui extrait un sujet
+ * technique canonique (datePublished, sameAs, llms.txt, schema-organization,
+ * web-vital-lcp, ...) pour fusionner les findings qui parlent du même sujet
+ * quelle que soit la formulation. Fallback sur dédup string legacy quand
+ * aucun sujet détectable.
  */
 function dedupeByRecommendation(findings: ReportFinding[]): ReportFinding[] {
-  const seen = new Map<string, ReportFinding>()
-  for (const f of findings) {
-    const key = f.recommendation.toLowerCase().trim().slice(0, 80)
-    const existing = seen.get(key)
-    if (!existing || f.pointsLost > existing.pointsLost) {
-      seen.set(key, f)
-    }
-  }
-  return Array.from(seen.values())
+  return dedupeFindings(findings)
 }
 
 export function buildScoreBreakdown(phases: ReportPhase[]): string {
@@ -109,10 +112,12 @@ export function buildScoreBreakdown(phases: ReportPhase[]): string {
 }
 
 export function buildTop5Issues(findings: ReportFinding[]): string {
-  const top = sortFindings(actionableFindings(findings))
-    .filter((f) => f.severity !== 'info')
-    .filter((f) => f.pointsLost > 0)
-    .slice(0, 5)
+  const deduped = dedupeByRecommendation(
+    actionableFindings(findings).filter(
+      (f) => f.severity !== 'info' && f.pointsLost > 0,
+    ),
+  )
+  const top = sortFindings(deduped).slice(0, 5)
 
   if (top.length === 0) {
     return '_Aucun problème critique détecté — excellent._'
@@ -286,7 +291,7 @@ export function buildExecutiveSummary(input: ReportInput): string {
     )
   }
 
-  return lines.join('\n\n')
+  return capitalizeProperNouns(lines.join('\n\n'))
 }
 
 /**

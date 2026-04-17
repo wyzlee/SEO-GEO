@@ -3,16 +3,22 @@
 import Link from 'next/link'
 import { PageHeader } from '@/components/layout/header'
 import { useAudits } from '@/lib/hooks/use-audits'
+import { useMe } from '@/lib/hooks/use-me'
 
 export default function DashboardPage() {
   const { data, isLoading } = useAudits()
+  const { data: me } = useMe()
   const audits = (data?.audits ?? []).slice(0, 5)
+  const orgName = me?.memberships[0]?.organizationName
+  const description = orgName
+    ? `Bienvenue, ${orgName}. Suivez vos audits SEO & GEO en cours et récemment terminés.`
+    : 'Suivez vos audits SEO & GEO en cours et récemment terminés.'
 
   return (
     <div>
       <PageHeader
         title="Vue d'ensemble"
-        description="Suivez vos audits SEO & GEO en cours et récemment terminés."
+        description={description}
         actions={
           <Link href="/dashboard/audits/new" className="btn-primary">
             Nouvel audit

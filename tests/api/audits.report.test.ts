@@ -143,6 +143,7 @@ describe('POST /api/audits/:id/report', () => {
         locationUrl: null,
       },
     ])
+    responses.push([{ branding: null }]) // org branding fetch
     responses.push([{ id: 'report-1', shareSlug: 'abc123' }]) // insert returning
 
     const POST = await loadPostReport()

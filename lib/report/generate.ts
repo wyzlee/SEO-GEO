@@ -3,6 +3,7 @@
  * both. Pure function — no DB access. Callers persist the result.
  */
 import { PHASE_LABELS_FR, formatDateFr, scoreLevel } from './labels'
+import { capitalizeProperNouns } from './proper-nouns'
 import {
   buildExecutiveSummary,
   buildHotspotUrls,
@@ -13,6 +14,7 @@ import {
   buildTop5Issues,
   buildWeaknesses,
   computePotentialGain,
+  type ReportBranding,
   type ReportInput,
 } from './render'
 
@@ -22,12 +24,28 @@ export interface GeneratedReport {
   templateVersion: string
 }
 
-const TEMPLATE_VERSION = 'v1.0'
+const TEMPLATE_VERSION = 'v1.1'
 
-const HTML_TEMPLATE_STYLES = `
+const DEFAULT_PRIMARY = '#4F46E5'
+const DEFAULT_SECONDARY = '#7C3AED'
+
+/**
+ * Sanity-check une couleur fournie par le client. Accepte `#rgb`, `#rrggbb`.
+ * Rejette tout ce qui pourrait injecter du CSS (`;`, `{`, `url(`, …).
+ */
+function safeColor(input: string | null | undefined, fallback: string): string {
+  if (!input) return fallback
+  const v = input.trim()
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v) ? v : fallback
+}
+
+function buildStyles(branding: ReportBranding | null | undefined): string {
+  const primary = safeColor(branding?.primaryColor, DEFAULT_PRIMARY)
+  const secondary = safeColor(branding?.accentColor, DEFAULT_SECONDARY)
+  return `
   :root {
-    --brand-primary: #4F46E5;
-    --brand-secondary: #7C3AED;
+    --brand-primary: ${primary};
+    --brand-secondary: ${secondary};
     --bg: #f4f6f9;
     --surface: #ffffff;
     --border: #dfe4ea;
@@ -121,6 +139,12 @@ const HTML_TEMPLATE_STYLES = `
     color: var(--muted);
     text-align: center;
   }
+  .brand-logo {
+    max-height: 48px;
+    max-width: 220px;
+    margin: 0 auto 14px;
+    display: block;
+  }
   @media print {
     body { background: #fff; }
     .report { box-shadow: none; border: none; margin: 0; padding: 32px; max-width: none; border-radius: 0; }
@@ -129,12 +153,42 @@ const HTML_TEMPLATE_STYLES = `
     h3 { break-after: avoid; }
   }
 `
+}
 
-function buildCoverHtml(audit: ReportInput['audit']): string {
+/**
+ * Escape basique pour attributs HTML (cover logoUrl, company name). Empêche
+ * l'injection de guillemets / chevrons dans les valeurs issues du branding
+ * saisi par le client.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function safeLogoUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  const trimmed = url.trim()
+  if (!/^https?:\/\//i.test(trimmed)) return null
+  return trimmed
+}
+
+function buildCoverHtml(
+  audit: ReportInput['audit'],
+  branding: ReportBranding | null | undefined,
+): string {
   const score = Math.round(audit.scoreTotal ?? 0)
   const level = scoreLevel(score)
+  const logo = safeLogoUrl(branding?.logoUrl)
+  const logoHtml = logo
+    ? `<img class="brand-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(branding?.companyName ?? '')}" />`
+    : ''
   return `
   <section class="cover">
+    ${logoHtml}
     <div class="eyebrow">Audit SEO & GEO</div>
     <h1>${audit.clientName ?? 'Audit'}</h1>
     <div class="target">${audit.targetUrl ?? ''}</div>
@@ -341,8 +395,14 @@ Cet audit couvre 11 phases d'analyse alignées avec les standards 2026 :
 ${audit.consultantName ? `**${audit.consultantName}**\n` : ''}Audit généré par Wyzlee — seo-geo.wyzlee.cloud
 `
 
-  const renderedBody = markdownToHtml(markdown.replace(/^# [^\n]+\n*/, ''))
-  const cover = buildCoverHtml(audit)
+  // Pass finale de normalisation : force la casse canonique des noms propres
+  // connus (Google, IA, ChatGPT, LCP/INP/CLS, Wikipedia…) dans tout le
+  // markdown assemblé. Les URLs et les blocs de code sont préservés.
+  const normalizedMarkdown = capitalizeProperNouns(markdown)
+  const renderedBody = markdownToHtml(normalizedMarkdown.replace(/^# [^\n]+\n*/, ''))
+  const cover = buildCoverHtml(audit, input.branding)
+  const styles = buildStyles(input.branding)
+  const companyName = input.branding?.companyName?.trim() || 'Wyzlee'
 
   const html = `<!doctype html>
 <html lang="fr">
@@ -354,16 +414,16 @@ ${audit.consultantName ? `**${audit.consultantName}**\n` : ''}Audit généré pa
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>${HTML_TEMPLATE_STYLES}</style>
+<style>${styles}</style>
 </head>
 <body>
 <div class="report">
   ${cover}
   ${renderedBody}
-  <footer>Audit généré par Wyzlee — seo-geo.wyzlee.cloud · ${formatDateFr(audit.finishedAt)}</footer>
+  <footer>Audit généré par ${escapeHtml(companyName)} · ${formatDateFr(audit.finishedAt)}</footer>
 </div>
 </body>
 </html>`
 
-  return { markdown, html, templateVersion: TEMPLATE_VERSION }
+  return { markdown: normalizedMarkdown, html, templateVersion: TEMPLATE_VERSION }
 }

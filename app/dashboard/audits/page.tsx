@@ -148,11 +148,28 @@ export default function AuditsListPage() {
             <p className="text-sm py-6 text-center" style={{ color: 'var(--color-muted)' }}>
               Chargement…
             </p>
+          ) : allAudits.length === 0 ? (
+            <div className="text-center py-16">
+              <h2 className="text-xl font-semibold font-[family-name:var(--font-display)]">
+                Aucun audit pour l&apos;instant
+              </h2>
+              <p
+                className="mt-2 text-sm max-w-md mx-auto"
+                style={{ color: 'var(--color-muted)' }}
+              >
+                Lancez votre premier audit pour voir les constats, le scoring
+                sur 100 points et le rapport livrable apparaître ici.
+              </p>
+              <Link
+                href="/dashboard/audits/new"
+                className="btn-primary mt-6 inline-flex"
+              >
+                Lancer un audit
+              </Link>
+            </div>
           ) : audits.length === 0 ? (
             <p className="text-sm py-10 text-center" style={{ color: 'var(--color-muted)' }}>
-              {allAudits.length === 0
-                ? 'Pas encore d\'audit. Lancez-en un pour remplir cette vue.'
-                : 'Aucun audit ne correspond à votre recherche.'}
+              Aucun audit ne correspond à votre recherche.
             </p>
           ) : (
             <table className="w-full text-sm font-[family-name:var(--font-sans)]">

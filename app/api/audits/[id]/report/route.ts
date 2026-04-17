@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import { and, desc, eq } from 'drizzle-orm'
 import crypto from 'node:crypto'
 import { db } from '@/lib/db'
-import { audits, auditPhases, findings, reports } from '@/lib/db/schema'
+import { audits, auditPhases, findings, organizations, reports } from '@/lib/db/schema'
 import { authenticateAuto, AuthError } from '@/lib/auth/server'
 import { generateReport } from '@/lib/report/generate'
+import { brandingFromRecord, type StoredBranding } from '@/lib/organizations/branding'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -60,6 +61,13 @@ export async function POST(
     )
   }
 
+  const [org] = await db
+    .select({ branding: organizations.branding })
+    .from(organizations)
+    .where(eq(organizations.id, ctx.organizationId))
+    .limit(1)
+  const branding = brandingFromRecord(org?.branding as StoredBranding | null)
+
   const rendered = generateReport({
     audit: {
       id: data.audit.id,
@@ -89,6 +97,7 @@ export async function POST(
       effort: f.effort as 'quick' | 'medium' | 'heavy' | null,
       locationUrl: f.locationUrl,
     })),
+    branding,
   })
 
   const slug = randomSlug()
