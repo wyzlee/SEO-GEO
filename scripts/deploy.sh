@@ -18,7 +18,8 @@ set -euo pipefail
 
 # ---- Config ----------------------------------------------------------------
 DEPLOY_HOST="${DEPLOY_HOST:-seo-geo.wyzlee.cloud}"
-DEPLOY_USER="${DEPLOY_USER:-deploy}"
+DEPLOY_USER="${DEPLOY_USER:-root}"
+DEPLOY_KEY="${DEPLOY_KEY:-$HOME/.ssh/id_ed25519_deploy_seogeo}"
 DEPLOY_PATH="${DEPLOY_PATH:-/srv/seo-geo}"
 HEALTHCHECK_URL="${HEALTHCHECK_URL:-https://seo-geo.wyzlee.cloud/api/health}"
 HEALTHCHECK_TIMEOUT_SEC="${HEALTHCHECK_TIMEOUT_SEC:-60}"
@@ -48,11 +49,12 @@ command -v ssh >/dev/null || fail "ssh manquant."
 command -v rsync >/dev/null || fail "rsync manquant."
 
 SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
+SSH_OPTS="-i ${DEPLOY_KEY} -o StrictHostKeyChecking=accept-new -o BatchMode=yes"
 
 # ---- Rollback mode ---------------------------------------------------------
 if [[ "$MODE" == "rollback" ]]; then
   warn "Rollback : restauration de l'image précédente sur $DEPLOY_HOST"
-  ssh "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose pull && docker tag seo-geo-app:previous seo-geo-app:current || true && docker compose up -d --no-build"
+  ssh $SSH_OPTS "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose pull && docker tag seo-geo-app:previous seo-geo-app:current || true && docker compose up -d --no-build"
   ok "Rollback lancé. Vérifier healthcheck : $HEALTHCHECK_URL"
   exit 0
 fi
@@ -80,24 +82,23 @@ fi
 # ---- Sync compose + migrations --------------------------------------------
 log "3/6 — rsync docker-compose + scripts + drizzle"
 rsync -av --delete \
-  --exclude='.env.local' --exclude='.env.production' \
+  -e "ssh $SSH_OPTS" \
+  --exclude='.env.local' --exclude='.env.production' --exclude='.env.*.bak*' \
   --exclude='node_modules' --exclude='.next' --exclude='.git' \
-  docker-compose.yml \
-  Dockerfile worker/ \
-  drizzle/ drizzle.config.ts \
-  scripts/ \
+  --exclude='.claude' --exclude='*.test.ts' --exclude='tests/' \
+  . \
   "$SSH_TARGET:$DEPLOY_PATH/"
 ok "Files rsync ✓"
 
 # ---- Apply migrations en amont (branche dev Neon validée avant) -----------
 log "4/6 — applique les migrations Drizzle sur la prod"
-ssh "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose run --rm app npx drizzle-kit push --config=drizzle.config.ts" || \
+ssh $SSH_OPTS "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose run --rm app npx drizzle-kit push --config=drizzle.config.ts" || \
   fail "Migration Drizzle échouée. Vérifier logs."
 ok "Migrations ✓"
 
 # ---- Pull + up -d ---------------------------------------------------------
 log "5/6 — redémarre les services (app + worker + gotenberg)"
-ssh "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose up -d --build"
+ssh $SSH_OPTS "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose up -d --build"
 ok "Services up ✓"
 
 # ---- Healthcheck ----------------------------------------------------------
@@ -113,7 +114,7 @@ while true; do
   if [[ "$elapsed" -ge "$HEALTHCHECK_TIMEOUT_SEC" ]]; then
     warn "Healthcheck timeout après ${HEALTHCHECK_TIMEOUT_SEC}s."
     warn "Log du conteneur pour diagnostic :"
-    ssh "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose logs --tail=50 app" || true
+    ssh $SSH_OPTS "$SSH_TARGET" "cd $DEPLOY_PATH && docker compose logs --tail=50 app" || true
     fail "Déploiement échoué. Rollback avec : $0 --rollback"
   fi
   sleep 2
