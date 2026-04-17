@@ -63,6 +63,12 @@ Références dans **`/Users/olivier/Developer/wyz-hub/.claude/docs/design-system
 - Scope préfixé si pertinent : `audit-engine: ajouter phase GEO`
 - Jamais de `--no-verify` ni bypass pre-commit hooks
 
+**Déploiement** :
+- Workflow obligatoire : `git commit` → `git push origin main` → `./scripts/deploy.sh`
+- Lancer le script via `! ./scripts/deploy.sh` dans Claude Code (exécution directe dans la session)
+- Le script fait : lint + typecheck + tests → build Docker → rsync → migrations → `docker compose up -d` → healthcheck
+- Ne jamais tenter SSH direct ou déploiement via Chrome/browser — passer exclusivement par ce script
+
 ---
 
 ## IP guardrails
