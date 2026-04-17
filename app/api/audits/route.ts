@@ -2,7 +2,7 @@ import { NextResponse, after } from 'next/server'
 import { and, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { audits } from '@/lib/db/schema'
+import { audits, organizations } from '@/lib/db/schema'
 import { authenticateAuto, AuthError } from '@/lib/auth/server'
 import { processAudit } from '@/lib/audit/process'
 import { assertSafeUrl, UnsafeUrlError } from '@/lib/security/url-guard'
@@ -55,7 +55,7 @@ const createAuditBody = z
       .optional(),
     clientName: z.string().max(200).optional(),
     consultantName: z.string().max(200).optional(),
-    mode: z.enum(['full', 'quick']).optional().default('full'),
+    mode: z.enum(['full', 'standard']).optional().default('full'),
   })
   .refine((data) => !!(data.targetUrl || data.uploadPath || data.githubRepo), {
     message: 'Renseigner targetUrl OU uploadPath OU githubRepo',
@@ -100,6 +100,17 @@ export async function POST(request: Request) {
       throw error
     }
   }
+
+  // Plan gating : free plan → mode forcé à 'standard'
+  const orgRow = await db
+    .select({ plan: organizations.plan })
+    .from(organizations)
+    .where(eq(organizations.id, ctx.organizationId))
+    .limit(1)
+  const plan = orgRow[0]?.plan ?? 'free'
+  const requestedMode = parsed.data.mode
+  const resolvedMode =
+    plan === 'pro' || plan === 'agency' ? requestedMode : 'standard'
 
   const userBurst = rateLimit(BURST_LIMIT, `u:${ctx.user.id}`)
   if (!userBurst.allowed) {
@@ -154,7 +165,7 @@ export async function POST(request: Request) {
       targetUrl: parsed.data.targetUrl ?? null,
       githubRepo: parsed.data.githubRepo ?? null,
       uploadPath: parsed.data.uploadPath ?? null,
-      mode: parsed.data.mode,
+      mode: resolvedMode,
       clientName: parsed.data.clientName ?? null,
       consultantName: parsed.data.consultantName ?? null,
       status: 'queued',

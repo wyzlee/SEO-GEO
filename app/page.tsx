@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { FlashAuditWidget } from '@/components/audit/flash-widget'
 
 export const metadata: Metadata = {
   title: 'Audit SEO & GEO — visibilité Google + moteurs IA',
@@ -140,6 +141,17 @@ export default function LandingPage() {
             >
               Demander un audit
             </a>
+          </div>
+
+          {/* Flash audit widget — inline, no login required */}
+          <div className="mt-12">
+            <p
+              className="mb-4 text-sm font-[family-name:var(--font-sans)]"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              Testez gratuitement — résultat en 10 secondes, sans compte
+            </p>
+            <FlashAuditWidget />
           </div>
         </section>
 

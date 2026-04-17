@@ -32,9 +32,12 @@ async function fetchWithTimeout(
   }
 }
 
-export async function fetchText(url: string): Promise<string | null> {
+export async function fetchText(
+  url: string,
+  timeoutMs?: number,
+): Promise<string | null> {
   try {
-    const res = await fetchWithTimeout(url)
+    const res = await fetchWithTimeout(url, { timeoutMs })
     if (!res.ok) return null
     return await res.text()
   } catch {
@@ -42,13 +45,16 @@ export async function fetchText(url: string): Promise<string | null> {
   }
 }
 
-export async function fetchHtml(url: string): Promise<{
+export async function fetchHtml(
+  url: string,
+  timeoutMs?: number,
+): Promise<{
   html: string
   finalUrl: string
   status: number
   lastModified: string | null
 }> {
-  const res = await fetchWithTimeout(url)
+  const res = await fetchWithTimeout(url, { timeoutMs })
   const html = await res.text()
   return {
     html,
@@ -103,8 +109,8 @@ async function fetchSubPage(url: string): Promise<SubPageSnapshot | null> {
   }
 }
 
-async function fetchSubPages(urls: string[]): Promise<SubPageSnapshot[]> {
-  const picked = urls.slice(0, MAX_SUB_PAGES)
+async function fetchSubPages(urls: string[], max = MAX_SUB_PAGES): Promise<SubPageSnapshot[]> {
+  const picked = urls.slice(0, max)
   const out: SubPageSnapshot[] = []
   for (let i = 0; i < picked.length; i += SUB_PAGES_CONCURRENCY) {
     const batch = picked.slice(i, i + SUB_PAGES_CONCURRENCY)
@@ -114,26 +120,41 @@ async function fetchSubPages(urls: string[]): Promise<SubPageSnapshot[]> {
   return out
 }
 
-export async function crawlUrl(targetUrl: string): Promise<CrawlSnapshot> {
-  const primary = await fetchHtml(targetUrl)
+export interface CrawlOptions {
+  /** Max number of subpages to fetch from sitemap. 0 = skip subpage crawl entirely. */
+  maxSubPages?: number
+  /** Per-request timeout in ms. Flash passes 6_000 to keep total crawl < 15s. */
+  timeoutMs?: number
+}
+
+export async function crawlUrl(
+  targetUrl: string,
+  opts: CrawlOptions = {},
+): Promise<CrawlSnapshot> {
+  const maxSub = opts.maxSubPages ?? MAX_SUB_PAGES
+  const timeoutMs = opts.timeoutMs
+  const primary = await fetchHtml(targetUrl, timeoutMs)
   const origin = new URL(primary.finalUrl).origin
 
   const [robotsTxt, sitemapXml, llmsTxt, llmsFullTxt] = await Promise.all([
-    fetchText(`${origin}/robots.txt`),
-    fetchText(`${origin}/sitemap.xml`),
-    fetchText(`${origin}/llms.txt`),
-    fetchText(`${origin}/llms-full.txt`),
+    fetchText(`${origin}/robots.txt`, timeoutMs),
+    maxSub > 0 ? fetchText(`${origin}/sitemap.xml`, timeoutMs) : Promise.resolve(null),
+    fetchText(`${origin}/llms.txt`, timeoutMs),
+    fetchText(`${origin}/llms-full.txt`, timeoutMs),
   ])
 
   const $ = cheerio.load(primary.html)
   const primaryBodyHash = hashContent($('body').text())
 
-  const subUrls = sitemapXml
-    ? extractSitemapUrls(sitemapXml, origin).filter(
-        (u) => u !== primary.finalUrl,
-      )
-    : []
-  const subPages = subUrls.length > 0 ? await fetchSubPages(subUrls) : []
+  let subPages: SubPageSnapshot[] = []
+  if (maxSub > 0 && sitemapXml) {
+    const subUrls = extractSitemapUrls(sitemapXml, origin).filter(
+      (u) => u !== primary.finalUrl,
+    )
+    if (subUrls.length > 0) {
+      subPages = await fetchSubPages(subUrls, maxSub)
+    }
+  }
 
   return {
     html: primary.html,

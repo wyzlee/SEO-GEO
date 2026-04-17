@@ -32,8 +32,11 @@ export async function markAuditRunning(auditId: string): Promise<boolean> {
   return result.length > 0
 }
 
-export async function seedAuditPhases(auditId: string): Promise<void> {
-  const rows = PHASE_ORDER.map((key, index) => ({
+export async function seedAuditPhases(
+  auditId: string,
+  phases: PhaseKey[] = PHASE_ORDER,
+): Promise<void> {
+  const rows = phases.map((key, index) => ({
     auditId,
     phaseKey: key,
     phaseOrder: index + 1,

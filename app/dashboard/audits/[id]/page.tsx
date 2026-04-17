@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Globe, Github, FileArchive } from 'lucide-react'
@@ -10,6 +10,11 @@ import { ScoreBadge } from '@/components/audit/score-badge'
 import { ScoreBreakdownChart } from '@/components/audit/score-breakdown-chart'
 import { CriticalFindings } from '@/components/audit/critical-findings'
 import { PhaseCard } from '@/components/audit/phase-card'
+import { RadarChart } from '@/components/audit/radar-chart'
+import { ViewToggle, type AuditView } from '@/components/audit/view-toggle'
+import { MarketingView } from '@/components/audit/marketing-view'
+import { TechView } from '@/components/audit/tech-view'
+import { TierGate } from '@/components/audit/tier-gate'
 import {
   useAudit,
   useAuditReports,
@@ -33,6 +38,7 @@ export default function AuditDetailPage({
   const reportsQuery = useAuditReports(id)
   const generateReport = useGenerateReport(id)
   const lastReport = reportsQuery.data?.reports?.[0]
+  const [auditView, setAuditView] = useState<AuditView>('marketing')
 
   const onGenerate = async () => {
     try {
@@ -90,9 +96,10 @@ export default function AuditDetailPage({
   const isCompleted = audit.status === 'completed'
   const isFailed = audit.status === 'failed'
   const score = audit.scoreTotal ?? 0
+  const isFull = audit.mode === 'full'
+  const isLocked = !isFull
 
-  const target =
-    audit.targetUrl ?? audit.githubRepo ?? 'Upload code'
+  const target = audit.targetUrl ?? audit.githubRepo ?? 'Upload code'
   const InputIcon =
     audit.inputType === 'github'
       ? Github
@@ -111,48 +118,51 @@ export default function AuditDetailPage({
       />
       <PageHeader
         title={target}
-        description={`${audit.inputType.toUpperCase()} · ${STATUS_LABEL[audit.status] ?? audit.status}`}
+        description={`${audit.inputType.toUpperCase()} · ${STATUS_LABEL[audit.status] ?? audit.status}${isLocked ? ' · Plan Standard' : ''}`}
         actions={
-          <div className="flex items-center gap-2">
-            {isCompleted &&
-              (lastReport?.shareSlug ? (
-                <>
-                  <a
-                    href={`/r/${lastReport.shareSlug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-secondary"
+          <div className="flex items-center gap-2 flex-wrap">
+            {isCompleted && (
+              <TierGate locked={isLocked} featureLabel="Rapport PDF complet">
+                {lastReport?.shareSlug ? (
+                  <>
+                    <a
+                      href={`/r/${lastReport.shareSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-secondary"
+                    >
+                      Voir le rapport
+                    </a>
+                    <a
+                      href={`/api/audits/${id}/report/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-secondary"
+                    >
+                      Télécharger PDF
+                    </a>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={onGenerate}
+                    disabled={generateReport.isPending}
                   >
-                    Voir le rapport
-                  </a>
-                  <a
-                    href={`/api/audits/${id}/report/pdf`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-secondary"
-                  >
-                    Télécharger PDF
-                  </a>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={onGenerate}
-                  disabled={generateReport.isPending}
-                >
-                  {generateReport.isPending
-                    ? 'Génération…'
-                    : 'Générer le rapport'}
-                </button>
-              ))}
+                    {generateReport.isPending ? 'Génération…' : 'Générer le rapport'}
+                  </button>
+                )}
+              </TierGate>
+            )}
             {isCompleted && audit.previousAuditId ? (
-              <Link
-                href={`/dashboard/audits/${id}/compare`}
-                className="btn-secondary"
-              >
-                Voir l&apos;évolution
-              </Link>
+              <TierGate locked={isLocked} featureLabel="Comparaison N-1">
+                <Link
+                  href={`/dashboard/audits/${id}/compare`}
+                  className="btn-secondary"
+                >
+                  Voir l&apos;évolution
+                </Link>
+              </TierGate>
             ) : null}
             <Link href="/dashboard/audits" className="btn-secondary">
               Liste
@@ -162,6 +172,7 @@ export default function AuditDetailPage({
       />
 
       <section className="p-6 space-y-6">
+        {/* Score header */}
         <div className="card-premium flex flex-col md:flex-row items-start md:items-center gap-6">
           <ScoreBadge score={score} size="lg" />
           <div className="min-w-0 flex-1">
@@ -188,6 +199,7 @@ export default function AuditDetailPage({
           </div>
         </div>
 
+        {/* Failure */}
         {isFailed && (
           <div
             className="rounded-lg p-5"
@@ -218,32 +230,64 @@ export default function AuditDetailPage({
           </div>
         )}
 
+        {/* Completed: radar + breakdown */}
         {isCompleted && (
-          <div className="card-premium">
-            <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mb-4"
-              style={{ color: 'var(--color-muted)' }}>
-              Répartition du score
-            </h2>
-            <ScoreBreakdownChart phases={phases} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="card-premium flex flex-col items-center justify-center py-6">
+              <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mb-4 self-start"
+                style={{ color: 'var(--color-muted)' }}>
+                Radar des phases
+              </h2>
+              <RadarChart phases={phases} size={220} />
+            </div>
+            <div className="card-premium">
+              <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mb-4"
+                style={{ color: 'var(--color-muted)' }}>
+                Répartition du score
+              </h2>
+              <ScoreBreakdownChart phases={phases} />
+            </div>
           </div>
         )}
 
         {isCompleted && <CriticalFindings phases={phases} />}
 
-        <div className="space-y-3">
-          <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mt-2"
-            style={{ color: 'var(--color-muted)' }}>
-            Détail par phase
-          </h2>
-          {phases.map((phase) => (
-            <PhaseCard key={phase.id} phase={phase} />
-          ))}
-          {phases.length === 0 && (
-            <div className="card-premium text-sm" style={{ color: 'var(--color-muted)' }}>
-              Aucune phase créée pour l&apos;instant — l&apos;audit démarre.
+        {/* View toggle + Marketing / Tech views */}
+        {isCompleted && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)]"
+                style={{ color: 'var(--color-muted)' }}>
+                Analyse détaillée
+              </h2>
+              <ViewToggle view={auditView} onChange={setAuditView} />
             </div>
-          )}
-        </div>
+
+            {auditView === 'marketing' ? (
+              <MarketingView phases={phases} />
+            ) : (
+              <TechView phases={phases} />
+            )}
+          </div>
+        )}
+
+        {/* All phases fallback (running / non-completed) */}
+        {!isCompleted && (
+          <div className="space-y-3">
+            <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mt-2"
+              style={{ color: 'var(--color-muted)' }}>
+              Détail par phase
+            </h2>
+            {phases.map((phase) => (
+              <PhaseCard key={phase.id} phase={phase} />
+            ))}
+            {phases.length === 0 && (
+              <div className="card-premium text-sm" style={{ color: 'var(--color-muted)' }}>
+                Aucune phase créée pour l&apos;instant — l&apos;audit démarre.
+              </div>
+            )}
+          </div>
+        )}
       </section>
     </div>
   )

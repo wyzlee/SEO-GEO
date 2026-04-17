@@ -25,7 +25,8 @@ import {
 import { readCodeSnapshot, type CodeSnapshot } from './code/read'
 import { cloneGithubRepo } from './code/clone'
 import { cleanupRoot } from './upload/extract'
-import { PHASE_ORDER, PHASE_SCORE_MAX } from './engine'
+import { PHASE_SCORE_MAX } from './engine'
+import { resolveModeConfig } from './modes'
 import type { CrawlSnapshot, Finding, PhaseKey, PhaseResult } from './types'
 import {
   completeAudit,
@@ -57,16 +58,22 @@ interface PipelineContext {
   cleanupPaths: string[]
 }
 
-async function resolveInput(audit: {
-  inputType: string
-  targetUrl: string | null
-  uploadPath: string | null
-  githubRepo: string | null
-}): Promise<PipelineContext> {
+async function resolveInput(
+  audit: {
+    inputType: string
+    targetUrl: string | null
+    uploadPath: string | null
+    githubRepo: string | null
+  },
+  opts?: { maxSubPages?: number; timeoutMs?: number },
+): Promise<PipelineContext> {
   const ctx: PipelineContext = { cleanupPaths: [] }
 
   if (audit.inputType === 'url' && audit.targetUrl) {
-    ctx.crawl = await crawlUrl(audit.targetUrl)
+    ctx.crawl = await crawlUrl(audit.targetUrl, {
+      maxSubPages: opts?.maxSubPages,
+      timeoutMs: opts?.timeoutMs,
+    })
     return ctx
   }
 
@@ -158,11 +165,6 @@ async function runPhaseForCode(
   }
 }
 
-const DEFAULT_AUDIT_TIMEOUT_MS = Number.parseInt(
-  process.env.AUDIT_TIMEOUT_MS ?? '600000',
-  10,
-) // 10 min default
-
 class AuditTimeoutError extends Error {
   constructor(auditId: string, ms: number) {
     super(`Audit ${auditId} dépassé le timeout (${ms} ms)`)
@@ -171,7 +173,16 @@ class AuditTimeoutError extends Error {
 }
 
 export async function processAudit(auditId: string): Promise<void> {
-  const timeoutMs = DEFAULT_AUDIT_TIMEOUT_MS
+  // Read mode from DB to pick the right pipeline timeout.
+  const modeRow = await db
+    .select({ mode: audits.mode })
+    .from(audits)
+    .where(eq(audits.id, auditId))
+    .limit(1)
+  const mode = modeRow[0]?.mode ?? null
+  const cfg = resolveModeConfig(mode)
+  const timeoutMs = cfg.timeoutMs
+
   let timeoutHandle: ReturnType<typeof setTimeout> | null = null
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(
@@ -208,20 +219,25 @@ async function runProcessAudit(auditId: string): Promise<void> {
     const audit = rows[0]
     if (!audit) throw new Error(`Audit ${auditId} introuvable`)
 
+    const cfg = resolveModeConfig(audit.mode)
+
     const claimed = await markAuditRunning(auditId)
     if (!claimed) {
       // Another worker or handler already running this audit — skip.
       logger.info('audit.already_claimed', { audit_id: auditId })
       return
     }
-    await seedAuditPhases(auditId)
+    await seedAuditPhases(auditId, cfg.phases)
 
-    const ctx = await resolveInput({
-      inputType: audit.inputType,
-      targetUrl: audit.targetUrl,
-      uploadPath: audit.uploadPath,
-      githubRepo: audit.githubRepo,
-    })
+    const ctx = await resolveInput(
+      {
+        inputType: audit.inputType,
+        targetUrl: audit.targetUrl,
+        uploadPath: audit.uploadPath,
+        githubRepo: audit.githubRepo,
+      },
+      { maxSubPages: cfg.maxSubPages },
+    )
     cleanupPaths = ctx.cleanupPaths
 
     const breakdown: Partial<Record<PhaseKey, number>> = {}
@@ -232,7 +248,7 @@ async function runProcessAudit(auditId: string): Promise<void> {
     let effectiveScore = 0
     let effectiveScoreMax = 0
 
-    for (const key of PHASE_ORDER) {
+    for (const key of cfg.phases) {
       try {
         await markPhaseRunning(auditId, key)
         let result: PhaseResult
