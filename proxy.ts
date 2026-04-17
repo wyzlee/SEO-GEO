@@ -7,10 +7,37 @@ import type { NextRequest } from 'next/server'
  * 1. Attach security headers + CSP nonce
  * 2. Gate protected routes behind a Stack Auth cookie
  * 3. Redirect authenticated users away from /login and marketing home
+ *
+ * CSP — état Vague 2.2 :
+ *  - `'unsafe-eval'` retiré de script-src (low-risk, aucun code app ne
+ *    l'utilise ; les lib modernes n'en ont plus besoin).
+ *  - `'unsafe-inline'` maintenu pour style-src (Tailwind v4 + React
+ *    inline styles) et script-src (Stack Auth inline snippets). Migration
+ *    vers strict-dynamic + nonces planifiée V2 (nonce est déjà exposé via
+ *    `x-nonce` header, prêt à l'emploi côté Next.js runtime).
+ *  - Bypass d'urgence : `CSP_RELAXED=1` en env pour réactiver le CSP
+ *    historique sans redéploiement (rollback sans rebuild).
  */
 export default async function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  const csp = `
+
+  const strictCsp = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https:;
+    style-src 'self' 'unsafe-inline' https:;
+    img-src 'self' blob: data: https:;
+    font-src 'self' data: https:;
+    connect-src 'self' https: wss:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+  `
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
+  const relaxedCsp = `
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https:;
     style-src 'self' 'unsafe-inline' https:;
@@ -25,6 +52,8 @@ export default async function proxy(request: NextRequest) {
   `
     .replace(/\s{2,}/g, ' ')
     .trim()
+
+  const csp = process.env.CSP_RELAXED === '1' ? relaxedCsp : strictCsp
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
