@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Moon,
   Sun,
+  Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -259,6 +260,22 @@ export function Sidebar() {
             )}
             {!collapsed && <span>{themeLabel}</span>}
           </button>
+
+          <Link
+            href="mailto:support@wyzlee.cloud"
+            title={collapsed ? 'Support' : undefined}
+            aria-label="Support"
+            className={cn(
+              'flex items-center transition-colors text-[11px] tracking-wider',
+              collapsed
+                ? 'justify-center p-2 rounded-md w-full'
+                : 'gap-2 py-2',
+            )}
+            style={{ color: 'var(--color-muted)' }}
+          >
+            <Mail className="h-4 w-4" />
+            {!collapsed && <span>Support</span>}
+          </Link>
 
           <Link
             href="/auth/logout"

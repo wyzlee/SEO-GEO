@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import * as cheerio from 'cheerio'
+import { assertSafeDnsUrl } from '@/lib/security/url-guard'
 import type { CrawlSnapshot, SubPageSnapshot } from './types'
 
 const USER_AGENT =
@@ -131,6 +132,7 @@ export async function crawlUrl(
   targetUrl: string,
   opts: CrawlOptions = {},
 ): Promise<CrawlSnapshot> {
+  await assertSafeDnsUrl(targetUrl)
   const maxSub = opts.maxSubPages ?? MAX_SUB_PAGES
   const timeoutMs = opts.timeoutMs
   const primary = await fetchHtml(targetUrl, timeoutMs)

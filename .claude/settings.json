@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm run test)",
+      "Bash(npm run test:*)",
+      "Bash(npm run build)",
+      "Bash(npm run db:generate)",
+      "Bash(npm run db:migrate)",
+      "Bash(npm ci)",
+      "Bash(npm install)",
+      "Bash(npm audit*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git branch*)",
+      "Bash(git stash*)",
+      "Bash(ls*)",
+      "Bash(cat drizzle/*.sql)",
+      "Bash(grep -rn * lib/ app/ tests/ components/)",
+      "Bash(grep -n * lib/* app/* tests/*)",
+      "Bash(curl -s https://seo-geo-orcin.vercel.app/*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://seo-geo-orcin.vercel.app/*)",
+      "Bash(mkdir -p .claude/skills)",
+      "Bash(mkdir -p .claude/agents)",
+      "Bash(mkdir -p .claude/commands)",
+      "Bash(mkdir -p tests/fixtures)",
+      "Bash(mkdir -p tests/lib)",
+      "Bash(mkdir -p tests/integration)",
+      "Bash(mkdir -p tests/e2e)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(git checkout -- .)",
+      "Bash(rm -rf*)",
+      "Bash(npm run db:push)",
+      "Bash(cat .env*)",
+      "Bash(echo * > .env*)"
+    ]
+  }
+}

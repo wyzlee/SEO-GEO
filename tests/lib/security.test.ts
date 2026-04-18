@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import dns from 'node:dns'
 import {
+  assertSafeDnsUrl,
   assertSafeUrl,
   UnsafeUrlError,
 } from '@/lib/security/url-guard'
@@ -7,6 +9,16 @@ import {
   rateLimit,
   __resetRateLimits,
 } from '@/lib/security/rate-limit'
+
+vi.mock('node:dns', () => {
+  const lookup = vi.fn()
+  return {
+    default: {
+      promises: { lookup },
+    },
+    promises: { lookup },
+  }
+})
 
 describe('assertSafeUrl', () => {
   it('accepts public https URLs', () => {
@@ -64,6 +76,49 @@ describe('assertSafeUrl', () => {
   it('accepts public IP (not private)', () => {
     const u = assertSafeUrl('http://8.8.8.8/')
     expect(u.hostname).toBe('8.8.8.8')
+  })
+})
+
+describe('assertSafeDnsUrl', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('throws UnsafeUrlError when DNS resolves to a private IPv4', async () => {
+    vi.mocked(dns.promises.lookup).mockResolvedValue(
+      [{ address: '10.0.0.1', family: 4 }] as unknown as dns.LookupAddress,
+    )
+    const err = await assertSafeDnsUrl('https://evil-rebind.example.com/').catch(
+      (e: unknown) => e,
+    )
+    expect(err).toBeInstanceOf(UnsafeUrlError)
+    expect((err as UnsafeUrlError).reason).toBe('dns_resolves_private')
+  })
+
+  it('does not throw when DNS resolves to a public IP', async () => {
+    vi.mocked(dns.promises.lookup).mockResolvedValueOnce(
+      [{ address: '93.184.216.34', family: 4 }] as unknown as dns.LookupAddress,
+    )
+    await expect(
+      assertSafeDnsUrl('https://example.com/'),
+    ).resolves.toBeUndefined()
+  })
+
+  it('skips DNS resolution for a literal IP hostname', async () => {
+    await expect(
+      assertSafeDnsUrl('http://8.8.8.8/'),
+    ).resolves.toBeUndefined()
+    expect(dns.promises.lookup).not.toHaveBeenCalled()
+  })
+
+  it('does not throw UnsafeUrlError when lookup raises ENOTFOUND', async () => {
+    const err = Object.assign(new Error('getaddrinfo ENOTFOUND no-such-host.example'), {
+      code: 'ENOTFOUND',
+    })
+    vi.mocked(dns.promises.lookup).mockRejectedValueOnce(err)
+    await expect(
+      assertSafeDnsUrl('https://no-such-host.example/'),
+    ).resolves.toBeUndefined()
   })
 })
 

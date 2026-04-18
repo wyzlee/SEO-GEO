@@ -6,7 +6,12 @@
  * time — downstream crawler already follows redirects, so we only validate the
  * initial URL ; a malicious redirect chain to private space is a separate
  * concern addressed via the crawler fetch options (abort signal + timeout).
+ *
+ * assertSafeDnsUrl extends assertSafeUrl with actual DNS resolution to guard
+ * against DNS rebinding attacks (public hostname resolving to a private IP).
  */
+
+import dns from 'node:dns'
 
 export class UnsafeUrlError extends Error {
   constructor(
@@ -117,4 +122,56 @@ export function assertSafeUrl(input: string): URL {
     )
   }
   return url
+}
+
+/**
+ * DNS-aware SSRF guard. Calls assertSafeUrl first (string checks), then
+ * resolves the hostname via DNS and verifies that no resolved address is
+ * private/reserved — preventing DNS rebinding attacks.
+ *
+ * If dns.promises.lookup throws (ENOTFOUND, ETIMEDOUT, etc.) we let it pass :
+ * the error will surface at HTTP fetch time with a more actionable message.
+ */
+export async function assertSafeDnsUrl(input: string): Promise<void> {
+  // Run all string-based checks first (scheme, blocked hosts, literal IPs).
+  // assertSafeUrl already handles literal IPv4 and IPv6 private addresses.
+  assertSafeUrl(input)
+
+  const url = new URL(input)
+  const host = url.hostname.toLowerCase()
+
+  // Skip DNS resolution for literal IP addresses — already validated above.
+  const isLiteralIpv4 = /^\d+\.\d+\.\d+\.\d+$/.test(host)
+  const isLiteralIpv6 = host.includes(':')
+  if (isLiteralIpv4 || isLiteralIpv6) return
+
+  // Resolve all addresses for the hostname.
+  let addresses: dns.LookupAddress[]
+  try {
+    addresses = await dns.promises.lookup(host, { all: true })
+  } catch {
+    // DNS errors (ENOTFOUND, ETIMEDOUT, …) — let the HTTP layer handle them.
+    return
+  }
+
+  for (const { address, family } of addresses) {
+    if (BLOCKED_HOSTS.has(address)) {
+      throw new UnsafeUrlError(
+        'DNS résout vers une adresse privée/réservée',
+        'dns_resolves_private',
+      )
+    }
+    if (family === 4 && isPrivateIpv4(address)) {
+      throw new UnsafeUrlError(
+        'DNS résout vers une adresse privée/réservée',
+        'dns_resolves_private',
+      )
+    }
+    if (family === 6 && isPrivateIpv6(address)) {
+      throw new UnsafeUrlError(
+        'DNS résout vers une adresse privée/réservée',
+        'dns_resolves_private',
+      )
+    }
+  }
 }

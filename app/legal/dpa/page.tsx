@@ -75,11 +75,80 @@ export default function DpaPage() {
 
       <Section title="5. Sous-traitants ultérieurs">
         <p>
-          Le Processeur recourt aux sous-traitants listés en{' '}
-          <a href="/legal/privacy">politique de confidentialité</a> (Stack
-          Auth, Neon, Resend). Tout nouvel ajout fera l&apos;objet d&apos;une
-          information préalable avec droit d&apos;opposition de 30 jours.
+          Le Processeur recourt aux sous-traitants techniques suivants.
+          Tout nouvel ajout fera l&apos;objet d&apos;une information
+          préalable avec droit d&apos;opposition de 30 jours.
         </p>
+        <div className="overflow-x-auto">
+          <table
+            className="w-full text-xs border-collapse"
+            style={{ border: '1px solid var(--color-border)' }}
+          >
+            <thead>
+              <tr style={{ background: 'var(--color-bgAlt)' }}>
+                {['Sous-traitant', 'Finalité', 'Pays', 'Garanties'].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-3 py-2 font-[family-name:var(--font-display)] font-semibold"
+                    style={{ borderBottom: '1px solid var(--color-border)' }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                {
+                  name: 'Vercel Inc.',
+                  purpose: 'Hébergement, edge compute, CDN',
+                  country: 'USA',
+                  guarantee: 'DPA + SCC — vercel.com/legal/dpa',
+                },
+                {
+                  name: 'Neon Database Inc.',
+                  purpose: 'Base de données opérationnelle',
+                  country: 'UE (Frankfurt)',
+                  guarantee: 'RGPD natif — neon.tech/dpa',
+                },
+                {
+                  name: 'Stack Auth',
+                  purpose: 'Authentification, gestion de compte',
+                  country: 'USA',
+                  guarantee: 'SCC — stack-auth.com/legal',
+                },
+                {
+                  name: 'Resend',
+                  purpose: 'Emails transactionnels',
+                  country: 'USA',
+                  guarantee: 'SCC — resend.com/legal/dpa',
+                },
+                {
+                  name: 'Anthropic PBC',
+                  purpose: 'Synthèse IA des rapports d\'audit',
+                  country: 'USA',
+                  guarantee: 'DPA sur demande — legal@anthropic.com',
+                },
+                {
+                  name: 'Google LLC',
+                  purpose: 'API Chrome UX Report (métriques CWV)',
+                  country: 'USA',
+                  guarantee: 'Google Cloud DPA — cloud.google.com/terms/data-processing-addendum',
+                },
+              ].map((row) => (
+                <tr
+                  key={row.name}
+                  style={{ borderBottom: '1px solid var(--color-border)' }}
+                >
+                  <td className="px-3 py-2 font-[family-name:var(--font-display)] font-medium">{row.name}</td>
+                  <td className="px-3 py-2">{row.purpose}</td>
+                  <td className="px-3 py-2">{row.country}</td>
+                  <td className="px-3 py-2" style={{ color: 'var(--color-muted)' }}>{row.guarantee}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Section>
 
       <Section title="6. Mesures techniques et organisationnelles (art. 32 RGPD)">

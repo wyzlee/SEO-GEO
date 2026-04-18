@@ -101,6 +101,10 @@ export const audits = pgTable(
     ),
     idxQueued: index('audits_queued_idx').on(t.status, t.queuedAt),
     idxPrevious: index('audits_previous_idx').on(t.previousAuditId),
+    idxOrgCreated: index('audits_org_created_idx').on(
+      t.organizationId,
+      t.createdAt,
+    ),
   }),
 )
 
@@ -163,6 +167,7 @@ export const findings = pgTable(
   (t) => ({
     idxAudit: index('findings_audit_idx').on(t.auditId),
     idxSeverity: index('findings_severity_idx').on(t.auditId, t.severity),
+    idxPhase: index('findings_phase_idx').on(t.auditId, t.phaseKey),
   }),
 )
 

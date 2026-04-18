@@ -14,7 +14,7 @@ export default function PrivacyPage() {
           Politique de confidentialité
         </h1>
         <p style={{ color: 'var(--color-muted)' }}>
-          Dernière mise à jour : 16 avril 2026 — conforme RGPD (UE 2016/679) et
+          Dernière mise à jour : 18 avril 2026 — conforme RGPD (UE 2016/679) et
           Loi Informatique & Libertés modifiée.
         </p>
       </header>
@@ -94,6 +94,28 @@ export default function PrivacyPage() {
           <li>
             <strong>Resend</strong> — envoi d&apos;emails transactionnels
             (DKIM / SPF activés).
+          </li>
+          <li>
+            <strong>Vercel Inc.</strong> — hébergement, edge compute, CDN
+            (USA — Data Processing Addendum disponible sur{' '}
+            <a
+              href="https://vercel.com/legal/dpa"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              vercel.com/legal/dpa
+            </a>
+            ).
+          </li>
+          <li>
+            <strong>Anthropic PBC</strong> — génération IA pour la synthèse
+            executive des rapports (USA — DPA disponible sur demande à{' '}
+            <a href="mailto:legal@anthropic.com">legal@anthropic.com</a>).
+          </li>
+          <li>
+            <strong>Google LLC</strong> — API Chrome UX Report pour les
+            métriques Core Web Vitals terrain (USA — Google Cloud DPA en
+            vigueur).
           </li>
         </ul>
         <p>

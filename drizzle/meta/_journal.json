@@ -29,6 +29,13 @@
       "when": 1776400990169,
       "tag": "0003_silky_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776502062712,
+      "tag": "0004_natural_warhawk",
+      "breakpoints": true
     }
   ]
 }

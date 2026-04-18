@@ -439,6 +439,27 @@ function buildStyles(branding: ReportBranding | null | undefined): string {
   .sprint-item-text { flex: 1; }
   .sprint-pts { font-size: 0.78rem; font-weight: 600; color: var(--muted); white-space: nowrap; margin-left: 8px; }
 
+  /* ── Forces (Points forts) ── */
+  .forces-list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 24px; }
+  .force-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--green-bg);
+    border: 1px solid var(--green-border);
+    border-left: 4px solid var(--green);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .force-icon { font-weight: 700; color: var(--green); flex-shrink: 0; }
+  .force-title { flex: 1; font-weight: 600; color: var(--green-text); }
+  .force-score { font-size: 0.78rem; font-weight: 600; color: var(--green); white-space: nowrap; margin-left: auto; }
+  .force-summary { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
   /* ── Hotspot table ── */
   table {
     border-collapse: collapse;
@@ -639,6 +660,46 @@ function buildPhaseBreakdownHtml(phases: ReportPhase[]): string {
 
   return `<div class="phase-list">
     ${rows.join('\n    ')}
+  </div>`
+}
+
+// ── Points forts (Forces) ─────────────────────────────────────────────────────
+
+function buildForcesHtml(phases: ReportPhase[]): string {
+  const FORCE_THRESHOLD = 0.7
+
+  const strengths = [...phases]
+    .filter(
+      (p) =>
+        p.phaseKey !== 'synthesis' &&
+        p.status !== 'skipped' &&
+        p.scoreMax > 0 &&
+        (p.score ?? 0) / p.scoreMax >= FORCE_THRESHOLD,
+    )
+    .sort((a, b) => {
+      const ra = (a.score ?? 0) / a.scoreMax
+      const rb = (b.score ?? 0) / b.scoreMax
+      return rb - ra
+    })
+    .slice(0, 5)
+
+  if (strengths.length === 0) return ''
+
+  const cards = strengths
+    .map((p) => {
+      const label = escapeHtml(PHASE_LABELS_FR[p.phaseKey] ?? p.phaseKey)
+      const pct = Math.round(((p.score ?? 0) / p.scoreMax) * 100)
+      const score = `${Math.round(p.score ?? 0)} / ${p.scoreMax} pts · ${pct}%`
+      return `<div class="force-card">
+        <span class="force-icon">✓</span>
+        <span class="force-title">${label}</span>
+        <span class="force-score">${score}</span>
+      </div>`
+    })
+    .join('\n    ')
+
+  return `<div class="forces-list">
+    ${cards}
   </div>`
 }
 
@@ -853,6 +914,7 @@ ${phaseLines}
   const kpiRow = buildKpiRow(input)
   const execSummary = buildExecutiveSummaryHtml(input)
   const phaseBreakdown = buildPhaseBreakdownHtml(phases)
+  const forces = buildForcesHtml(phases)
   const top5 = buildTop5Html(findings)
   const quickWins = buildQuickWinsHtml(findings)
   const roadmap = buildRoadmapHtml(findings)
@@ -889,6 +951,8 @@ ${phaseLines}
 
     ${hotspot}
 
+    ${forces ? `<h2>Points forts</h2>\n    ${forces}` : ''}
+
     <h2>Points à corriger en priorité</h2>
     ${top5}
 
@@ -904,6 +968,7 @@ ${phaseLines}
 
     <h2>Contact</h2>
     <p>${consultant}Audit généré par ${escapeHtml(companyName)} · <a href="https://seo-geo-orcin.vercel.app" style="color:var(--brand-primary)">seo-geo-orcin.vercel.app</a></p>
+    <p style="margin-top:0.5rem">Pour toute question sur ce rapport : <a href="mailto:support@wyzlee.cloud" style="color:var(--brand-primary)">support@wyzlee.cloud</a></p>
 
   </div>
   <footer>Audit généré par ${escapeHtml(companyName)} · ${escapeHtml(formatDateFr(audit.finishedAt))}</footer>
