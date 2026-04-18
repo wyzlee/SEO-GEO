@@ -13,7 +13,7 @@
 | S1.4 | Legal sous-traitants | ✅ DONE — Vercel, Anthropic, Google ajoutés |
 | S1.5 | Canal support email | ✅ DONE — sidebar + rapport |
 | S1.6 | 5 tests régression rapport | ✅ DONE — 287/288 tests verts |
-| S1.7 | Fix PDF charts timing | ⏳ ATTEND résultat S1.2 |
+| S1.7 | Fix PDF charts timing | ✅ DONE — 2026-04-18 — document.fonts.ready après networkidle0 |
 | S1.8 | Section Forces rapport | ✅ DONE — phases ≥ 70% score |
 | S1.9 | 3 index DB | ✅ DONE — migration appliquée Neon prod |
 | S1.10 | SSRF DNS check | ✅ DONE — assertSafeDnsUrl() |

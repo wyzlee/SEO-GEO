@@ -61,6 +61,9 @@ export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
       waitUntil: 'networkidle0',
       timeout: timeoutMs,
     })
+    // Attendre que toutes les polices soient chargées (Inter via Google Fonts)
+    // avant de générer le PDF — évite les caractères manquants ou mal kerné.
+    await page.evaluate(() => document.fonts.ready)
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
