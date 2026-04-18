@@ -10,7 +10,7 @@ import { verifyBearerSecret } from '@/lib/security/constant-time'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 // Matched to audit route: after() keeps the function alive through processing
-export const maxDuration = 800
+export const maxDuration = 300
 
 async function findPreviousAuditId(
   organizationId: string,

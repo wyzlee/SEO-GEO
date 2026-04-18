@@ -42,7 +42,7 @@ const DAILY_LIMIT = { name: 'audits.post.daily', max: 50, windowMs: 86_400_000 }
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 800
+export const maxDuration = 300
 
 const createAuditBody = z
   .object({
