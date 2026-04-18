@@ -46,111 +46,198 @@ function buildStyles(branding: ReportBranding | null | undefined): string {
   :root {
     --brand-primary: ${primary};
     --brand-secondary: ${secondary};
-    --bg: #f4f6f9;
+    --bg: #eef0f5;
     --surface: #ffffff;
-    --border: #dfe4ea;
-    --text: #1a1e2c;
-    --muted: #5c6a7e;
-    --green: #10b981;
-    --blue: #3b82f6;
-    --amber: #f59e0b;
-    --red: #ef4444;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --text: #0f172a;
+    --text-body: #1e293b;
+    --muted: #64748b;
+    --green: #059669;
+    --green-bg: #ecfdf5;
+    --green-text: #065f46;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --blue-text: #1e3a8a;
+    --amber: #d97706;
+    --amber-bg: #fffbeb;
+    --amber-text: #78350f;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --red-text: #7f1d1d;
   }
+  * { box-sizing: border-box; }
   body {
-    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg);
-    color: var(--text);
+    color: var(--text-body);
     margin: 0;
-    line-height: 1.55;
+    line-height: 1.7;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
   }
   .report {
-    max-width: 760px;
-    margin: 40px auto;
-    padding: 40px 48px;
+    max-width: 820px;
+    margin: 32px auto 64px;
     background: var(--surface);
-    border-radius: 18px;
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 24px 64px rgba(0,0,0,0.1);
   }
-  h1, h2, h3 {
-    font-family: 'Cabinet Grotesk', 'Inter', sans-serif;
-    letter-spacing: -0.015em;
-  }
-  h1 { font-size: 2.1rem; margin-top: 0; }
-  h2 { font-size: 1.45rem; margin-top: 2.2rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
-  h3 { font-size: 1.1rem; margin-top: 1.6rem; }
+  /* ── Cover ── */
   .cover {
+    background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    padding: 52px 56px 44px;
     text-align: center;
-    padding: 48px 24px 40px;
-    background: linear-gradient(135deg, rgba(79,70,229,0.08), rgba(124,58,237,0.08));
-    border-radius: 14px;
-    margin-bottom: 32px;
+    color: #fff;
   }
   .cover .eyebrow {
-    font-size: 0.78rem;
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--brand-primary);
-    font-family: 'Cabinet Grotesk', 'Inter', sans-serif;
-    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: #a5b4fc;
+    margin-bottom: 18px;
   }
   .cover h1 {
-    font-size: 2.4rem;
-    margin: 8px 0 4px;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 10px;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
   }
   .cover .target {
-    font-size: 0.95rem;
-    color: var(--muted);
-  }
-  .cover .meta {
-    margin-top: 26px;
-    font-size: 0.85rem;
-    color: var(--muted);
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 28px;
+    letter-spacing: 0.01em;
   }
   .score-ribbon {
     display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 10px 20px;
-    margin: 16px auto;
-    background: var(--brand-primary);
+    align-items: center;
+    gap: 10px;
+    padding: 13px 30px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 100px;
     color: #fff;
-    border-radius: 999px;
-    font-family: 'Cabinet Grotesk', 'Inter', sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .score-ribbon.level-green { background: var(--green); }
-  .score-ribbon.level-blue { background: var(--blue); }
-  .score-ribbon.level-amber { background: var(--amber); color: #1a1a1a; }
-  .score-ribbon.level-red { background: var(--red); }
-  .score-ribbon strong { font-size: 1.8rem; font-weight: 700; }
-  .score-ribbon .slash { opacity: 0.8; }
-  table { border-collapse: collapse; width: 100%; margin: 12px 0 20px; font-size: 0.9rem; }
-  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-  th { font-family: 'Cabinet Grotesk', 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--muted); font-weight: 600; }
-  code { background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
-  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
-  ul { padding-left: 20px; }
-  li { margin-bottom: 6px; }
+  .score-ribbon.level-green { background: rgba(5,150,105,0.9); border-color: rgba(5,150,105,0.6); }
+  .score-ribbon.level-blue  { background: rgba(37,99,235,0.9);  border-color: rgba(37,99,235,0.6); }
+  .score-ribbon.level-amber { background: rgba(217,119,6,0.9);  border-color: rgba(217,119,6,0.6); }
+  .score-ribbon.level-red   { background: rgba(220,38,38,0.9);  border-color: rgba(220,38,38,0.6); }
+  .score-ribbon strong { font-size: 2rem; font-weight: 800; line-height: 1; }
+  .score-ribbon .slash { font-size: 0.88rem; opacity: 0.7; }
+  .score-ribbon .level-label { font-size: 0.9rem; font-weight: 600; opacity: 0.92; }
+  .cover .meta {
+    margin-top: 22px;
+    font-size: 0.78rem;
+    color: #64748b;
+  }
+  .brand-logo {
+    max-height: 40px;
+    max-width: 160px;
+    margin: 0 auto 20px;
+    display: block;
+    filter: brightness(0) invert(1);
+  }
+  /* ── Body ── */
+  .report-body {
+    padding: 44px 56px 40px;
+  }
+  h1, h2, h3, h4 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 2.4rem 0 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border-light);
+  }
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 1.8rem 0 0.5rem;
+    color: var(--text);
+  }
+  p { margin: 0.5rem 0 0.8rem; color: var(--text-body); }
+  strong { color: var(--text); }
+  /* ── Tables ── */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0 24px;
+    font-size: 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  thead { background: #f8fafc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  th {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-light);
+    color: var(--text-body);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: #fafbfc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* ── Lists ── */
+  ul { padding-left: 0; list-style: none; margin: 8px 0 12px; }
+  li { padding: 5px 0 5px 22px; position: relative; line-height: 1.6; }
+  li::before { content: '›'; position: absolute; left: 6px; color: var(--brand-primary); font-weight: 700; font-size: 1.1em; line-height: 1.4; }
+  /* ── Code ── */
+  code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.82em;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: #4338ca;
+  }
+  hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+  /* ── Footer ── */
   footer {
-    margin-top: 40px;
-    padding-top: 20px;
+    margin: 0 56px;
+    padding: 20px 0 36px;
     border-top: 1px solid var(--border);
-    font-size: 0.8rem;
+    font-size: 0.77rem;
     color: var(--muted);
     text-align: center;
   }
-  .brand-logo {
-    max-height: 48px;
-    max-width: 220px;
-    margin: 0 auto 14px;
-    display: block;
-  }
+  /* ── Print / PDF ── */
   @media print {
     body { background: #fff; }
-    .report { box-shadow: none; border: none; margin: 0; padding: 32px; max-width: none; border-radius: 0; }
-    .cover { break-after: page; }
+    .report { box-shadow: none; border-radius: 0; margin: 0; max-width: none; }
+    .cover {
+      break-after: page;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .report-body { padding: 32px 40px; }
+    footer { margin: 0 40px; padding: 16px 0 24px; }
     h2 { break-after: avoid; }
-    h3 { break-after: avoid; }
+    h3 { break-after: avoid; page-break-after: avoid; }
+    table { break-inside: avoid; }
+    li { break-inside: avoid; }
   }
 `
 }
@@ -176,6 +263,18 @@ function safeLogoUrl(url: string | null | undefined): string | null {
   return trimmed
 }
 
+function coverTitle(audit: ReportInput['audit']): string {
+  if (audit.clientName?.trim()) return escapeHtml(audit.clientName.trim())
+  if (audit.targetUrl) {
+    try {
+      return escapeHtml(new URL(audit.targetUrl).hostname.replace(/^www\./, ''))
+    } catch {
+      return escapeHtml(audit.targetUrl)
+    }
+  }
+  return 'Rapport SEO & GEO'
+}
+
 function buildCoverHtml(
   audit: ReportInput['audit'],
   branding: ReportBranding | null | undefined,
@@ -186,18 +285,21 @@ function buildCoverHtml(
   const logoHtml = logo
     ? `<img class="brand-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(branding?.companyName ?? '')}" />`
     : ''
+  const targetDisplay = audit.targetUrl
+    ? `<div class="target">${escapeHtml(audit.targetUrl)}</div>`
+    : ''
   return `
   <section class="cover">
     ${logoHtml}
-    <div class="eyebrow">Audit SEO & GEO</div>
-    <h1>${audit.clientName ?? 'Audit'}</h1>
-    <div class="target">${audit.targetUrl ?? ''}</div>
+    <div class="eyebrow">Audit SEO &amp; GEO</div>
+    <h1>${coverTitle(audit)}</h1>
+    ${targetDisplay}
     <div class="score-ribbon level-${level.color}">
-      <strong>${score}</strong><span class="slash">/ 100</span>
-      <span>· ${level.label}</span>
+      <strong>${score}</strong><span class="slash">&nbsp;/&nbsp;100</span>
+      <span class="level-label">· ${escapeHtml(level.label)}</span>
     </div>
     <div class="meta">
-      ${formatDateFr(audit.finishedAt)}${audit.consultantName ? ` · par ${audit.consultantName}` : ''}
+      ${escapeHtml(formatDateFr(audit.finishedAt))}${audit.consultantName ? ` · par ${escapeHtml(audit.consultantName)}` : ''}
     </div>
   </section>`
 }
@@ -410,17 +512,19 @@ ${audit.consultantName ? `**${audit.consultantName}**\n` : ''}Audit généré pa
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Audit SEO & GEO — ${audit.clientName ?? audit.targetUrl ?? ''}</title>
+<title>Audit SEO &amp; GEO — ${escapeHtml(audit.clientName ?? audit.targetUrl ?? '')}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>${styles}</style>
 </head>
 <body>
 <div class="report">
   ${cover}
-  ${renderedBody}
-  <footer>Audit généré par ${escapeHtml(companyName)} · ${formatDateFr(audit.finishedAt)}</footer>
+  <div class="report-body">
+    ${renderedBody}
+  </div>
+  <footer>Audit généré par ${escapeHtml(companyName)} · ${escapeHtml(formatDateFr(audit.finishedAt))}</footer>
 </div>
 </body>
 </html>`

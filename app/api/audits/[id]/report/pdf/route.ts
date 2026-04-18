@@ -11,8 +11,8 @@ export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/audits/:id/report/pdf
- * Renvoie le rapport le plus récent de l'audit, rendu en PDF via Gotenberg.
- * Auth requis, scope org. 404 si pas de rapport. 503 si Gotenberg indispo.
+ * Renvoie le rapport le plus récent de l'audit, rendu en PDF via Puppeteer.
+ * Auth requis, scope org. 404 si pas de rapport. 503 si rendu indisponible.
  */
 export async function GET(
   request: Request,
@@ -79,7 +79,7 @@ export async function GET(
       return NextResponse.json(
         {
           error:
-            'PDF indisponible — le service de rendu (Gotenberg) ne répond pas. Utilisez le lien de partage HTML.',
+            'PDF indisponible — utilisez le lien de partage HTML ou réessayez.',
         },
         { status: 503 },
       )

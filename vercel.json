@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "app/r/[slug]/pdf/route.ts": {
+      "memory": 2048,
+      "maxDuration": 60
+    },
+    "app/api/audits/[id]/report/pdf/route.ts": {
+      "memory": 2048,
+      "maxDuration": 60
+    }
+  }
+}

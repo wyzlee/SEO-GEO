@@ -1,14 +1,13 @@
 /**
- * PDF renderer via Gotenberg (sidecar docker-compose).
+ * PDF renderer via Puppeteer + @sparticuz/chromium (Vercel-native).
  *
- * Architecture : l'app Next.js POST le HTML complet du rapport à
- * `${GOTENBERG_URL}/forms/chromium/convert/html`. Gotenberg lance un
- * Chromium headless dans son container, rend le HTML avec ses CSS
- * inline + fonts Google, et retourne un PDF stream.
+ * Remplace l'ancienne dépendance Gotenberg (Docker sidecar incompatible Vercel).
+ * Le binaire Chromium est fourni par @sparticuz/chromium et téléchargé au
+ * build par Vercel. En local, définir CHROMIUM_PATH pour pointer vers un
+ * Chrome/Chromium installé.
  *
- * En dev, si `GOTENBERG_URL` n'est pas défini ou si le service ne répond
- * pas, `renderPdf` lève une `PdfUnavailableError` — les routes HTTP
- * peuvent alors retourner 503 avec un fallback vers le HTML.
+ * Contrainte Vercel : la fonction appelante doit déclarer maxDuration ≥ 30s
+ * et memory ≥ 1024 MB (configurable dans vercel.json).
  */
 
 export class PdfUnavailableError extends Error {
@@ -21,89 +20,67 @@ export class PdfUnavailableError extends Error {
 export interface RenderPdfInput {
   html: string
   filename?: string
-  /** Marges en pouces. Défauts conservateurs pour A4. */
-  marginTopInches?: number
-  marginRightInches?: number
-  marginBottomInches?: number
-  marginLeftInches?: number
-  /** Timeout (ms) pour la requête à Gotenberg. */
+  /** Timeout (ms) pour la génération. Défaut : 30s. */
   timeoutMs?: number
 }
 
 /**
- * Convertit un HTML auto-contenu en PDF via Gotenberg.
+ * Convertit un HTML auto-contenu en PDF via Puppeteer.
  *
- * Contrat : le HTML doit embarquer ses styles (inline `<style>`) et ne pas
- * dépendre de ressources privées. Gotenberg charge les URLs externes
- * publiquement accessibles (Google Fonts, etc.) mais pas les ressources
- * derrière l'auth de l'app.
+ * Contrat : le HTML doit embarquer ses styles (inline `<style>`). Les fonts
+ * Google Fonts sont chargées via network pendant le rendu (waitUntil: networkidle0).
  */
 export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
-  const gotenbergUrl = process.env.GOTENBERG_URL
-  if (!gotenbergUrl) {
-    throw new PdfUnavailableError('GOTENBERG_URL not configured')
+  let chromium: typeof import('@sparticuz/chromium')
+  let puppeteer: typeof import('puppeteer-core')
+
+  try {
+    chromium = await import('@sparticuz/chromium')
+    puppeteer = await import('puppeteer-core')
+  } catch {
+    throw new PdfUnavailableError('puppeteer-core or @sparticuz/chromium not available')
   }
 
-  const endpoint = `${gotenbergUrl.replace(/\/$/, '')}/forms/chromium/convert/html`
-  const filename = input.filename || 'index.html'
   const timeoutMs = input.timeoutMs ?? 30_000
 
-  const form = new FormData()
-  form.append(
-    'files',
-    new Blob([input.html], { type: 'text/html' }),
-    filename,
-  )
-  // Marges en inches (défaut Gotenberg) — valeurs conservatrices pour A4.
-  form.append(
-    'marginTop',
-    String(input.marginTopInches ?? 0.4),
-  )
-  form.append(
-    'marginBottom',
-    String(input.marginBottomInches ?? 0.4),
-  )
-  form.append(
-    'marginLeft',
-    String(input.marginLeftInches ?? 0.4),
-  )
-  form.append(
-    'marginRight',
-    String(input.marginRightInches ?? 0.4),
-  )
-  form.append('preferCssPageSize', 'false')
-  // Attendre que les fonts Google soient chargées avant snapshot.
-  form.append('waitDelay', '1s')
+  // En local : utiliser CHROMIUM_PATH (Chrome installé).
+  // Sur Vercel/Lambda : @sparticuz/chromium fournit le bon binaire.
+  const executablePath =
+    process.env.CHROMIUM_PATH || (await chromium.default.executablePath())
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  let browser: import('puppeteer-core').Browser | null = null
   try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      body: form,
-      signal: controller.signal,
+    browser = await puppeteer.default.launch({
+      args: chromium.default.args,
+      executablePath,
+      headless: true,
     })
-    if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      throw new PdfUnavailableError(
-        `Gotenberg HTTP ${res.status}: ${text.slice(0, 200)}`,
-      )
-    }
-    const arrayBuffer = await res.arrayBuffer()
-    return Buffer.from(arrayBuffer)
-  } catch (error) {
-    if (error instanceof PdfUnavailableError) throw error
-    if (
-      error instanceof Error &&
-      (error.name === 'AbortError' || error.message.includes('fetch failed'))
-    ) {
-      throw new PdfUnavailableError(
-        `Gotenberg unreachable: ${error.message}`,
-      )
-    }
-    throw error
+
+    const page = await browser.newPage()
+    await page.setContent(input.html, {
+      waitUntil: 'networkidle0',
+      timeout: timeoutMs,
+    })
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        bottom: '20mm',
+        left: '15mm',
+        right: '15mm',
+      },
+    })
+
+    return Buffer.from(pdfBuffer)
+  } catch (err) {
+    if (err instanceof PdfUnavailableError) throw err
+    throw new PdfUnavailableError(
+      `PDF generation failed: ${err instanceof Error ? err.message : String(err)}`,
+    )
   } finally {
-    clearTimeout(timer)
+    if (browser) await browser.close().catch(() => null)
   }
 }
 
