@@ -47,8 +47,14 @@ export default function AuditDetailPage({
     try {
       const res = await authFetch(`/api/audits/${id}/report/pdf`)
       if (!res.ok) {
-        const body = await res.text()
-        toast.error(`PDF indisponible : ${body.slice(0, 120)}`)
+        let msg = 'PDF indisponible — utilisez le lien de partage HTML.'
+        try {
+          const json = await res.json()
+          if (json.error) msg = json.error
+        } catch {
+          // réponse non-JSON inattendue
+        }
+        toast.error(msg)
         return
       }
       const blob = await res.blob()
@@ -189,9 +195,6 @@ export default function AuditDetailPage({
                 </Link>
               </TierGate>
             ) : null}
-            <Link href="/dashboard/audits" className="btn-secondary">
-              Liste
-            </Link>
           </div>
         }
       />

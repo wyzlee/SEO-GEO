@@ -91,7 +91,17 @@ export async function rateLimit(
     return { allowed: true, remaining: 999, resetAt: Date.now() + config.windowMs, retryAfterSeconds: 0 }
   }
 
-  const result = await limiter.limit(identity)
+  let result: Awaited<ReturnType<typeof limiter.limit>>
+  try {
+    result = await limiter.limit(identity)
+  } catch (err) {
+    // Upstash Redis indisponible : fail-open pour ne pas bloquer les utilisateurs.
+    logger.error('rate_limit.upstash_error', {
+      limiter: config.name,
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return { allowed: true, remaining: 999, resetAt: Date.now() + config.windowMs, retryAfterSeconds: 0 }
+  }
 
   if (!result.success) {
     return {
