@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { audits, reports } from '@/lib/db/schema'
 import { authenticateAuto, AuthError } from '@/lib/auth/server'
 import { PdfUnavailableError, buildPdfFilename, renderPdf } from '@/lib/report/pdf'
+import { sanitizeReportDocument } from '@/lib/report/sanitize'
 import { logger } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
@@ -60,7 +61,7 @@ export async function GET(
   }
 
   try {
-    const pdf = await renderPdf({ html: report.contentHtml })
+    const pdf = await renderPdf({ html: sanitizeReportDocument(report.contentHtml) })
     const filename = buildPdfFilename(audit, audit.finishedAt)
     return new NextResponse(new Uint8Array(pdf), {
       status: 200,

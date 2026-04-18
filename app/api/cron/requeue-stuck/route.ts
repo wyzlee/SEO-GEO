@@ -3,6 +3,7 @@ import { and, eq, lt } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { audits } from '@/lib/db/schema'
 import { logger } from '@/lib/observability/logger'
+import { verifyBearerSecret } from '@/lib/security/constant-time'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,7 @@ const STUCK_THRESHOLD_MS = 12 * 60 * 1000
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyBearerSecret(authHeader, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

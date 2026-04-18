@@ -6,6 +6,7 @@ import { reports } from '@/lib/db/schema'
 import { getClientIp } from '@/lib/security/ip'
 import { rateLimit } from '@/lib/security/rate-limit'
 import { logger } from '@/lib/observability/logger'
+import { sanitizeReportDocument } from '@/lib/report/sanitize'
 import type { Metadata } from 'next'
 
 export const runtime = 'nodejs'
@@ -96,10 +97,15 @@ export default async function PublicReportPage({
     )
   }
 
+  // Le HTML est généré server-side avec escapeHtml() à chaque frontière
+  // user-data, mais on applique DOMPurify en défense en profondeur pour
+  // bloquer tout <script>/handler inline qui aurait échappé.
+  const safeHtml = sanitizeReportDocument(report.contentHtml)
+
   return (
     <div
-      // Rapport auto-contained : CSS embedded, fonts chargées, sanitized upstream.
-      dangerouslySetInnerHTML={{ __html: report.contentHtml }}
+      // Rapport auto-contained : CSS embedded, fonts chargées via Google Fonts.
+      dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   )
 }

@@ -32,12 +32,45 @@ export async function POST(request: Request) {
     const sub = data.object as Stripe.Subscription
     // organizationId est dans les metadata de la subscription (propagé via
     // subscription_data.metadata lors de la Checkout Session).
-    const orgId = sub.metadata?.organizationId
-    if (!orgId) {
+    const orgIdFromMetadata = sub.metadata?.organizationId
+    if (!orgIdFromMetadata) {
       logger.warn('stripe webhook: missing organizationId in subscription metadata', { subscriptionId: sub.id })
       return NextResponse.json({ ok: true })
     }
 
+    // Défense en profondeur : croiser metadata.orgId avec l'org liée au
+    // stripeCustomerId en DB. Empêche qu'un acteur qui contrôlerait les
+    // metadata d'une subscription Stripe n'altère un autre org.
+    const stripeCustomerId =
+      typeof sub.customer === 'string' ? sub.customer : sub.customer.id
+    const [ownerOrg] = await db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.stripeCustomerId, stripeCustomerId))
+      .limit(1)
+
+    if (!ownerOrg) {
+      logger.warn('stripe webhook: no org matches stripeCustomerId', {
+        subscriptionId: sub.id,
+        stripeCustomerId,
+      })
+      return NextResponse.json({ ok: true })
+    }
+
+    if (ownerOrg.id !== orgIdFromMetadata) {
+      logger.error('stripe webhook: orgId mismatch metadata vs customer', {
+        subscriptionId: sub.id,
+        metadataOrgId: orgIdFromMetadata,
+        customerOrgId: ownerOrg.id,
+        stripeCustomerId,
+      })
+      return NextResponse.json(
+        { error: 'orgId mismatch' },
+        { status: 400 },
+      )
+    }
+
+    const orgId = ownerOrg.id
     const priceId = sub.items.data[0]?.price.id ?? ''
     const planId =
       type === 'customer.subscription.deleted'

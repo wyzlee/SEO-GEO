@@ -90,8 +90,24 @@ vi.mock('@/lib/observability/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
-// Minimal DB mock
-const dbMock = {
+// Minimal DB mock. `then` rend le builder awaitable pour les queries sans
+// `.limit()` terminal (existingRows, prevFindings). Résout à [] par défaut.
+interface DbMock {
+  [k: string]: unknown
+  select: () => DbMock
+  from: () => DbMock
+  where: () => DbMock
+  limit: ReturnType<typeof vi.fn>
+  update: () => DbMock
+  set: () => DbMock
+  returning: ReturnType<typeof vi.fn>
+  insert: () => DbMock
+  values: () => DbMock
+  onConflictDoNothing: ReturnType<typeof vi.fn>
+  then: (resolve: (v: unknown) => unknown) => unknown
+}
+
+const dbMock: DbMock = {
   select: () => dbMock,
   from: () => dbMock,
   where: () => dbMock,
@@ -102,6 +118,7 @@ const dbMock = {
   insert: () => dbMock,
   values: () => dbMock,
   onConflictDoNothing: vi.fn().mockResolvedValue([]),
+  then: (resolve) => resolve([]),
 }
 
 vi.mock('@/lib/db', () => ({ db: dbMock }))

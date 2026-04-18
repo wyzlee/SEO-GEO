@@ -62,11 +62,53 @@ export function __resetSink(): void {
   activeSink = defaultSink
 }
 
+/**
+ * Patterns de secrets à masquer dans les messages d'erreur et stacks.
+ * Ne couvre pas 100% des cas (un attaquant déterminé peut toujours
+ * crafter un message) mais bloque les régressions accidentelles :
+ * - JWT classique (3 segments base64url séparés par `.`)
+ * - Headers Authorization: Bearer xxx
+ * - Clés API style `sk_live_...`, `pk_test_...` (Stripe), `key_xxx`, `token=xxx`
+ * - Mot de passe dans URL (`password=` / `pwd=`)
+ */
+const SENSITIVE_PATTERNS: Array<{ re: RegExp; replacement: string }> = [
+  // JWT (3 groupes base64url)
+  {
+    re: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g,
+    replacement: '[REDACTED_JWT]',
+  },
+  // Bearer <token>
+  { re: /Bearer\s+[A-Za-z0-9_\-.]+/gi, replacement: 'Bearer [REDACTED]' },
+  // Stripe / API keys (sk_live_, pk_test_, rk_, whsec_, key_)
+  {
+    re: /\b(?:sk|pk|rk|whsec|key)_(?:live|test)?_?[A-Za-z0-9]{16,}\b/g,
+    replacement: '[REDACTED_KEY]',
+  },
+  // password= / pwd= / token= dans query strings
+  {
+    re: /\b(password|pwd|token|secret|api[_-]?key)=[^&\s"']+/gi,
+    replacement: '$1=[REDACTED]',
+  },
+]
+
+function scrubSecrets(input: string): string {
+  let out = input
+  for (const { re, replacement } of SENSITIVE_PATTERNS) {
+    out = out.replace(re, replacement)
+  }
+  return out
+}
+
 function serializeError(err: Error): Record<string, unknown> {
   return {
     name: err.name,
-    message: err.message,
-    stack: err.stack,
+    message: scrubSecrets(err.message),
+    // En prod on tronque la stack (moins de fuite, logs plus légers).
+    // En dev on garde la stack complète (mais toujours scrubbed).
+    stack:
+      process.env.NODE_ENV === 'production'
+        ? scrubSecrets((err.stack ?? '').split('\n').slice(0, 10).join('\n'))
+        : scrubSecrets(err.stack ?? ''),
   }
 }
 

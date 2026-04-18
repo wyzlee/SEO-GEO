@@ -27,6 +27,11 @@ import { db } from '@/lib/db'
 import { audits } from '@/lib/db/schema'
 import { processAudit } from '@/lib/audit/process'
 import { createLogger } from '@/lib/observability/logger'
+import { assertEnvOrThrow } from '@/lib/env'
+
+// Fail-fast si les variables critiques manquent (DATABASE_URL etc.).
+// En dev : warn seulement.
+assertEnvOrThrow()
 
 const POLL_MS = Number.parseInt(process.env.WORKER_POLL_MS ?? '2000', 10)
 const IDLE_BACKOFF_MAX_MS = 10_000

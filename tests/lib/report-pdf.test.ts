@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  PdfUnavailableError,
-  buildPdfFilename,
-  renderPdf,
-} from '@/lib/report/pdf'
+import { buildPdfFilename } from '@/lib/report/pdf'
+// renderPdf + PdfUnavailableError sont importés dynamiquement dans les tests
+// ci-dessous via `await import(...)` après avoir posé les mocks
+// `@sparticuz/chromium` / `puppeteer-core` via `vi.doMock()`.
 
 const ORIGINAL_ENV = { ...process.env }
 
@@ -41,63 +40,105 @@ describe('buildPdfFilename', () => {
   })
 })
 
-describe('renderPdf', () => {
+describe('renderPdf (Puppeteer + @sparticuz/chromium)', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.resetModules()
     process.env = { ...ORIGINAL_ENV }
   })
 
   afterEach(() => {
     process.env = { ...ORIGINAL_ENV }
+    vi.doUnmock('@sparticuz/chromium')
+    vi.doUnmock('puppeteer-core')
   })
 
-  it('throws PdfUnavailableError when GOTENBERG_URL missing', async () => {
-    delete process.env.GOTENBERG_URL
-    await expect(renderPdf({ html: '<p>hi</p>' })).rejects.toBeInstanceOf(
-      PdfUnavailableError,
+  it('throws PdfUnavailableError when puppeteer-core unavailable', async () => {
+    vi.doMock('@sparticuz/chromium', () => {
+      throw new Error('module not installed')
+    })
+    vi.doMock('puppeteer-core', () => {
+      throw new Error('module not installed')
+    })
+    const { renderPdf: render, PdfUnavailableError: Err } = await import(
+      '@/lib/report/pdf'
     )
+    await expect(render({ html: '<p>hi</p>' })).rejects.toBeInstanceOf(Err)
   })
 
-  it('POSTs to gotenberg and returns a Buffer on success', async () => {
-    process.env.GOTENBERG_URL = 'http://gotenberg:3000'
-    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]) // "%PDF"
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(pdfBytes, { status: 200 }),
-    )
-    vi.stubGlobal('fetch', fetchMock)
+  it('renders Buffer via Puppeteer on success', async () => {
+    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x0a]) // "%PDF\n"
+    const pageStub = {
+      setContent: vi.fn().mockResolvedValue(undefined),
+      evaluate: vi.fn().mockResolvedValue(undefined),
+      pdf: vi.fn().mockResolvedValue(pdfBytes),
+    }
+    const browserStub = {
+      newPage: vi.fn().mockResolvedValue(pageStub),
+      close: vi.fn().mockResolvedValue(undefined),
+    }
+    vi.doMock('@sparticuz/chromium', () => ({
+      default: {
+        args: ['--no-sandbox'],
+        executablePath: vi.fn().mockResolvedValue('/chromium'),
+      },
+    }))
+    vi.doMock('puppeteer-core', () => ({
+      default: { launch: vi.fn().mockResolvedValue(browserStub) },
+    }))
 
-    const buf = await renderPdf({ html: '<h1>ok</h1>' })
+    const { renderPdf: render } = await import('@/lib/report/pdf')
+    const buf = await render({ html: '<h1>ok</h1>' })
     expect(Buffer.isBuffer(buf)).toBe(true)
     expect(buf.slice(0, 4).toString()).toBe('%PDF')
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('http://gotenberg:3000/forms/chromium/convert/html')
-    expect((init as { method: string }).method).toBe('POST')
+    expect(pageStub.setContent).toHaveBeenCalledWith(
+      '<h1>ok</h1>',
+      expect.objectContaining({ waitUntil: 'networkidle0' }),
+    )
+    expect(pageStub.pdf).toHaveBeenCalledWith(
+      expect.objectContaining({ format: 'A4', printBackground: true }),
+    )
+    expect(browserStub.close).toHaveBeenCalledTimes(1)
   })
 
-  it('throws PdfUnavailableError on non-2xx response', async () => {
-    process.env.GOTENBERG_URL = 'http://gotenberg:3000'
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response('boom', { status: 500 }),
-      ),
+  it('wraps Puppeteer launch errors in PdfUnavailableError', async () => {
+    vi.doMock('@sparticuz/chromium', () => ({
+      default: {
+        args: [],
+        executablePath: vi.fn().mockResolvedValue('/chromium'),
+      },
+    }))
+    vi.doMock('puppeteer-core', () => ({
+      default: { launch: vi.fn().mockRejectedValue(new Error('chrome fail')) },
+    }))
+
+    const { renderPdf: render, PdfUnavailableError: Err } = await import(
+      '@/lib/report/pdf'
     )
-    await expect(renderPdf({ html: '<h1>x</h1>' })).rejects.toBeInstanceOf(
-      PdfUnavailableError,
-    )
+    await expect(render({ html: '<p/>' })).rejects.toBeInstanceOf(Err)
   })
 
-  it('throws PdfUnavailableError when fetch itself fails', async () => {
-    process.env.GOTENBERG_URL = 'http://gotenberg:3000'
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(
-        Object.assign(new Error('fetch failed'), { name: 'TypeError' }),
-      ),
+  it('closes browser even when page.pdf throws', async () => {
+    const close = vi.fn().mockResolvedValue(undefined)
+    const browserStub = {
+      newPage: vi.fn().mockResolvedValue({
+        setContent: vi.fn().mockResolvedValue(undefined),
+        evaluate: vi.fn().mockResolvedValue(undefined),
+        pdf: vi.fn().mockRejectedValue(new Error('render fail')),
+      }),
+      close,
+    }
+    vi.doMock('@sparticuz/chromium', () => ({
+      default: { args: [], executablePath: vi.fn().mockResolvedValue('/x') },
+    }))
+    vi.doMock('puppeteer-core', () => ({
+      default: { launch: vi.fn().mockResolvedValue(browserStub) },
+    }))
+
+    const { renderPdf: render, PdfUnavailableError: Err } = await import(
+      '@/lib/report/pdf'
     )
-    await expect(renderPdf({ html: '<h1>x</h1>' })).rejects.toBeInstanceOf(
-      PdfUnavailableError,
-    )
+    await expect(render({ html: '<p/>' })).rejects.toBeInstanceOf(Err)
+    expect(close).toHaveBeenCalledTimes(1)
   })
 })

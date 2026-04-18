@@ -1,12 +1,31 @@
 import Stripe from 'stripe'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
-  // La version 2026-03-25.dahlia est la LatestApiVersion selon le package installé (v22.0.2).
-  // Le cast `as never` contourne la contrainte de type — safer que d'importer LatestApiVersion
-  // dont l'export n'est pas stable entre les versions majeures du package.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  apiVersion: '2026-03-25.dahlia' as any,
-  typescript: true,
+// Lazy singleton : le SDK Stripe instantiate throw si STRIPE_SECRET_KEY manque
+// (versions récentes). Import-time throw casserait tests, dev sans Stripe et
+// builds CI. L'accès réel aux méthodes reste fail-loud.
+let _stripe: Stripe | null = null
+
+function createStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY
+  if (!key) {
+    throw new Error(
+      'STRIPE_SECRET_KEY non défini — client Stripe indisponible. ' +
+        'Configurer la clé dans .env.local (dev) ou Vercel env (prod).',
+    )
+  }
+  return new Stripe(key, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    apiVersion: '2026-03-25.dahlia' as any,
+    typescript: true,
+  })
+}
+
+export const stripe: Stripe = new Proxy({} as Stripe, {
+  get(_target, prop, receiver) {
+    if (!_stripe) _stripe = createStripe()
+    const value = Reflect.get(_stripe as object, prop, receiver)
+    return typeof value === 'function' ? value.bind(_stripe) : value
+  },
 })
 
 export const PLANS = {
