@@ -1,17 +1,21 @@
 # Verdict production-readiness — SEO-GEO
-**Date** : 2026-04-18
-**Branche** : `claude/add-tests-security-eqglm`
-**Commits à venir** : correctifs sécurité + tests + CI
+**Date** : 2026-04-18 — **Mis à jour** : 2026-04-18 (fin session)
+**Branche d'origine** : `claude/add-tests-security-eqglm` → **mergée dans `main`** (commit `1674ec3`)
+**Statut global** : ✅ **CODE MERGÉ — PROD OPÉRATIONNELLE**
 
 ---
 
-## Verdict final : ✅ **GO production**
+## Verdict final : ✅ **EN PRODUCTION**
 
-L'app SEO-GEO est **prête à être déployée en production** sur Vercel
-(`seo-geo-orcin.vercel.app`) avec les réserves listées en *Limites connues*.
+L'app SEO-GEO est **déployée et opérationnelle** sur Vercel
+(`seo-geo-orcin.vercel.app`). Toutes les corrections sécurité sont mergées.
 
 Les 2 findings **CRITICAL** sont résolus, les 2 **HIGH** aussi, les 4
 **MEDIUM** aussi. Tests automatisés, CI GitHub Actions et smoke E2E en place.
+
+**2 actions manuelles restantes avant premier client réel :**
+- 🔴 **S1.2** — Smoke test prod : login → audit → rapport → PDF → partage
+- 🟠 **S4.3** — Passer Stripe en mode LIVE (clés live + webhook live)
 
 ---
 
@@ -184,24 +188,15 @@ npm run test:e2e             # 6 scénarios
 - [x] Rate limiter fail-closed sans Redis
 - [x] Toutes les routes privées passent `authenticateAuto`/`authenticateRequest`
 
-**À vérifier côté Vercel dashboard (hors code) avant go-live** :
+**État côté Vercel dashboard** :
 
-- [ ] Env vars production set :
-  - `DATABASE_URL` (Neon prod branch)
-  - `NEXT_PUBLIC_STACK_PROJECT_ID`, `NEXT_PUBLIC_STACK_PUBLISHABLE_KEY`,
-    `STACK_SECRET_SERVER_KEY`, `STACK_WEBHOOK_SECRET`
-  - `CRON_SECRET` (générer via `openssl rand -hex 32`)
-  - `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-  - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_STUDIO_MONTHLY`,
-    `STRIPE_PRICE_AGENCY_MONTHLY`
-  - `ANTHROPIC_API_KEY` (phase 11 synthesis)
-  - `RESEND_API_KEY` (notifications audit terminé)
-  - `SENTRY_AUTH_TOKEN` (source maps)
-- [ ] Cron jobs Vercel actifs et schedulés dans dashboard
-- [ ] Stack Auth webhook URL pointé vers `/api/webhooks/stack-auth` (signature secret match)
-- [ ] Stripe webhook URL pointé vers `/api/stripe/webhook`
-  (events : `customer.subscription.*`, `invoice.payment_failed`)
-- [ ] Domain custom HTTPS forcé (pas de redirect loop)
+- [x] Toutes les env vars production configurées (DATABASE_URL, Stack Auth, Upstash, Stripe TEST, Anthropic, Resend, CrUX, CRON_SECRET)
+- [x] Cron jobs actifs dans `vercel.json`
+- [x] Stack Auth webhook → `/api/webhooks/stack-auth` ✅
+- [x] Stripe webhook → `/api/stripe/webhook` (5 events) ✅
+- [x] Redeploy post-config réussi (`dpl_9HcESUJDy2b1W2Gj5BhJB6eNiZcC`) ✅
+- [ ] **Smoke test prod S1.2** — à faire manuellement
+- [ ] **Stripe LIVE mode** — avant premier client payant réel
 
 ---
 
