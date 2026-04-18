@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth/context'
 
 export interface OrgSummary {
   organizationId: string
@@ -23,14 +24,19 @@ export function useOrganizations() {
   const [orgs, setOrgs] = useState<OrgSummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [currentOrgId, setCurrentOrgIdState] = useState<string | null>(null)
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
     setCurrentOrgIdState(getCurrentOrgId())
+    if (authLoading || !user) {
+      if (!authLoading) setIsLoading(false)
+      return
+    }
     fetch('/api/organizations')
       .then(r => r.ok ? r.json() : { memberships: [] })
       .then(data => { setOrgs(data.memberships ?? []); setIsLoading(false) })
       .catch(() => setIsLoading(false))
-  }, [])
+  }, [user, authLoading])
 
   const switchOrg = (orgId: string) => {
     setCurrentOrgId(orgId)

@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO-GEO — Guide Produit</title>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .phase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+    margin-bottom: 40px;
+  }
+  .phase-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 22px;
+    display: flex;
+    gap: 16px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .phase-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--ph-color, var(--accent));
+  }
+  .phase-card:hover { border-color: var(--ph-color, var(--accent)); transform: translateX(3px); }
+  .phase-num {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 1.4rem;
+    color: var(--ph-color, var(--accent));
+    opacity: 0.3;
+    line-height: 1;
+    min-width: 28px;
+  }
+  .phase-body {}
+  .phase-name {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .phase-pts {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.6rem;
+    color: var(--ph-color, var(--accent));
+    border: 1px solid var(--ph-color, var(--accent));
+    padding: 1px 6px;
+    border-radius: 3px;
+    opacity: 0.8;
+  }
+  .phase-desc {
+    font-size: 0.71rem;
+    color: var(--muted2);
+    line-height: 1.65;
+  }
+  .score-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 40px;
+    max-width: 700px;
+  }
+  .score-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .score-bar-label {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--text);
+    min-width: 180px;
+  }
+  .score-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--sb-color, var(--accent));
+    transition: width 0.8s ease;
+  }
+  .score-bar-pts {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    min-width: 50px;
+    text-align: right;
+  }
+  .rapport-mockup {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 680px;
+    margin-bottom: 40px;
+  }
+  .rapport-header {
+    background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.08));
+    border-bottom: 1px solid var(--border);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rapport-score-big {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 3rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .rapport-score-sub {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .rapport-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+  }
+  .rapport-meta-item {
+    font-size: 0.68rem;
+    color: var(--muted2);
+    font-family: 'Fira Code', monospace;
+  }
+  .rapport-sections {
+    padding: 20px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rapport-section-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rapport-section-row:last-child { border-bottom: none; }
+  .rapport-section-name {
+    flex: 1;
+    font-size: 0.72rem;
+    color: var(--muted2);
+  }
+  .rapport-section-score {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text);
+    min-width: 48px;
+    text-align: right;
+  }
+  .badge-ok { color: var(--accent3); }
+  .badge-warn { color: var(--accent5); }
+  .badge-bad { color: var(--accent2); }
+
+  .workflow-steps {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    max-width: 800px;
+    margin-bottom: 40px;
+    overflow-x: auto;
+  }
+  .wf-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 130px;
+    flex: 1;
+  }
+  .wf-step-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    position: relative;
+  }
+  .wf-step-num {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wf-step-label {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-align: center;
+    color: var(--text);
+  }
+  .wf-step-desc {
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .wf-arrow {
+    padding-top: 18px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  .input-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 700px;
+    margin-bottom: 40px;
+  }
+  .input-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .input-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--ic-color, var(--accent));
+    transform: scaleX(0);
+    transition: transform 0.25s;
+  }
+  .input-card:hover { border-color: var(--ic-color, var(--accent)); }
+  .input-card:hover::after { transform: scaleX(1); }
+  .input-icon { font-size: 1.8rem; margin-bottom: 14px; }
+  .input-title {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--ic-color, var(--accent));
+    margin-bottom: 8px;
+  }
+  .input-desc {
+    font-size: 0.72rem;
+    color: var(--muted2);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .input-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+  }
+  .badge-v1 { background: rgba(57,211,83,0.1); border: 1px solid rgba(57,211,83,0.25); color: var(--accent3); }
+  .badge-v2 { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25); color: var(--accent5); }
+
+  .persona-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .persona-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 26px 24px;
+    transition: all 0.2s;
+  }
+  .persona-card:hover { border-color: var(--persona-color, var(--accent)); transform: translateY(-2px); }
+  .persona-emoji { font-size: 2rem; margin-bottom: 14px; }
+  .persona-title {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--persona-color, var(--accent));
+    margin-bottom: 6px;
+  }
+  .persona-profile {
+    font-size: 0.7rem;
+    color: var(--muted2);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .persona-need {
+    font-size: 0.68rem;
+    color: var(--text);
+    border-left: 2px solid var(--persona-color, var(--accent));
+    padding-left: 10px;
+    line-height: 1.6;
+  }
+
+  .packages-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 40px;
+  }
+  .packages-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .packages-table th {
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .packages-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.73rem;
+    vertical-align: top;
+  }
+  .packages-table tr:last-child td { border-bottom: none; }
+  .packages-table tr:hover td { background: rgba(0,194,255,0.03); }
+  .pkg-name {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.82rem;
+  }
+  .pkg-price {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .roadmap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 800px;
+    margin-bottom: 40px;
+  }
+  .roadmap-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    transition: border-color 0.2s;
+  }
+  .roadmap-card:hover { border-color: var(--rm-color, var(--accent)); }
+  .roadmap-label {
+    font-size: 0.6rem;
+    color: var(--rm-color, var(--accent));
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+  .roadmap-title {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .roadmap-items {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .roadmap-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.71rem;
+    color: var(--muted2);
+    line-height: 1.55;
+  }
+  .roadmap-item::before {
+    content: '→';
+    color: var(--rm-color, var(--accent));
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    margin-top: 1px;
+  }
+  .stat-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .stat-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    min-width: 160px;
+    flex: 1;
+  }
+  .stat-block-value {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 2rem;
+    color: var(--sb-val-color, var(--accent));
+    line-height: 1;
+  }
+  .stat-block-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .diff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 600px;
+    margin-bottom: 40px;
+  }
+  .diff-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 16px;
+    background: rgba(0,194,255,0.04);
+    border: 1px solid rgba(0,194,255,0.15);
+    border-radius: 6px;
+    font-size: 0.73rem;
+    color: var(--muted2);
+    line-height: 1.6;
+  }
+  .diff-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    width: 20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-mark">SEO<span>-GEO</span></span>
+    <span class="logo-sub">Guide Produit</span>
+    <span class="logo-version">v1.0 — Avril 2026</span>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Pourquoi</div>
+    <a href="#hero" class="nav-item"><span class="nav-dot"></span>En résumé</a>
+    <a href="#context" class="nav-item"><span class="nav-dot"></span>Le marché a basculé</a>
+    <a href="#solution" class="nav-item"><span class="nav-dot"></span>La solution</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">L'Audit</div>
+    <a href="#dimensions" class="nav-item"><span class="nav-dot"></span>11 Dimensions</a>
+    <a href="#score" class="nav-item"><span class="nav-dot"></span>Score & Rapport</a>
+    <a href="#workflow" class="nav-item"><span class="nav-dot"></span>Comment ça marche</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Modes d'entrée</div>
+    <a href="#input" class="nav-item"><span class="nav-dot"></span>URL ou Code source</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Pour qui / Combien</div>
+    <a href="#personas" class="nav-item"><span class="nav-dot"></span>3 Personas</a>
+    <a href="#packages" class="nav-item"><span class="nav-dot"></span>Packages commerciaux</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Suite</div>
+    <a href="#roadmap" class="nav-item"><span class="nav-dot"></span>Roadmap V1 → V2</a>
+  </div>
+
+  <div class="sidebar-buttons">
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span class="theme-toggle-icon" id="theme-icon">&#9789;</span>
+      <span id="theme-label">Light mode</span>
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>11 dimensions d'audit<br>
+    Score 100 pts &middot; Rapport FR<br>
+    URL live &middot; Code source (V2)<br>
+    Tripwire &middot; Retainer &middot; Enterprise
+  </div>
+</nav>
+
+<main>
+
+<!-- HERO -->
+<section id="hero" style="min-height:100vh; padding: 64px 56px;">
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span>&#9670;</span> L'audit qui voit ce que Google ET les IA voient
+    </div>
+    <h1 class="hero-title">
+      SEO<span class="accent">-GEO</span><br>
+      <span class="dim">Audit</span>
+    </h1>
+    <p class="hero-desc">
+      40 % des requêtes d'information démarrent aujourd'hui sur une IA — pas sur Google.
+      SEO-GEO est le premier outil d'audit qui mesure simultanément votre visibilité dans les moteurs de recherche classiques
+      <strong>et</strong> dans les moteurs IA (ChatGPT, Perplexity, Claude, Gemini, Copilot).
+      Un rapport actionnable en français, livré en moins de 10 minutes.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-value">11<span> phases</span></div>
+        <div class="stat-label">Dimensions d'analyse</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">100<span> pts</span></div>
+        <div class="stat-label">Score final</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">&lt;10<span> min</span></div>
+        <div class="stat-label">Durée d'un audit</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">FR<span> only</span></div>
+        <div class="stat-label">Rapport jargon-free</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">WL<span></span></div>
+        <div class="stat-label">White-label natif</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTEXT -->
+<section id="context">
+  <div class="section-eyebrow">01 — Le marché a basculé</div>
+  <h2>Ce que vos clients<br>ne voient pas venir</h2>
+  <p class="subtitle">Les outils SEO classiques (Ahrefs, Semrush) ont été conçus pour Google. En 2026, Google n'est plus le seul juge de la visibilité en ligne.</p>
+
+  <div class="stat-row reveal">
+    <div class="stat-block" style="--sb-val-color:#ff6b35">
+      <div class="stat-block-value">40 %</div>
+      <div class="stat-block-label">des requêtes d'information démarrent sur une IA plutôt que sur Google</div>
+    </div>
+    <div class="stat-block" style="--sb-val-color:#c084fc">
+      <div class="stat-block-value">3,6×</div>
+      <div class="stat-block-label">plus de crawls de GPTBot vs Googlebot sur les sites audités</div>
+    </div>
+    <div class="stat-block" style="--sb-val-color:#fbbf24">
+      <div class="stat-block-value">3-6 mois</div>
+      <div class="stat-block-label">demi-vie d'une citation IA — plus courte qu'en SEO classique</div>
+    </div>
+    <div class="stat-block" style="--sb-val-color:#39d353">
+      <div class="stat-block-value">76 %</div>
+      <div class="stat-block-label">des citations IA portent sur des contenus publiés dans les 30 derniers jours</div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal">La double peine</div>
+  <div class="diff-list reveal">
+    <div class="diff-item">
+      <div class="diff-icon">&#128200;</div>
+      <div><strong>Le trafic organique Google baisse</strong> — les IA répondent directement aux questions, sans clic vers votre site.</div>
+    </div>
+    <div class="diff-item">
+      <div class="diff-icon">&#129302;</div>
+      <div><strong>Invisible aux IA</strong> — si votre site n'est pas correctement balisé, structuré et cité, ChatGPT et ses pairs ne vous mentionneront jamais dans leurs réponses.</div>
+    </div>
+    <div class="diff-item">
+      <div class="diff-icon">&#128295;</div>
+      <div><strong>Aucun outil classique ne couvre ça</strong> — Semrush et Ahrefs mesurent les positions Google. Ils ne savent pas si Perplexity vous cite — ni pourquoi.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="section-eyebrow">02 — La solution</div>
+  <h2>Deux dimensions.<br>Un seul audit.</h2>
+  <p class="subtitle">SEO-GEO mesure en simultané les deux types de visibilité qui comptent en 2026 : le référencement moteur et la citation par les IA génératives.</p>
+
+  <div class="sub-divider reveal">Les deux signaux mesurés</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#4F46E5">
+      <div class="card-icon">&#128269;</div>
+      <div class="card-title">SEO — Visibilité moteurs</div>
+      <div class="card-desc">Google, Bing, DuckDuckGo. Fondations techniques, données structurées, performance, contenus, autorité. L'essentiel pour maintenir et développer le trafic organique.</div>
+    </div>
+    <div class="card" style="--c-color:#7C3AED">
+      <div class="card-icon">&#129302;</div>
+      <div class="card-title">GEO — Visibilité IA</div>
+      <div class="card-desc">ChatGPT Search, Claude, Perplexity, Gemini, Copilot. Signaux de citation, balisage IA, entités reconnues, fraîcheur. La nouvelle frontière de la visibilité en ligne.</div>
+    </div>
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-icon">&#128203;</div>
+      <div class="card-title">Rapport actionnable FR</div>
+      <div class="card-desc">Un score sur 100. Un plan d'action priorisé. En français, sans jargon. Livrable client-ready en web et PDF, sous votre marque.</div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-icon">&#9201;</div>
+      <div class="card-title">Résultats en &lt; 10 min</div>
+      <div class="card-desc">Entrez une URL. L'audit se lance. 10 minutes plus tard, un rapport complet de 11 dimensions est prêt à être envoyé à votre client.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DIMENSIONS -->
+<section id="dimensions">
+  <div class="section-eyebrow">03 — L'audit</div>
+  <h2>11 dimensions<br>d'analyse</h2>
+  <p class="subtitle">Chaque dimension évalue un aspect précis de votre visibilité. Ensemble, elles donnent une image complète de ce qui fonctionne — et de ce qu'il faut corriger en priorité.</p>
+
+  <div class="phase-grid reveal">
+    <div class="phase-card" style="--ph-color:#4F46E5">
+      <div class="phase-num">01</div>
+      <div class="phase-body">
+        <div class="phase-name">Fondations techniques <span class="phase-pts">12 pts</span></div>
+        <div class="phase-desc">Le site répond-il correctement ? URLs propres, redirections, HTTPS, robots.txt, sitemap.xml. La base avant tout.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#7C3AED">
+      <div class="phase-num">02</div>
+      <div class="phase-body">
+        <div class="phase-name">Données structurées <span class="phase-pts">15 pts</span></div>
+        <div class="phase-desc">Les moteurs IA comprennent-ils vos contenus ? Balisage Schema.org, FAQ, Articles, Produits, Organisations. L'enjeu technique le plus fort de 2026.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#c084fc">
+      <div class="phase-num" style="opacity:0.5">03</div>
+      <div class="phase-body">
+        <div class="phase-name">Visibilité IA (GEO) <span class="phase-pts" style="border-color:#c084fc; color:#c084fc">18 pts ★</span></div>
+        <div class="phase-desc">ChatGPT vous mentionne-t-il ? Perplexity ? Claude ? Tests de prompts réels, fichier llms.txt, analyse des citations IA. Le poids le plus élevé de l'audit.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#00c2ff">
+      <div class="phase-num">04</div>
+      <div class="phase-body">
+        <div class="phase-name">Entités & notoriété <span class="phase-pts">10 pts</span></div>
+        <div class="phase-desc">Votre marque est-elle reconnue comme acteur légitime de son domaine ? Knowledge Graph Google, Wikidata, mentions tierces de qualité.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#39d353">
+      <div class="phase-num">05</div>
+      <div class="phase-body">
+        <div class="phase-name">E-E-A-T <span class="phase-pts">10 pts</span></div>
+        <div class="phase-desc">Expérience, Expertise, Autorité, Confiance. Biographies auteurs, preuves d'expertise, mentions presse. +132 % de visibilité IA si le signal est présent.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#fbbf24">
+      <div class="phase-num">06</div>
+      <div class="phase-body">
+        <div class="phase-name">Fraîcheur <span class="phase-pts">8 pts</span></div>
+        <div class="phase-desc">Vos contenus sont-ils à jour ? 76 % des citations IA portent sur des contenus de moins de 30 jours. La fraîcheur est un signal de ranking IA direct.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#ff6b35">
+      <div class="phase-num">07</div>
+      <div class="phase-body">
+        <div class="phase-name">International <span class="phase-pts">8 pts</span></div>
+        <div class="phase-desc">Site multilingue ? Hreflang, adaptation géographique, signaux de localisation. Redistribué vers les autres dimensions si site mono-langue.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#0ea5e9">
+      <div class="phase-num">08</div>
+      <div class="phase-body">
+        <div class="phase-name">Performance web <span class="phase-pts">8 pts</span></div>
+        <div class="phase-desc">Votre site est-il rapide ? Core Web Vitals, INP (Interaction to Next Paint), LCP, CLS. Les métriques de vitesse qui impactent le classement Google.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#10b981">
+      <div class="phase-num">09</div>
+      <div class="phase-body">
+        <div class="phase-name">Couverture thématique <span class="phase-pts">6 pts</span></div>
+        <div class="phase-desc">Couvrez-vous le sujet en profondeur ? Pillar pages, clusters de contenus, maillage interne. La profondeur qui fait la différence face à l'IA.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#f43f5e">
+      <div class="phase-num">10</div>
+      <div class="phase-body">
+        <div class="phase-name">Erreurs communes <span class="phase-pts">5 pts</span></div>
+        <div class="phase-desc">Cannibalisation de mots-clés, contenu dupliqué, pages orphelines, thin content. Le garde-fou qui évite les régressions.</div>
+      </div>
+    </div>
+    <div class="phase-card" style="--ph-color:#8b5cf6">
+      <div class="phase-num">11</div>
+      <div class="phase-body">
+        <div class="phase-name">Synthèse & recommandations <span class="phase-pts">Plan d'action</span></div>
+        <div class="phase-desc">Les 5 actions les plus impactantes, classées par rapport bénéfice/effort. C'est la section que votre client lira en premier dans le rapport.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCORE & RAPPORT -->
+<section id="score">
+  <div class="section-eyebrow">04 — Le livrable</div>
+  <h2>Un score.<br>Un rapport client-ready.</h2>
+  <p class="subtitle">Chaque audit produit un score sur 100 et un rapport complet en français — prêt à être envoyé à votre client sans retouche.</p>
+
+  <div class="sub-divider reveal">Distribution du score sur 100 pts</div>
+  <div class="score-bar-wrap reveal">
+    <div class="score-bar-row">
+      <div class="score-bar-label">Visibilité IA (GEO)</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:18%; --sb-color:#c084fc"></div></div>
+      <div class="score-bar-pts" style="color:#c084fc">18 pts ★</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">Données structurées</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:15%; --sb-color:#7C3AED"></div></div>
+      <div class="score-bar-pts">15 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">Fondations techniques</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:12%; --sb-color:#4F46E5"></div></div>
+      <div class="score-bar-pts">12 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">E-E-A-T</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:10%; --sb-color:#39d353"></div></div>
+      <div class="score-bar-pts">10 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">Entités & notoriété</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:10%; --sb-color:#00c2ff"></div></div>
+      <div class="score-bar-pts">10 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">Fraîcheur</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:8%; --sb-color:#fbbf24"></div></div>
+      <div class="score-bar-pts">8 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">International</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:8%; --sb-color:#ff6b35"></div></div>
+      <div class="score-bar-pts">8 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">Performance web</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:8%; --sb-color:#0ea5e9"></div></div>
+      <div class="score-bar-pts">8 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">Couverture thématique</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:6%; --sb-color:#10b981"></div></div>
+      <div class="score-bar-pts">6 pts</div>
+    </div>
+    <div class="score-bar-row">
+      <div class="score-bar-label">Erreurs communes</div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:5%; --sb-color:#f43f5e"></div></div>
+      <div class="score-bar-pts">5 pts</div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal">Le rapport livré au client</div>
+  <div class="rapport-mockup reveal">
+    <div class="rapport-header">
+      <div>
+        <div class="rapport-score-big">74</div>
+        <div class="rapport-score-sub">Score SEO-GEO / 100</div>
+      </div>
+      <div class="rapport-meta">
+        <div class="rapport-meta-item">audit: exemple.fr</div>
+        <div class="rapport-meta-item">date: avril 2026</div>
+        <div class="rapport-meta-item">mode: URL live</div>
+        <div class="rapport-meta-item" style="color:var(--accent3); margin-top:4px">&#10003; PDF disponible</div>
+      </div>
+    </div>
+    <div class="rapport-sections">
+      <div class="rapport-section-row">
+        <span class="rapport-section-name">01 Fondations techniques</span>
+        <span class="rapport-section-score badge-ok">10 / 12</span>
+      </div>
+      <div class="rapport-section-row">
+        <span class="rapport-section-name">02 Données structurées</span>
+        <span class="rapport-section-score badge-warn">9 / 15</span>
+      </div>
+      <div class="rapport-section-row">
+        <span class="rapport-section-name" style="color:var(--accent)">03 Visibilité IA (GEO) ★</span>
+        <span class="rapport-section-score badge-bad">6 / 18</span>
+      </div>
+      <div class="rapport-section-row">
+        <span class="rapport-section-name">04 Entités & notoriété</span>
+        <span class="rapport-section-score badge-warn">7 / 10</span>
+      </div>
+      <div class="rapport-section-row">
+        <span class="rapport-section-name">05 E-E-A-T</span>
+        <span class="rapport-section-score badge-ok">9 / 10</span>
+      </div>
+      <div class="rapport-section-row">
+        <span class="rapport-section-name">06 Fraîcheur</span>
+        <span class="rapport-section-score badge-ok">7 / 8</span>
+      </div>
+      <div class="rapport-section-row">
+        <span class="rapport-section-name">07–10 Autres dimensions</span>
+        <span class="rapport-section-score badge-ok">26 / 27</span>
+      </div>
+      <div class="rapport-section-row" style="background:rgba(79,70,229,0.04); border-radius:6px; padding:8px 12px; border:none">
+        <span class="rapport-section-name" style="color:var(--accent4)">11 Synthèse — Plan d'action priorisé</span>
+        <span class="rapport-section-score" style="color:var(--accent4)">5 actions</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal">Ce que le rapport inclut</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#4F46E5">
+      <div class="card-icon">&#127760;</div>
+      <div class="card-title">Lien web partageable</div>
+      <div class="card-desc">Une URL unique, tokenisée, à durée de vie configurable. Votre client consulte son rapport depuis n'importe quel appareil, sans login.</div>
+    </div>
+    <div class="card" style="--c-color:#7C3AED">
+      <div class="card-icon">&#128196;</div>
+      <div class="card-title">PDF téléchargeable</div>
+      <div class="card-desc">Export PDF de qualité impression — idéal pour les réunions client, les présentations et les archivages contractuels.</div>
+    </div>
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-icon">&#127981;</div>
+      <div class="card-title">White-label natif</div>
+      <div class="card-desc">Le rapport porte votre logo (ou celui de votre client). Aucune mention SEO-GEO. Livrable prêt à sortir sous votre marque.</div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-icon">&#127482;</div>
+      <div class="card-title">Français, sans jargon</div>
+      <div class="card-desc">Rédigé pour être compris par un décideur non-technique. Pas de termes SEO obscurs — des constats clairs et des actions concrètes.</div>
+    </div>
+    <div class="card" style="--c-color:#fbbf24">
+      <div class="card-icon">&#128203;</div>
+      <div class="card-title">Stats sourcées & datées</div>
+      <div class="card-desc">Chaque chiffre cité dans le rapport est traçable à une source. Les benchmarks sont mis à jour trimestriellement.</div>
+    </div>
+    <div class="card" style="--c-color:#c084fc">
+      <div class="card-icon">&#127919;</div>
+      <div class="card-title">Plan d'action priorisé</div>
+      <div class="card-desc">Les 5 recommandations les plus impactantes, classées par rapport bénéfice / effort. Ce que le client doit faire en premier — sans ambiguïté.</div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOW -->
+<section id="workflow">
+  <div class="section-eyebrow">05 — Comment ça marche</div>
+  <h2>De l'URL<br>au rapport client</h2>
+  <p class="subtitle">3 étapes, moins de 10 minutes. Aucune configuration nécessaire — entrez l'URL, récupérez le rapport.</p>
+
+  <div class="workflow-steps reveal">
+    <div class="wf-step">
+      <div class="wf-step-icon" style="border-color:var(--accent); background:rgba(0,194,255,0.07)">
+        &#128279;
+        <div class="wf-step-num">1</div>
+      </div>
+      <div class="wf-step-label">Entrer l'URL</div>
+      <div class="wf-step-desc">L'URL du site à auditer. C'est tout.</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-step-icon" style="border-color:#7C3AED; background:rgba(124,58,237,0.07)">
+        &#9881;
+        <div class="wf-step-num" style="background:#7C3AED">2</div>
+      </div>
+      <div class="wf-step-label">Audit automatique</div>
+      <div class="wf-step-desc">11 dimensions analysées. Résultats en temps réel.</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-step-icon" style="border-color:#c084fc; background:rgba(192,132,252,0.07)">
+        &#9889;
+        <div class="wf-step-num" style="background:#c084fc">3</div>
+      </div>
+      <div class="wf-step-label">Score calculé</div>
+      <div class="wf-step-desc">Score /100 + findings détaillés.</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-step-icon" style="border-color:#39d353; background:rgba(57,211,83,0.07)">
+        &#128196;
+        <div class="wf-step-num" style="background:#39d353">4</div>
+      </div>
+      <div class="wf-step-label">Rapport généré</div>
+      <div class="wf-step-desc">Web + PDF. White-label. En français.</div>
+    </div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step">
+      <div class="wf-step-icon" style="border-color:#fbbf24; background:rgba(251,191,36,0.07)">
+        &#128231;
+        <div class="wf-step-num" style="background:#fbbf24">5</div>
+      </div>
+      <div class="wf-step-label">Envoi client</div>
+      <div class="wf-step-desc">Un lien partageable. Le client clique, il voit.</div>
+    </div>
+  </div>
+</section>
+
+<!-- INPUT MODES -->
+<section id="input">
+  <div class="section-eyebrow">06 — Modes d'entrée</div>
+  <h2>URL ou code source.<br>Votre choix.</h2>
+  <p class="subtitle">SEO-GEO accepte deux types d'entrée — pour les sites en ligne et pour les projets pre-launch.</p>
+
+  <div class="input-cards reveal">
+    <div class="input-card" style="--ic-color:#4F46E5">
+      <div class="input-icon">&#127758;</div>
+      <div class="input-title">URL Live</div>
+      <div class="input-desc">
+        Entrez l'URL d'un site en production. L'audit crawle le site en temps réel, analyse les contenus visibles, les performances, les signaux IA.
+        <br><br>
+        Idéal pour les audits clients sur des sites existants, les suivis trimestriels, les démarches de prospection.
+      </div>
+      <span class="input-badge badge-v1">V1 — Disponible</span>
+    </div>
+    <div class="input-card" style="--ic-color:#7C3AED">
+      <div class="input-icon">&#128230;</div>
+      <div class="input-title">Code source</div>
+      <div class="input-desc">
+        Uploadez un ZIP ou connectez un repo GitHub. L'audit analyse le code avant que le site soit en ligne — parfait pour auditer avant release.
+        <br><br>
+        Idéal pour les studios dev qui veulent livrer un site optimisé dès le départ, ou pour les clients en refonte.
+      </div>
+      <span class="input-badge badge-v2">V2 — Sprint 06</span>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal">Cas d'usage couverts</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#4F46E5">
+      <div class="card-icon">&#128200;</div>
+      <div class="card-title">Audit de prospection</div>
+      <div class="card-desc">Auditez le site d'un prospect sans lui demander quoi que ce soit. Arrivez en rendez-vous avec un rapport sous son nom.</div>
+    </div>
+    <div class="card" style="--c-color:#7C3AED">
+      <div class="card-icon">&#128260;</div>
+      <div class="card-title">Suivi trimestriel</div>
+      <div class="card-desc">Relancez l'audit tous les trimestres sur les sites clients en retainer. Mesurez la progression du score.</div>
+    </div>
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-icon">&#128640;</div>
+      <div class="card-title">Audit pre-launch</div>
+      <div class="card-desc">Le studio dev uploade le code avant mise en ligne. Aucune surprise à la livraison.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PERSONAS -->
+<section id="personas">
+  <div class="section-eyebrow">07 — Pour qui ?</div>
+  <h2>3 personas.<br>Un même outil.</h2>
+
+  <div class="persona-cards reveal">
+    <div class="persona-card" style="--persona-color:#4F46E5">
+      <div class="persona-emoji">&#127970;</div>
+      <div class="persona-title">Agence SEO</div>
+      <div class="persona-profile">
+        5 à 30 personnes. Propose du SEO classique à ses clients.
+        Veut ajouter une offre GEO à son retainer sans recruter un expert IA.
+      </div>
+      <div class="persona-need">
+        "On a des clients qui demandent pourquoi ils n'apparaissent plus dans les réponses de ChatGPT. On n'avait pas d'outil pour répondre ça."
+      </div>
+    </div>
+    <div class="persona-card" style="--persona-color:#7C3AED">
+      <div class="persona-emoji">&#128084;</div>
+      <div class="persona-title">Directeur marketing B2B SaaS</div>
+      <div class="persona-profile">
+        Son trafic organique stagne ou baisse depuis 12 mois.
+        Veut comprendre pourquoi et comment compenser via la visibilité IA.
+      </div>
+      <div class="persona-need">
+        "Mon site est bien référencé sur Google mais je ne comprends pas pourquoi mes concurrents apparaissent dans Perplexity et pas moi."
+      </div>
+    </div>
+    <div class="persona-card" style="--persona-color:#00c2ff">
+      <div class="persona-emoji">&#128187;</div>
+      <div class="persona-title">Studio dev / Freelance</div>
+      <div class="persona-profile">
+        Développe des sites pour des clients. Veut livrer un produit optimisé
+        dès le départ — et le justifier dans son offre commerciale.
+      </div>
+      <div class="persona-need">
+        "On peut désormais livrer un rapport d'audit SEO-GEO avec chaque projet web. C'est devenu un argument de vente différenciant."
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PACKAGES -->
+<section id="packages">
+  <div class="section-eyebrow">08 — Les offres</div>
+  <h2>Tripwire, Retainer,<br>ou White-label.</h2>
+  <p class="subtitle">Modèle hybride : prestation one-shot pour démarrer, retainer pour fidéliser, white-label pour les agences partenaires.</p>
+
+  <div class="packages-table-wrap reveal">
+    <table class="packages-table">
+      <thead>
+        <tr>
+          <th>Offre</th>
+          <th>Prix indicatif</th>
+          <th>Livrable</th>
+          <th>Engagement</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="pkg-name">Tripwire Audit</div><div style="font-size:0.62rem; color:var(--muted); margin-top:3px">Taux conversion cible &gt; 35 % vers retainer</div></td>
+          <td><div class="pkg-price">1 500 – 3 500 €</div><div style="font-size:0.62rem; color:var(--muted)">One-shot</div></td>
+          <td>Audit complet 11 dimensions + debrief 1h</td>
+          <td>Livraison 3-5 jours</td>
+        </tr>
+        <tr>
+          <td><div class="pkg-name">Retainer Starter</div></td>
+          <td><div class="pkg-price">2 500 – 3 500 €<span style="font-size:0.65rem; color:var(--muted)">/mois</span></div></td>
+          <td>Audit trimestriel + 2-4 refresh/mois + reporting mensuel</td>
+          <td>3 mois minimum</td>
+        </tr>
+        <tr>
+          <td><div class="pkg-name">Retainer Growth</div></td>
+          <td><div class="pkg-price">5 000 – 7 500 €<span style="font-size:0.65rem; color:var(--muted)">/mois</span></div></td>
+          <td>Starter + pillar content + entity building + AI visibility tracking</td>
+          <td>6 mois minimum</td>
+        </tr>
+        <tr>
+          <td><div class="pkg-name">Retainer Enterprise</div></td>
+          <td><div class="pkg-price">10 000 – 15 000 €<span style="font-size:0.65rem; color:var(--muted)">/mois</span></div></td>
+          <td>Growth + production de contenu (4-8 pièces/mois) + link building + conseil stratégique</td>
+          <td>12 mois minimum</td>
+        </tr>
+        <tr>
+          <td><div class="pkg-name">SEO+GEO Add-on</div><div style="font-size:0.62rem; color:var(--muted); margin-top:3px">Pour agences avec retainer SEO existant</div></td>
+          <td><div class="pkg-price">+25 %</div><div style="font-size:0.62rem; color:var(--muted)">sur retainer existant</div></td>
+          <td>Layer GEO greffé sur le retainer SEO actuel</td>
+          <td>Aligné sur le retainer</td>
+        </tr>
+        <tr>
+          <td><div class="pkg-name">White-label Delivery</div><div style="font-size:0.62rem; color:var(--muted); margin-top:3px">Exécution sous marque agence tierce</div></td>
+          <td><div class="pkg-price">-40 à -60 %</div><div style="font-size:0.62rem; color:var(--muted)">Tarif wholesale</div></td>
+          <td>Livraison sous la marque de l'agence partenaire</td>
+          <td>Variable</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="section-eyebrow">09 — Roadmap</div>
+  <h2>Agency tool V1.<br>SaaS public V2.</h2>
+  <p class="subtitle">Le produit se déploie en deux phases : d'abord en mode agence (Olivier pilote les audits manuellement), puis en self-serve public avec Stripe.</p>
+
+  <div class="roadmap-grid reveal">
+    <div class="roadmap-card" style="--rm-color:#4F46E5">
+      <div class="roadmap-label">Maintenant — V1 Agency Tool</div>
+      <div class="roadmap-title">Agency<br>Mode</div>
+      <div class="roadmap-items">
+        <div class="roadmap-item">Dashboard interne — Olivier lance et suit les audits</div>
+        <div class="roadmap-item">Le client reçoit un rapport white-label sans accès à l'app</div>
+        <div class="roadmap-item">Audit URL live en production</div>
+        <div class="roadmap-item">Rapports FR web + PDF livrable immédiatement</div>
+        <div class="roadmap-item">Score 100pts sur 11 dimensions</div>
+        <div class="roadmap-item">Pricing à la prestation (tripwire + retainer)</div>
+      </div>
+    </div>
+    <div class="roadmap-card" style="--rm-color:#7C3AED">
+      <div class="roadmap-label">Prochainement — V2 Self-serve SaaS</div>
+      <div class="roadmap-title">Self-serve<br>Public</div>
+      <div class="roadmap-items">
+        <div class="roadmap-item">Signup public et onboarding automatisé</div>
+        <div class="roadmap-item">Dashboard client avec historique des audits</div>
+        <div class="roadmap-item">Plans Free / Pro / Agence (Stripe)</div>
+        <div class="roadmap-item">Audit sur code source (ZIP + GitHub)</div>
+        <div class="roadmap-item">Tracking continu KPI (Mention Rate, Citation Rate)</div>
+        <div class="roadmap-item">Alertes automatiques sur régression de score</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal">Métriques cibles V1 (90 jours)</div>
+  <div class="stat-row reveal">
+    <div class="stat-block" style="--sb-val-color:#4F46E5">
+      <div class="stat-block-value">10+</div>
+      <div class="stat-block-label">audits livrés à des vrais clients</div>
+    </div>
+    <div class="stat-block" style="--sb-val-color:#7C3AED">
+      <div class="stat-block-value">3+</div>
+      <div class="stat-block-label">conversions tripwire → retainer</div>
+    </div>
+    <div class="stat-block" style="--sb-val-color:#39d353">
+      <div class="stat-block-value">4.3/5</div>
+      <div class="stat-block-label">CSAT minimum sur les rapports livrés</div>
+    </div>
+    <div class="stat-block" style="--sb-val-color:#00c2ff">
+      <div class="stat-block-value">&lt;10 min</div>
+      <div class="stat-block-label">temps de génération d'un audit URL</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span>SEO-GEO — Guide Produit v1.0 &middot; Audit dual-signal SEO + GEO &middot; Avril 2026</span>
+  <span>11 dimensions &middot; Score 100 pts &middot; Rapport FR white-label</span>
+</footer>
+
+<script src="scripts.js"></script>
+</body>
+</html>

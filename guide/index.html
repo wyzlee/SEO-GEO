@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WYZLEE — Guide CEO</title>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-mark">WYZ<span>LEE</span></span>
+    <span class="logo-sub" data-i18n="logo-sub">Guide CEO</span>
+    <span class="logo-version">v1.0 — Mars 2026</span>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label" data-i18n="nav-overview-label">Vue d'ensemble</div>
+    <a href="#overview" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-architecture">Architecture</span></a>
+    <a href="#maturity" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-maturity">Maturite Agentique</span></a>
+    <a href="#infra" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-infra">Infrastructure</span></a>
+    <a href="#n8n" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-n8n">n8n (4 pipelines)</span></a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label" data-i18n="nav-pilotage-label">Pilotage</div>
+    <a href="#discord" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-discord">Discord (12 agents)</span></a>
+    <a href="#agents" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-agents">Agents & Modeles</span></a>
+    <a href="#crons" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-crons">9 Crons</span></a>
+    <a href="#claude" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-claude">Claude Code</span></a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label" data-i18n="nav-data-label">Donnees</div>
+    <a href="#nocodb" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-nocodb">NocoDB (11 tables)</span></a>
+    <a href="#kb" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-kb">Knowledge Base</span></a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label" data-i18n="nav-apps-label">Apps & Projets</div>
+    <a href="#apps" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-apps">8 Apps Wyzlee</span></a>
+    <a href="#auth" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-auth">Auth SSO</span></a>
+    <a href="#stack" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-stack">Golden Stack</span></a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label" data-i18n="nav-ops-label">Operations</div>
+    <a href="#routines" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-routines">Routines CEO</span></a>
+    <a href="#troubleshooting" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-troubleshooting">Troubleshooting</span></a>
+    <a href="#quickref" class="nav-item"><span class="nav-dot"></span><span data-i18n="nav-quickref">Reference rapide</span></a>
+  </div>
+
+  <div class="sidebar-buttons">
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span class="theme-toggle-icon" id="theme-icon">&#9789;</span>
+      <span id="theme-label">Light mode</span>
+    </button>
+    <button class="lang-toggle" onclick="toggleLang()">
+      <span class="lang-toggle-icon">&#127760;</span>
+      <span id="lang-label">English</span>
+    </button>
+  </div>
+  <div class="sidebar-footer" data-i18n="sidebar-footer-html" data-i18n-html>
+    <span class="status-dot"></span>12 agents actifs<br>
+    8 apps &middot; 5 live en prod<br>
+    11 tables NocoDB &middot; 9 crons<br>
+    Score agentique: 9.4/10
+  </div>
+</nav>
+
+<main>
+
+<!-- HERO -->
+<section id="hero" style="min-height:100vh; padding: 64px 56px;">
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span>&#9670;</span> <span data-i18n="hero-tag">Workflow Agentique Autonome — Score 9.4/10</span>
+    </div>
+    <h1 class="hero-title">
+      WYZLEE<br>
+      <span class="accent">Command</span><br>
+      <span class="dim">Center</span>
+    </h1>
+    <p class="hero-desc" data-i18n="hero-desc">
+      Pilotez 12 agents IA (OpenClaw) + 4 pipelines event-driven (n8n) via Discord. 8 apps SaaS, 11 tables NocoDB, webhooks Gitea, CI/CD deploy. OpenClaw fait le cerveau, n8n connecte les tuyaux, zero chevauchement — tout est trace dans le Journal IA.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-value">12<span> agents</span></div>
+        <div class="stat-label" data-i18n="hero-stat-agents">IA specialises</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">8<span> apps</span></div>
+        <div class="stat-label" data-i18n="hero-stat-apps">SaaS ecosystem</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">11<span> tables</span></div>
+        <div class="stat-label" data-i18n="hero-stat-tables">NocoDB</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">9<span>+4</span></div>
+        <div class="stat-label" data-i18n="hero-stat-crons">crons + pipelines</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">9.4<span>/10</span></div>
+        <div class="stat-label" data-i18n="hero-stat-score">score agentique</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="section-eyebrow" data-i18n="ey-overview">01 — Architecture</div>
+  <h2 data-i18n="h2-overview">Deux cerveaux,<br>un ecosysteme</h2>
+  <p class="subtitle" data-i18n="sub-overview">Discord (OpenClaw) pilote de facon autonome 24/7. Claude Code intervient quand tu bosses. Les deux se completent sans se dupliquer.</p>
+
+  <div class="sub-divider reveal" data-i18n="div-5pillars">Les 5 piliers</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#5865F2">
+      <div class="card-icon">&#128302;</div>
+      <div class="card-title" data-i18n="card-openclaw-title">OpenClaw (Discord)</div>
+      <div class="card-desc" data-i18n="card-openclaw-desc">12 agents IA autonomes, 9 crons, 10 bindings Discord. CEO orchestrateur, QA self-repair, event-driven Docker. <strong>Conversationnel + reasoning.</strong></div>
+    </div>
+    <div class="card" style="--c-color:#ff6b35">
+      <div class="card-icon">&#9881;</div>
+      <div class="card-title" data-i18n="card-n8n-title">n8n (Plomberie)</div>
+      <div class="card-desc" data-i18n="card-n8n-desc">4 pipelines event-driven. Zero cron, zero LLM. Webhooks Git, notifications NocoDB, CI/CD deploy. <strong>Reagit aux events, ne pense pas.</strong></div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-icon">&#128451;</div>
+      <div class="card-title" data-i18n="card-nocodb-title">NocoDB</div>
+      <div class="card-desc" data-i18n="card-nocodb-desc">11 tables. Taches, sprints, alertes, changelog, services, deps watch, domaines, workflows n8n, Journal IA. <strong>Source de verite projet.</strong></div>
+    </div>
+    <div class="card" style="--c-color:#c084fc">
+      <div class="card-icon">&#128218;</div>
+      <div class="card-title" data-i18n="card-kb-title">Open Notebook (KB)</div>
+      <div class="card-desc" data-i18n="card-kb-desc">9 sources documentaires. RAG search via Discord #ask-docs. Base de connaissances interrogeable par les agents et par toi.</div>
+    </div>
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-icon">&#9000;</div>
+      <div class="card-title" data-i18n="card-claude-title">Claude Code</div>
+      <div class="card-desc" data-i18n="card-claude-desc">Coding, deploys, infra, architecture. 5 commandes slash, 7 CLAUDE.md par app, memoire persistante. <strong>Interactif avec Olivier.</strong></div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-4layers">Architecture en 4 couches</div>
+  <div class="arch-layers reveal">
+    <div class="arch-layer" style="--al-color:#5865F2">
+      <div class="arch-layer-num">L1</div>
+      <div class="arch-layer-name" data-i18n="layer-l1-name">Interface CEO</div>
+      <div class="arch-layer-desc" data-i18n="layer-l1-desc">Discord (pilotage autonome 24/7) + Claude Code (interactif quand Olivier bosse)</div>
+    </div>
+    <div class="arch-layer" style="--al-color:#ff6b35">
+      <div class="arch-layer-num">L2</div>
+      <div class="arch-layer-name" data-i18n="layer-l2-name">Orchestration</div>
+      <div class="arch-layer-desc" data-i18n="layer-l2-desc">OpenClaw (12 agents, skills, reasoning) + n8n (4 pipelines webhooks, CI/CD) + systemd events</div>
+    </div>
+    <div class="arch-layer" style="--al-color:#39d353">
+      <div class="arch-layer-num">L3</div>
+      <div class="arch-layer-name" data-i18n="layer-l3-name">Data</div>
+      <div class="arch-layer-desc" data-i18n="layer-l3-desc">NocoDB (11 tables, source de verite) + Open Notebook (9 sources KB, RAG) + Neon databases par app</div>
+    </div>
+    <div class="arch-layer" style="--al-color:#c084fc">
+      <div class="arch-layer-num">L4</div>
+      <div class="arch-layer-name" data-i18n="layer-l4-name">Infrastructure</div>
+      <div class="arch-layer-desc" data-i18n="layer-l4-desc">VPS Docker + Traefik TLS + MinIO S3 + Ollama LLM + Backups quotidiens</div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-interconnect">Comment tout s'interconnecte</div>
+  <div class="reveal schema-block">
+<pre>
+<span style="color:#5865F2">DISCORD</span> (#daily, #chat, #coding, #ask-docs, ...)
+   |                          |
+   | messages                 | webhooks (/deploy)
+   v                          v
+<span style="color:#5865F2">OPENCLAW</span> (cerveau)          <span style="color:#ff6b35">n8n</span> (plomberie)
+ 12 agents IA                 4 pipelines event-driven
+ 27 skills (.sh)              zero cron, zero LLM
+ 9 crons                      |
+   |                          |--- P1: <span style="color:#39d353">Gitea</span> push → Discord notif
+   |--- exec scripts          |--- P2: <span style="color:#39d353">NocoDB</span> task change → Discord notif
+   |--- docker restart        |--- P3: <span style="color:#39d353">Gitea</span> push main → deploy
+   |--- mcp-proxy.sh          |--- P4: Discord /deploy → <span style="color:#39d353">deploy.wyzlee.cloud</span>
+   v                          |
+<span style="color:#39d353">NocoDB</span> (11 tables)          v
+   |                        <span style="color:#5865F2">Discord #daily</span> (notifications)
+   v
+<span style="color:#c084fc">Journal IA</span> (audit trail)     <span style="color:#fbbf24">VPS crons</span>
+   ^                          02h00 backup.sh
+   |                          03h00 backup-wyzlee.sh
+<span style="color:#ff6b35">systemd</span> (Docker die → log)
+
+<span style="color:#00c2ff">Claude Code</span> (interactif)
+ coding, deploys, /wyz-status, /deploy, /vps
+</pre>
+  </div>
+</section>
+
+<!-- MATURITY -->
+<section id="maturity">
+  <div class="section-eyebrow" data-i18n="ey-maturity">02 — Maturite Agentique</div>
+  <h2 data-i18n="h2-maturity">Score 9.4/10<br>Workflow Agentique</h2>
+  <p class="subtitle" data-i18n="sub-maturity">Position sur l'echelle : Automatisation classique &#8594; Chatbot &#8594; Agent &#8594; <strong style="color:var(--accent)">Workflow agentique</strong>. Le systeme s'auto-pilote, s'auto-repare, et trace chaque decision.</p>
+
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-icon">&#127919;</div>
+      <div class="card-title" data-i18n="card-ceo-orch-title">CEO Orchestrateur Dynamique</div>
+      <div class="card-desc" data-i18n="card-ceo-orch-desc">Le CEO ne repond JAMAIS aux questions techniques. Il ROUTE dynamiquement via /focus vers le bon agent specialise, puis evalue la reponse et synthetise.</div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-icon">&#128295;</div>
+      <div class="card-title" data-i18n="card-qa-title">QA Self-Repair</div>
+      <div class="card-desc" data-i18n="card-qa-desc">Chaining conditionnel : si app DOWN &#8594; error-scan &#8594; si OOM &#8594; auto-restart container &#8594; re-check &#8594; si toujours down &#8594; escalade NocoDB P0 + mention CEO.</div>
+    </div>
+    <div class="card" style="--c-color:#c084fc">
+      <div class="card-icon">&#129504;</div>
+      <div class="card-title" data-i18n="card-memory-title">Memoire Persistante</div>
+      <div class="card-desc" data-i18n="card-memory-desc">12 agents avec SQLite + CONTEXT.md. 5 crons en session named (continuite entre runs). Anti-repetition pour la veille, sprint tracking pour Scrum.</div>
+    </div>
+    <div class="card" style="--c-color:#ff6b35">
+      <div class="card-icon">&#9889;</div>
+      <div class="card-title" data-i18n="card-event-title">Event-Driven</div>
+      <div class="card-desc" data-i18n="card-event-desc">Service systemd ecoute Docker die events en temps reel &#8594; log NocoDB Journal IA. Plus seulement du polling cron, aussi de la reaction aux evenements.</div>
+    </div>
+    <div class="card" style="--c-color:#fbbf24">
+      <div class="card-icon">&#128737;</div>
+      <div class="card-title" data-i18n="card-mcp-title">MCP Proxy (Anti lock-in)</div>
+      <div class="card-desc" data-i18n="card-mcp-desc">mcp-proxy.sh encapsule NocoDB, KB, Docker, Infra. Les agents appellent le proxy, pas les APIs directement. Si un service change, on modifie le proxy.</div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-icon">&#128220;</div>
+      <div class="card-title" data-i18n="card-audit-title">Audit Trail Complet</div>
+      <div class="card-desc" data-i18n="card-audit-desc">nocodb-log.sh appele par chaque cron &#8594; Journal IA NocoDB. Docker events logges. SOUL.md documentent les raisons des decisions. Tracabilite totale.</div>
+    </div>
+  </div>
+</section>
+
+<!-- INFRA -->
+<section id="infra">
+  <div class="section-eyebrow" data-i18n="ey-infra">03 — Infrastructure</div>
+  <h2 data-i18n="h2-infra">VPS, Docker<br>& Services</h2>
+
+  <div class="sub-divider reveal" data-i18n="div-urls">URLs des services</div>
+  <div class="links-grid reveal" style="margin-bottom:40px;">
+    <a class="link-card" href="https://wyzlee.com" target="_blank"><div><div class="link-name">Wyzlee (portail SSO)</div><div class="link-url">wyzlee.com</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://wyzscrib.wyzlee.cloud" target="_blank"><div><div class="link-name">WyzScrib</div><div class="link-url">wyzscrib.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://wyzrfp.wyzlee.cloud" target="_blank"><div><div class="link-name">WyzRFP</div><div class="link-url">wyzrfp.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://wyzchronos.wyzlee.cloud" target="_blank"><div><div class="link-name">WyzChronos</div><div class="link-url">wyzchronos.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://wyzflow.wyzlee.cloud" target="_blank"><div><div class="link-name">WyzFlow</div><div class="link-url">wyzflow.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://nocodb.wyzlee.cloud" target="_blank"><div><div class="link-name">NocoDB</div><div class="link-url">nocodb.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://openclaw.wyzlee.cloud" target="_blank"><div><div class="link-name">OpenClaw</div><div class="link-url">openclaw.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://n8n.wyzlee.cloud" target="_blank"><div><div class="link-name">n8n</div><div class="link-url">n8n.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://notebook.wyzlee.cloud" target="_blank"><div><div class="link-name">Open Notebook (KB)</div><div class="link-url">notebook.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://minio.wyzlee.cloud" target="_blank"><div><div class="link-name">MinIO Console</div><div class="link-url">minio.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://auth.wyzlee.cloud" target="_blank"><div><div class="link-name">Authentik SSO</div><div class="link-url">auth.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://git.wyzlee.cloud" target="_blank"><div><div class="link-name">Gitea</div><div class="link-url">git.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://dashy.wyzlee.cloud" target="_blank"><div><div class="link-name">Dashy</div><div class="link-url">dashy.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+    <a class="link-card" href="https://code.wyzlee.cloud" target="_blank"><div><div class="link-name">Code Server</div><div class="link-url">code.wyzlee.cloud</div></div><span class="link-arr">&#8599;</span></a>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-vps">VPS Hostinger KVM2</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-title" data-i18n="card-server-title">Serveur</div>
+      <div class="card-desc">IP: <span class="ic">187.77.169.230</span><br>SSH: <span class="ic">ssh -i ~/.ssh/id_ed25519 root@187.77.169.230</span><br>RAM: 7.8 GB &middot; Disque: 96 GB</div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-title" data-i18n="card-docker-title">Docker</div>
+      <div class="card-desc">Base: node:20-alpine multi-stage<br>Network: shared-ai<br>Traefik: TLS Let's Encrypt, routing par Host()</div>
+    </div>
+    <div class="card" style="--c-color:#ff6b35">
+      <div class="card-title" data-i18n="card-scripts-title">Scripts VPS (/docker/scripts/)</div>
+      <div class="card-desc"><span class="ic">mcp-proxy.sh</span> — abstraction APIs<br><span class="ic">nocodb-log.sh</span> — audit trail<br><span class="ic">docker-event-bridge.sh</span> — events<br><span class="ic">backup.sh</span> — backup quotidien 02h00</div>
+    </div>
+    <div class="card" style="--c-color:#c084fc">
+      <div class="card-title" data-i18n="card-backups-title">Backups</div>
+      <div class="card-desc" data-i18n="card-backups-desc">Cron 02h00 quotidien. Sauvegarde: OpenClaw config, docker-compose files, NocoDB PostgreSQL dump, Traefik config. Retention 7 jours.</div>
+    </div>
+  </div>
+</section>
+
+<!-- N8N -->
+<section id="n8n">
+  <div class="section-eyebrow" data-i18n="ey-n8n">04 — n8n Plomberie</div>
+  <h2 data-i18n="h2-n8n">4 Pipelines<br>Event-Driven</h2>
+  <p class="subtitle" data-i18n="sub-n8n">n8n est la plomberie : il reagit aux events (push Git, tache NocoDB, commande deploy). Zero cron, zero LLM, zero reporting. OpenClaw fait le cerveau, n8n connecte les tuyaux.</p>
+
+  <div class="sub-divider reveal" data-i18n="div-separation">Separation des responsabilites</div>
+  <div class="reveal" style="overflow-x:auto; margin-bottom:32px;">
+    <table class="agents-table">
+      <thead><tr><th data-i18n="th-domain">Domaine</th><th data-i18n="th-owner">Owner unique</th><th data-i18n="th-details">Details</th></tr></thead>
+      <tbody>
+        <tr><td>Reporting / Standups</td><td><span class="agent-badge" style="background:rgba(88,101,242,0.2); color:#5865F2">OpenClaw</span></td><td>CEO crons : Daily 08:15, Weekly lun 09:00, Friday 18:00</td></tr>
+        <tr><td>Health / Monitoring</td><td><span class="agent-badge" style="background:rgba(88,101,242,0.2); color:#5865F2">OpenClaw</span></td><td>QA crons : Morning 06:30, Health Pulse */30min</td></tr>
+        <tr><td>Securite</td><td><span class="agent-badge" style="background:rgba(88,101,242,0.2); color:#5865F2">OpenClaw</span></td><td>Secu cron : Weekly Security dim 03:00</td></tr>
+        <tr><td>Intelligence / Veille</td><td><span class="agent-badge" style="background:rgba(88,101,242,0.2); color:#5865F2">OpenClaw</span></td><td>Recherche : Briefing 08:00, Deep Dive lun 08:00</td></tr>
+        <tr><td>Sprint tracking</td><td><span class="agent-badge" style="background:rgba(88,101,242,0.2); color:#5865F2">OpenClaw</span></td><td>Scrum cron : Sprint Standup 09:00 L-V</td></tr>
+        <tr><td>CI/CD & Git webhooks</td><td><span class="agent-badge" style="background:rgba(255,107,53,0.2); color:#ff6b35">n8n</span></td><td>P1 Gitea push notif, P3 GitOps deploy</td></tr>
+        <tr><td>Deploy commands</td><td><span class="agent-badge" style="background:rgba(255,107,53,0.2); color:#ff6b35">n8n</span></td><td>P4 Discord /deploy &#8594; deploy.wyzlee.cloud</td></tr>
+        <tr><td>Task hooks</td><td><span class="agent-badge" style="background:rgba(255,107,53,0.2); color:#ff6b35">n8n</span></td><td>P2 NocoDB task change &#8594; Discord notif</td></tr>
+        <tr><td>Backups</td><td><span class="agent-badge" style="background:rgba(251,191,36,0.2); color:#fbbf24">VPS cron</span></td><td>backup.sh 02:00 + backup-wyzlee.sh 03:00</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-4pipelines">4 Pipelines actifs</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#ff6b35">
+      <div class="card-title" data-i18n="card-p1-title">P1 — Gitea Webhook Handler</div>
+      <div class="card-desc" data-i18n="card-p1-desc">Push event Gitea &#8594; parse commit &#8594; format notification &#8594; Discord #daily. Se declenche a chaque git push sur n'importe quel repo.</div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-title" data-i18n="card-p2-title">P2 — Task Completion Pipeline</div>
+      <div class="card-desc" data-i18n="card-p2-desc">NocoDB envoie un webhook quand une tache change de status &#8594; parse &#8594; si pertinent &#8594; Discord #daily. Connecte le backlog a Discord.</div>
+    </div>
+    <div class="card" style="--c-color:#5865F2">
+      <div class="card-title" data-i18n="card-p3-title">P3 — GitOps Deploy Pipeline</div>
+      <div class="card-desc" data-i18n="card-p3-desc">Push sur branche main &#8594; Discord demande confirmation &#8594; attente reponse &#8594; trigger deploy.wyzlee.cloud &#8594; Discord resultat. CI/CD complet.</div>
+    </div>
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-title" data-i18n="card-p4-title">P4 — Discord Deploy Command</div>
+      <div class="card-desc" data-i18n="card-p4-desc">Slash command /deploy depuis Discord &#8594; verifie la signature &#8594; resout le repo &#8594; trigger deploy.wyzlee.cloud &#8594; reponse Discord. Deploy a la demande.</div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-webhooks">Webhook Endpoints</div>
+  <div class="reveal" style="overflow-x:auto; margin-bottom:32px;">
+    <table class="agents-table">
+      <thead><tr><th data-i18n="th-endpoint">Endpoint</th><th data-i18n="th-source">Source</th><th data-i18n="th-pipeline">Pipeline</th></tr></thead>
+      <tbody>
+        <tr><td><span class="ic">/webhook/gitea-webhook</span></td><td>Gitea (push events)</td><td>P1 + P3</td></tr>
+        <tr><td><span class="ic">/webhook/nocodb-task-complete</span></td><td>NocoDB (task updates)</td><td>P2</td></tr>
+        <tr><td><span class="ic">/webhook/gitops-deploy</span></td><td>Gitea (push on main)</td><td>P3</td></tr>
+        <tr><td><span class="ic">/webhook/discord-deploy</span></td><td>Discord (/deploy command)</td><td>P4</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-archives">10 workflows archives</div>
+  <div class="reveal archive-block" data-i18n="archives-html" data-i18n-html>
+    WF1 Morning Standup &#8594; <strong>remplace par OpenClaw CEO 08:15</strong><br>
+    WF4 Daily Summary &#8594; <strong>remplace par OpenClaw CEO</strong><br>
+    WF5 Weekly Report &#8594; <strong>remplace par OpenClaw CEO lun 09:00</strong><br>
+    WF7 Backup Quotidien &#8594; <strong>remplace par VPS cron backup.sh</strong><br>
+    WF2 Telegram Router x2 &#8594; <strong>Telegram abandonne, Discord only</strong><br>
+    WF8, doublons, tests &#8594; nettoyes<br>
+    <span style="opacity:0.5">Tous prefixes [ARCHIVE] dans n8n. Rationalisation 2026-03-17.</span>
+  </div>
+</section>
+
+<!-- DISCORD -->
+<section id="discord">
+  <div class="section-eyebrow" data-i18n="ey-discord">05 — Discord Command Center</div>
+  <h2 data-i18n="h2-discord">10 Channels,<br>12 Agents</h2>
+  <p class="subtitle" data-i18n="sub-discord">Chaque channel a son agent dedie. Le CEO orchestre dynamiquement via /focus. Telegram et Slack sont desactives — Discord est le seul canal.</p>
+
+  <div class="sub-divider reveal" data-i18n="div-channels">Channels et bindings</div>
+  <div class="reveal" style="overflow-x:auto; margin-bottom:32px;">
+    <table class="agents-table">
+      <thead><tr><th data-i18n="th-channel">Channel</th><th data-i18n="th-agent">Agent</th><th data-i18n="th-model">Modele</th><th data-i18n="th-role">Role</th></tr></thead>
+      <tbody>
+        <tr><td><span class="agent-id">#daily</span></td><td>CEO</td><td>gemini-3-flash</td><td data-i18n="discord-daily">Hub central — recoit tous les crons</td></tr>
+        <tr><td><span class="agent-id">#chat</span></td><td>CEO</td><td>gemini-3-flash</td><td data-i18n="discord-chat">Conversation libre</td></tr>
+        <tr><td><span class="agent-id">#veille-tech</span></td><td>Recherche</td><td>kimi-k2.5</td><td data-i18n="discord-veille-tech">Veille technologique a la demande</td></tr>
+        <tr><td><span class="agent-id">#veille-ia</span></td><td>Recherche</td><td>kimi-k2.5</td><td data-i18n="discord-veille-ia">Veille IA a la demande</td></tr>
+        <tr><td><span class="agent-id">#wyzchronos</span></td><td>Scrum</td><td>gemini-3-flash</td><td data-i18n="discord-wyzchronos">Sprint et taches WyzChronos</td></tr>
+        <tr><td><span class="agent-id">#wyzflow</span></td><td>Scrum</td><td>gemini-3-flash</td><td data-i18n="discord-wyzflow">Sprint et taches WyzFlow</td></tr>
+        <tr><td><span class="agent-id">#wyztranscribe</span></td><td>Scrum</td><td>gemini-3-flash</td><td data-i18n="discord-wyztranscribe">Sprint et taches WyzScrib</td></tr>
+        <tr><td><span class="agent-id">#wyzrfp</span></td><td>Scrum</td><td>gemini-3-flash</td><td data-i18n="discord-wyzrfp">Sprint et taches WyzRFP</td></tr>
+        <tr><td><span class="agent-id">#coding</span></td><td>Lead Tech</td><td>gemini-3-flash</td><td data-i18n="discord-coding">Questions techniques, code review</td></tr>
+        <tr><td><span class="agent-id">#ask-docs</span></td><td>Recherche</td><td>kimi-k2.5</td><td data-i18n="discord-ask-docs">KB search (Open Notebook RAG)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-no-binding">Channels sans binding</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#5865F2"><div class="card-title">#logs</div><div class="card-desc" data-i18n="card-logs-desc">Webhook only — git push notifications, deploy status</div></div>
+    <div class="card" style="--c-color:#5865F2"><div class="card-title">#memory</div><div class="card-desc" data-i18n="card-memory-chan-desc">Config only — gestion memoire OpenClaw</div></div>
+    <div class="card" style="--c-color:#5865F2"><div class="card-title">#wyzvox</div><div class="card-desc" data-i18n="card-wyzvox-desc">Non binde — reserve pour futur usage</div></div>
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section id="agents">
+  <div class="section-eyebrow" data-i18n="ey-agents">06 — Agents IA</div>
+  <h2 data-i18n="h2-agents">12 Agents<br>Specialises</h2>
+  <p class="subtitle" data-i18n="sub-agents">Chaque agent a un modele optimise pour son role, une memoire SQLite persistante, et un SOUL.md avec decision trees. Le CEO orchestre, il ne code jamais.</p>
+
+  <div class="reveal" style="overflow-x:auto; margin-bottom:32px;">
+    <table class="agents-table">
+      <thead><tr><th data-i18n="th-agent">Agent</th><th data-i18n="th-model">Modele</th><th data-i18n="th-role">Role</th><th data-i18n="th-skills">Skills (.sh)</th></tr></thead>
+      <tbody>
+        <tr><td><span class="agent-id">ceo</span> <span class="agent-badge badge-default" data-i18n="badge-orchestrateur">orchestrateur</span></td><td>gemini-3-flash</td><td data-i18n="agent-ceo-role">Route via /focus, synthese, decisions strategiques</td><td>3 .sh + 5 SKILL.md</td></tr>
+        <tr><td><span class="agent-id">leadtech</span></td><td>gemini-3-flash</td><td data-i18n="agent-leadtech-role">Code, Docker, deps, performance</td><td>2 .sh + 2 SKILL.md</td></tr>
+        <tr><td><span class="agent-id">archi</span></td><td>deepseek-v3.2</td><td data-i18n="agent-archi-role">Architecture, code review</td><td>0</td></tr>
+        <tr><td><span class="agent-id">ba</span></td><td>deepseek-v3.2</td><td data-i18n="agent-ba-role">Specs fonctionnelles, analyse code, user stories</td><td>0</td></tr>
+        <tr><td><span class="agent-id">secu</span></td><td>gemini-3-flash</td><td data-i18n="agent-secu-role">Audits securite, headers, SSL, firewall, RGPD</td><td>4 .sh</td></tr>
+        <tr><td><span class="agent-id">qa</span> <span class="agent-badge badge-default">self-repair</span></td><td>gemini-3-flash</td><td data-i18n="agent-qa-role">Health monitoring, auto-restart OOM, escalade auto</td><td>3 .sh</td></tr>
+        <tr><td><span class="agent-id">seo</span></td><td>qwen3.5</td><td data-i18n="agent-seo-role">Referencement, meta tags</td><td>0</td></tr>
+        <tr><td><span class="agent-id">recherche</span></td><td>kimi-k2.5:cloud</td><td data-i18n="agent-recherche-role">Veille tech/IA, web fetch, KB search (131K context)</td><td>1 .sh + 1 SKILL.md</td></tr>
+        <tr><td><span class="agent-id">scrum</span></td><td>gemini-3-flash</td><td data-i18n="agent-scrum-role">Sprints NocoDB, standups, taches bloquees</td><td>2 .sh</td></tr>
+        <tr><td><span class="agent-id">designer</span></td><td>qwen3.5:cloud</td><td data-i18n="agent-designer-role">Design System Midnight, UX audit</td><td>1 SKILL.md</td></tr>
+        <tr><td><span class="agent-id">marketing</span></td><td>qwen3.5:cloud</td><td data-i18n="agent-marketing-role">Copywriting FR, changelogs publics</td><td>1 SKILL.md</td></tr>
+        <tr><td><span class="agent-id">juridique</span></td><td>kimi-k2.5:cloud</td><td data-i18n="agent-juridique-role">RGPD, CGU/CGV, conformite (131K context)</td><td>2 SKILL.md</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-models">Distribution des modeles</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#39d353"><div class="card-title">gemini-3-flash (5 agents)</div><div class="card-desc" data-i18n="card-gemini-desc">Tool-calling fiable. CEO, LeadTech, Secu, QA, Scrum. Context 131K.</div></div>
+    <div class="card" style="--c-color:#fbbf24"><div class="card-title">qwen3.5:cloud (3 agents)</div><div class="card-desc" data-i18n="card-qwen-desc">Raisonnement + francais. Designer, Marketing, SEO. Context 32K.</div></div>
+    <div class="card" style="--c-color:#00c2ff"><div class="card-title">deepseek-v3.2 (2 agents)</div><div class="card-desc" data-i18n="card-deepseek-desc">Analyse code profonde. Archi, BA. Pas de skill execution. Context 131K.</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">kimi-k2.5 (2 agents)</div><div class="card-desc" data-i18n="card-kimi-desc">Long context 131K. Recherche, Juridique. Synthese de documents longs.</div></div>
+  </div>
+</section>
+
+<!-- CRONS -->
+<section id="crons">
+  <div class="section-eyebrow" data-i18n="ey-crons">07 — Cron Jobs (OpenClaw)</div>
+  <h2 data-i18n="h2-crons">9 Crons<br>Timeline Matinale</h2>
+
+  <div class="routine-block reveal">
+    <div class="routine-header" data-i18n="crons-morning-header">Timeline matinale quotidienne</div>
+    <div class="routine-body">
+      <div class="routine-step"><span class="routine-time">06:30</span><span data-i18n="cron-0630"><strong>QA</strong> — Morning QA Report : health-check + Docker errors + TTFB + SSL. Si OOM detecte &#8594; auto-restart.</span></div>
+      <div class="routine-step"><span class="routine-time">08:00</span><span data-i18n="cron-0800"><strong>Recherche</strong> — Intelligence Briefing : web fetch 13 sources (Next.js, React, Neon, HuggingFace, OpenAI, Anthropic...). Anti-repetition via memoire.</span></div>
+      <div class="routine-step"><span class="routine-time">08:15</span><span data-i18n="cron-0815"><strong>CEO</strong> — Daily Standup : synthetise QA + Recherche (ne repete pas), ajoute status Docker + taches NocoDB + decision du jour.</span></div>
+      <div class="routine-step"><span class="routine-time">09:00</span><span data-i18n="cron-0900"><strong>Scrum</strong> — Sprint Standup (lun-ven) : NocoDB sprint board, taches In Progress, taches bloquees > 2 jours.</span></div>
+    </div>
+  </div>
+
+  <div class="routine-block reveal">
+    <div class="routine-header" data-i18n="crons-other-header">Autres crons</div>
+    <div class="routine-body">
+      <div class="routine-step"><span class="routine-time">*/30min</span><span data-i18n="cron-30min"><strong>QA</strong> — Health Pulse : silent si OK, alerte si down, auto-restart OOM, escalade P0 apres 3 fails.</span></div>
+      <div class="routine-step"><span class="routine-time">03:00 dim</span><span data-i18n="cron-sun0300"><strong>Secu</strong> — Weekly Security Scan : execute 4 scripts .sh (headers, SSL, env, firewall).</span></div>
+      <div class="routine-step"><span class="routine-time">08:00 lun</span><span data-i18n="cron-mon0800"><strong>Recherche</strong> — Weekly Deep Dive : tendances, concurrence, opportunites (en plus du daily).</span></div>
+      <div class="routine-step"><span class="routine-time">09:00 lun</span><span data-i18n="cron-mon0900"><strong>CEO</strong> — Weekly Report : bilan semaine + metriques infra + objectifs.</span></div>
+      <div class="routine-step"><span class="routine-time">18:00 ven</span><span data-i18n="cron-fri1800"><strong>CEO</strong> — Friday Review : bilan + plan lundi.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLAUDE CODE -->
+<section id="claude">
+  <div class="section-eyebrow" data-i18n="ey-claude">08 — Claude Code</div>
+  <h2 data-i18n="h2-claude">Outil de travail<br>interactif</h2>
+  <p class="subtitle" data-i18n="sub-claude">Claude Code est ton outil pour coder, deployer, et gerer l'infra. Chaque repo a son CLAUDE.md. 5 commandes slash, memoire persistante entre sessions.</p>
+
+  <div class="cmd-panels reveal">
+    <div class="cmd-panel">
+      <div class="cmd-panel-header" style="background:rgba(0,194,255,0.08); color:var(--accent);" data-i18n="cmd-status-header">Status & Monitoring</div>
+      <div class="cmd-panel-body">
+        <div class="cmd-row"><div class="cmd-code">/wyz-status</div><div class="cmd-desc" data-i18n="cmd-status-desc1">Git status 9 repos</div></div>
+        <div class="cmd-row"><div class="cmd-code">/wyz-status --vps</div><div class="cmd-desc" data-i18n="cmd-status-desc2">+ containers Docker VPS</div></div>
+        <div class="cmd-row"><div class="cmd-code">/wyz-status --deps</div><div class="cmd-desc" data-i18n="cmd-status-desc3">+ audit Golden Stack</div></div>
+        <div class="cmd-row"><div class="cmd-code">/wyz-status --nocodb</div><div class="cmd-desc" data-i18n="cmd-status-desc4">+ taches/alertes/sprint NocoDB</div></div>
+        <div class="cmd-row"><div class="cmd-code">/wyz-status --all</div><div class="cmd-desc" data-i18n="cmd-status-desc5">Tout (VPS + deps + NocoDB)</div></div>
+      </div>
+    </div>
+    <div class="cmd-panel">
+      <div class="cmd-panel-header" style="background:rgba(255,107,53,0.08); color:var(--accent2);" data-i18n="cmd-nocodb-header">NocoDB</div>
+      <div class="cmd-panel-body">
+        <div class="cmd-row"><div class="cmd-code">/nocodb-dashboard</div><div class="cmd-desc" data-i18n="cmd-nocodb-desc1">Dashboard taches, alertes, sprint, services</div></div>
+        <div class="cmd-row"><div class="cmd-code">/nocodb-task</div><div class="cmd-desc" data-i18n="cmd-nocodb-desc2">Lister les taches ouvertes</div></div>
+        <div class="cmd-row"><div class="cmd-code">/nocodb-task add "titre"</div><div class="cmd-desc" data-i18n="cmd-nocodb-desc3">Creer une tache</div></div>
+        <div class="cmd-row"><div class="cmd-code">/nocodb-task done 42</div><div class="cmd-desc" data-i18n="cmd-nocodb-desc4">Marquer une tache Done</div></div>
+        <div class="cmd-row"><div class="cmd-code">/nocodb-task sprint</div><div class="cmd-desc" data-i18n="cmd-nocodb-desc5">Taches du sprint actif</div></div>
+      </div>
+    </div>
+    <div class="cmd-panel">
+      <div class="cmd-panel-header" style="background:rgba(57,211,83,0.08); color:var(--accent3);" data-i18n="cmd-deploy-header">Deploy & VPS</div>
+      <div class="cmd-panel-body">
+        <div class="cmd-row"><div class="cmd-code">/deploy wyzscrib</div><div class="cmd-desc" data-i18n="cmd-deploy-desc1">Deploy complet (build, push, restart, healthcheck)</div></div>
+        <div class="cmd-row"><div class="cmd-code">/vps</div><div class="cmd-desc" data-i18n="cmd-deploy-desc2">Status rapide VPS</div></div>
+        <div class="cmd-row"><div class="cmd-code">/vps logs &lt;container&gt;</div><div class="cmd-desc" data-i18n="cmd-deploy-desc3">Derniers logs</div></div>
+        <div class="cmd-row"><div class="cmd-code">/vps restart &lt;container&gt;</div><div class="cmd-desc" data-i18n="cmd-deploy-desc4">Restart un container</div></div>
+        <div class="cmd-row"><div class="cmd-code">/vps errors</div><div class="cmd-desc" data-i18n="cmd-deploy-desc5">Scan erreurs recentes</div></div>
+        <div class="cmd-row"><div class="cmd-code">/vps backup</div><div class="cmd-desc" data-i18n="cmd-deploy-desc6">Backup manuel</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NOCODB -->
+<section id="nocodb">
+  <div class="section-eyebrow" data-i18n="ey-nocodb">09 — NocoDB</div>
+  <h2 data-i18n="h2-nocodb">11 Tables<br>Command Center</h2>
+  <p class="subtitle" data-i18n="sub-nocodb">Source de verite pour la gestion de projet. API REST v1. Base ID: <span class="ic">pmhomxaxcgde0zu</span>. Header: <span class="ic">xc-token</span> (JAMAIS xc-auth).</p>
+
+  <div class="tables-grid reveal">
+    <div class="table-card"><div class="table-num">PRODUCT</div><div class="table-name">Apps</div><div class="table-desc" data-i18n="table-apps-desc">Registre des 8 apps Wyzlee</div><div class="table-id">mdwysvdowz1wre9</div></div>
+    <div class="table-card"><div class="table-num">PRODUCT</div><div class="table-name">Epics</div><div class="table-desc" data-i18n="table-epics-desc">Gros chantiers multi-taches</div><div class="table-id">m3yxgpvb1ehbkop</div></div>
+    <div class="table-card"><div class="table-num">PRODUCT</div><div class="table-name">Taches</div><div class="table-desc" data-i18n="table-taches-desc">Backlog &#8594; Todo &#8594; In Progress &#8594; Done</div><div class="table-id">m0g0gtalxccobp7</div></div>
+    <div class="table-card"><div class="table-num">PRODUCT</div><div class="table-name">Sprints</div><div class="table-desc" data-i18n="table-sprints-desc">Cycles de travail (2 semaines)</div><div class="table-id">m1i63fzm11zozwx</div></div>
+    <div class="table-card"><div class="table-num">PRODUCT</div><div class="table-name">Changelog</div><div class="table-desc" data-i18n="table-changelog-desc">Historique des deploys/changements</div><div class="table-id">m445afasmkoaao5</div></div>
+    <div class="table-card"><div class="table-num">INFRA</div><div class="table-name">Services</div><div class="table-desc" data-i18n="table-services-desc">Inventaire VPS + services (health)</div><div class="table-id">ms4uysy9k618haq</div></div>
+    <div class="table-card"><div class="table-num">INFRA</div><div class="table-name">Alertes</div><div class="table-desc" data-i18n="table-alertes-desc">Incidents par severite</div><div class="table-id">m0dw9bakzqlooch</div></div>
+    <div class="table-card"><div class="table-num">INFRA</div><div class="table-name">Deps Watch</div><div class="table-desc" data-i18n="table-deps-desc">Suivi deps outdated par app</div><div class="table-id">mpwbd9qf0oy03hp</div></div>
+    <div class="table-card"><div class="table-num">INFRA</div><div class="table-name">Domaines</div><div class="table-desc" data-i18n="table-domaines-desc">DNS, sous-domaines, TLS</div><div class="table-id">mrdc9dcq84omoxk</div></div>
+    <div class="table-card"><div class="table-num">AI</div><div class="table-name">Workflows n8n</div><div class="table-desc" data-i18n="table-workflows-desc">10 workflows actifs</div><div class="table-id">msvrwckpjd2h6cg</div></div>
+    <div class="table-card"><div class="table-num">AI</div><div class="table-name">Journal IA</div><div class="table-desc" data-i18n="table-journal-desc">Audit trail agents (auto-log)</div><div class="table-id">mxazcvjw6bjb50m</div></div>
+  </div>
+</section>
+
+<!-- KB -->
+<section id="kb">
+  <div class="section-eyebrow" data-i18n="ey-kb">10 — Knowledge Base</div>
+  <h2 data-i18n="h2-kb">9 Sources<br>Open Notebook</h2>
+  <p class="subtitle" data-i18n="sub-kb">Base de connaissances interrogeable via Discord #ask-docs ou directement via l'API. RAG search avec FTS. Auth: Bearer token (see .env.local)</p>
+
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">01 — Ecosysteme</div><div class="card-desc" data-i18n="kb-01">Vue d'ensemble apps, golden stack, design system Midnight</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">02 — Auth SSO</div><div class="card-desc" data-i18n="kb-02">Stack Auth, flows SSO (portail + direct), cles API</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">03 — Infrastructure</div><div class="card-desc" data-i18n="kb-03">VPS, Docker, Traefik, Neon, MinIO, backups</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">04 — OpenClaw</div><div class="card-desc" data-i18n="kb-04">12 agents, 27 skills, 9 crons, orchestrateur, self-repair</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">05 — NocoDB</div><div class="card-desc" data-i18n="kb-05">11 tables, conventions, API REST v1</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">06 — Apps Detail</div><div class="card-desc" data-i18n="kb-06">Architecture detaillee de chaque app</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">07 — Discord</div><div class="card-desc" data-i18n="kb-07">13 channels, 10 bindings, crons routing</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">08 — Deploy & Ops</div><div class="card-desc" data-i18n="kb-08">Procedures deploy, monitoring, workflow Discord/Claude Code</div></div>
+    <div class="card" style="--c-color:#c084fc"><div class="card-title">09 — Maturite</div><div class="card-desc" data-i18n="kb-09">Score agentique, mecanismes implementes, architecture</div></div>
+  </div>
+</section>
+
+<!-- APPS -->
+<section id="apps">
+  <div class="section-eyebrow" data-i18n="ey-apps">11 — Apps Wyzlee</div>
+  <h2 data-i18n="h2-apps">8 Apps SaaS<br>5 en production</h2>
+
+  <div class="projects-list reveal">
+    <div class="project-row" style="--pr-color:#00c2ff" onclick="toggleProject(this)">
+      <div class="project-header"><span class="project-priority">HUB</span><span class="project-name">Wyzlee (portail SSO)</span><span class="project-phase" style="background:rgba(57,211,83,0.15); color:#39d353">Live</span><span class="project-toggle">&#9660;</span></div>
+      <div class="project-body"><div class="project-grid"><div><div class="project-section-title">Stack</div><p style="font-size:0.73rem; color:var(--muted2); line-height:1.7;" data-i18n="app-wyzlee-desc">Astro 6 + React 19. Deploye sur Vercel (SSG, CDN global). Hub SSO — un compte = acces partout. Dashboard.tsx gere le SSO token relay vers les apps enfant.</p></div><div><div class="project-section-title">URL</div><div style="margin-bottom:16px"><span class="ic">wyzlee.com</span></div></div></div></div>
+    </div>
+    <div class="project-row" style="--pr-color:#39d353" onclick="toggleProject(this)">
+      <div class="project-header"><span class="project-priority">APP</span><span class="project-name">WyzScrib (transcription pro)</span><span class="project-phase" style="background:rgba(57,211,83,0.15); color:#39d353">Live</span><span class="project-toggle">&#9660;</span></div>
+      <div class="project-body"><div class="project-grid"><div><div class="project-section-title">Stack</div><p style="font-size:0.73rem; color:var(--muted2); line-height:1.7;" data-i18n="app-wyzscrib-desc">Next.js 16, Neon Drizzle, MinIO S3, Auth DEDIEE (bcdb4808). Multi-tenant RBAC, multi-provider IA (Azure, Gemini, Mistral, Ollama), Stripe billing.</p></div><div><div class="project-section-title">URL</div><div><span class="ic">wyzscrib.wyzlee.cloud</span></div></div></div></div>
+    </div>
+    <div class="project-row" style="--pr-color:#fbbf24" onclick="toggleProject(this)">
+      <div class="project-header"><span class="project-priority">APP</span><span class="project-name">WyzRFP (appels d'offres)</span><span class="project-phase" style="background:rgba(57,211,83,0.15); color:#39d353">Live</span><span class="project-toggle">&#9660;</span></div>
+      <div class="project-body"><div class="project-grid"><div><div class="project-section-title">Stack</div><p style="font-size:0.73rem; color:var(--muted2); line-height:1.7;" data-i18n="app-wyzrfp-desc">Next.js 16, Neon Drizzle, SSO partage. 5 providers IA factory pattern, RAG embeddings, analyse automatique d'AO.</p></div><div><div class="project-section-title">URL</div><div><span class="ic">wyzrfp.wyzlee.cloud</span></div></div></div></div>
+    </div>
+    <div class="project-row" style="--pr-color:#ff6b35" onclick="toggleProject(this)">
+      <div class="project-header"><span class="project-priority">APP</span><span class="project-name">WyzChronos (gestion du temps)</span><span class="project-phase" style="background:rgba(57,211,83,0.15); color:#39d353">Live</span><span class="project-toggle">&#9660;</span></div>
+      <div class="project-body"><div class="project-grid"><div><div class="project-section-title">Stack</div><p style="font-size:0.73rem; color:var(--muted2); line-height:1.7;" data-i18n="app-wyzchronos-desc">Monorepo: Vite+React frontend, Node API, WebSocket server. 3 containers Docker. Neon SQL brut, RxDB offline, IA Mistral, real-time LISTEN/NOTIFY.</p></div><div><div class="project-section-title">URL</div><div><span class="ic">wyzchronos.wyzlee.cloud</span></div></div></div></div>
+    </div>
+    <div class="project-row" style="--pr-color:#c084fc" onclick="toggleProject(this)">
+      <div class="project-header"><span class="project-priority">APP</span><span class="project-name">WyzFlow (BPMN workflows)</span><span class="project-phase" style="background:rgba(57,211,83,0.15); color:#39d353">Live</span><span class="project-toggle">&#9660;</span></div>
+      <div class="project-body"><div class="project-grid"><div><div class="project-section-title">Stack</div><p style="font-size:0.73rem; color:var(--muted2); line-height:1.7;" data-i18n="app-wyzflow-desc">Vite+React frontend + Python FastAPI backend. 4 containers. Double mode Firebase/PostgreSQL. SSO partage.</p></div><div><div class="project-section-title">URL</div><div><span class="ic">wyzflow.wyzlee.cloud</span></div></div></div></div>
+    </div>
+    <div class="project-row" style="--pr-color:#fbbf24" onclick="toggleProject(this)">
+      <div class="project-header"><span class="project-priority">PAUSE</span><span class="project-name">WyzApp (app principale)</span><span class="project-phase" style="background:rgba(251,191,36,0.15); color:#fbbf24">SUSPENDED</span><span class="project-toggle">&#9660;</span></div>
+      <div class="project-body"><div class="project-grid"><div><div class="project-section-title">Status</div><p style="font-size:0.73rem; color:var(--muted2); line-height:1.7;" data-i18n="app-wyzapp-desc">App suspendue — code existe mais non deployee (ni VPS ni Vercel). Retiree du monitoring QA. Deploiement a planifier.</p></div><div></div></div></div>
+    </div>
+    <div class="project-row" style="--pr-color:#5865F2" onclick="toggleProject(this)">
+      <div class="project-header"><span class="project-priority">NEW</span><span class="project-name">WyzClaw (scraping)</span><span class="project-phase">Coming soon</span><span class="project-toggle">&#9660;</span></div>
+      <div class="project-body"><div class="project-grid"><div><div class="project-section-title">Stack</div><p style="font-size:0.73rem; color:var(--muted2); line-height:1.7;" data-i18n="app-wyzclaw-desc">Next.js 16, Drizzle + Neon. Auth Authentik (pas Stack Auth). Client OpenClaw integre. Pas encore deploye.</p></div><div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTH -->
+<section id="auth">
+  <div class="section-eyebrow" data-i18n="ey-auth">12 — Authentification</div>
+  <h2 data-i18n="h2-auth">Stack Auth SSO<br>& Auth dediee</h2>
+
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#00c2ff">
+      <div class="card-title" data-i18n="card-sso-title">SSO Partage (projet 9c5fa1a5)</div>
+      <div class="card-desc" data-i18n="card-sso-desc">Un compte = acces partout. WyzFlow, WyzRFP, WyzChronos, WyzApp partagent le meme projet Stack Auth. Login via wyzlee.com ou directement sur l'app.</div>
+    </div>
+    <div class="card" style="--c-color:#c084fc">
+      <div class="card-title" data-i18n="card-auth-ded-title">Auth Dediee WyzScrib (bcdb4808)</div>
+      <div class="card-desc" data-i18n="card-auth-ded-desc">Comptes pro independants. WyzScrib a son propre projet Stack Auth. Un compte WyzScrib =/= un compte Wyzlee.</div>
+    </div>
+    <div class="card" style="--c-color:#fbbf24">
+      <div class="card-title" data-i18n="card-sso-relay-title">SSO Token Relay</div>
+      <div class="card-desc" data-i18n="card-sso-relay-desc">Portail &#8594; extrait refresh_token du cookie &#8594; ouvre app?sso_token=token &#8594; app enfant set cookie &#8594; refreshUser() &#8594; connecte.</div>
+    </div>
+    <div class="card" style="--c-color:#39d353">
+      <div class="card-title" data-i18n="card-jwt-title">JWT Verification</div>
+      <div class="card-desc" data-i18n="card-jwt-desc">jose + createRemoteJWKSet. Next.js: proxy.ts. Vite: AuthGuard component. API: Bearer token header.</div>
+    </div>
+  </div>
+</section>
+
+<!-- GOLDEN STACK -->
+<section id="stack">
+  <div class="section-eyebrow" data-i18n="ey-stack">13 — Golden Stack</div>
+  <h2 data-i18n="h2-stack">Stack technique<br>Mars 2026</h2>
+
+  <div class="reveal" style="overflow-x:auto; margin-bottom:32px;">
+    <table class="agents-table">
+      <thead><tr><th>Package</th><th>Version</th><th data-i18n="th-role">Role</th></tr></thead>
+      <tbody>
+        <tr><td><span class="ic">next</span></td><td>^16.1.6</td><td>Framework fullstack</td></tr>
+        <tr><td><span class="ic">react</span></td><td>^19.2.3</td><td>UI library</td></tr>
+        <tr><td><span class="ic">@neondatabase/serverless</span></td><td>^1.0.2</td><td>Neon DB driver</td></tr>
+        <tr><td><span class="ic">drizzle-orm</span></td><td>^0.45.1</td><td>ORM TypeScript</td></tr>
+        <tr><td><span class="ic">@stackframe/react</span></td><td>^2.8.77</td><td>Stack Auth SDK</td></tr>
+        <tr><td><span class="ic">jose</span></td><td>^6.2.1</td><td>JWT/JWKS verification</td></tr>
+        <tr><td><span class="ic">zustand</span></td><td>^5.0.11</td><td>State management</td></tr>
+        <tr><td><span class="ic">zod</span></td><td>^4.3.6</td><td>Validation</td></tr>
+        <tr><td><span class="ic">tailwind-merge</span></td><td>^3.5.0</td><td>Tailwind dedup</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-design-system">Design System Midnight</div>
+  <div class="cards-grid reveal">
+    <div class="card" style="--c-color:#6366f1"><div class="card-title">Palette</div><div class="card-desc" data-i18n="card-palette-desc">Background #0a0e1a &#8594; #111827. Accent #6366f1 (indigo), #8b5cf6 (violet). Success emerald, Error rose, Warning amber.</div></div>
+    <div class="card" style="--c-color:#8b5cf6"><div class="card-title">Typography</div><div class="card-desc" data-i18n="card-typo-desc">Sans: Inter. Mono: JetBrains Mono. Tailwind v4: @import "tailwindcss", @theme {}, @custom-variant dark.</div></div>
+    <div class="card" style="--c-color:#00c2ff"><div class="card-title">Effets</div><div class="card-desc" data-i18n="card-effects-desc">Glassmorphism: backdrop-blur-xl + surfaces transparentes. Animations: framer-motion 200-500ms. Glow hover.</div></div>
+  </div>
+</section>
+
+<!-- ROUTINES -->
+<section id="routines">
+  <div class="section-eyebrow" data-i18n="ey-routines">14 — Routines CEO</div>
+  <h2 data-i18n="h2-routines">Daily & Weekly<br>Routines</h2>
+
+  <div class="routine-block reveal">
+    <div class="routine-header" data-i18n="routine-daily-header">Routine quotidienne</div>
+    <div class="routine-body">
+      <div class="routine-step"><span class="routine-time">06:30</span><span data-i18n="routine-0630">QA Morning Report arrive dans #daily (automatique — tu n'as rien a faire)</span></div>
+      <div class="routine-step"><span class="routine-time">08:00</span><span data-i18n="routine-0800">Intelligence Briefing arrive dans #daily (veille tech + IA, web fetch)</span></div>
+      <div class="routine-step"><span class="routine-time">08:15</span><span data-i18n="routine-0815">Daily Standup CEO dans #daily (synthese QA + Recherche + Docker + NocoDB)</span></div>
+      <div class="routine-step"><span class="routine-time">09:00</span><span data-i18n="routine-0900">Sprint Standup dans #daily (taches NocoDB, bloquees, prochaines)</span></div>
+      <div class="routine-step"><span class="routine-time" data-i18n="routine-morning-time">Matin</span><span data-i18n="routine-morning">Lire les 4 rapports dans #daily. Identifier les priorites. Ouvrir Claude Code.</span></div>
+      <div class="routine-step"><span class="routine-time" data-i18n="routine-day-time">Journee</span><span data-i18n="routine-day">Claude Code pour coder/deployer. Discord pour monitoring (agents autonomes). NocoDB pour taches.</span></div>
+      <div class="routine-step"><span class="routine-time" data-i18n="routine-evening-time">Soir</span><span data-i18n="routine-evening">Verifier backup (/vps backup). Planifier demain.</span></div>
+    </div>
+  </div>
+
+  <div class="routine-block reveal">
+    <div class="routine-header" data-i18n="routine-weekly-header">Checklist hebdomadaire</div>
+    <div class="routine-body">
+      <div class="checklist">
+        <div class="check-item"><div class="check-box"></div><span data-i18n="check-1">Rapports semaine lus dans Discord #daily</span></div>
+        <div class="check-item"><div class="check-box"></div><span data-i18n="check-2">NocoDB: taches et alertes a jour (/nocodb-dashboard)</span></div>
+        <div class="check-item"><div class="check-box"></div><span data-i18n="check-3">Sprint board: taches bloquees traitees</span></div>
+        <div class="check-item"><div class="check-box"></div><span data-i18n="check-4">Backups VPS fonctionnels (/vps backup)</span></div>
+        <div class="check-item"><div class="check-box"></div><span data-i18n="check-5">Rapport securite dimanche consulte</span></div>
+        <div class="check-item"><div class="check-box"></div><span data-i18n="check-6">KB a jour si decisions d'architecture prises</span></div>
+        <div class="check-item"><div class="check-box"></div><span data-i18n="check-7">Git: tous les repos commites et pushes</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-divider reveal" data-i18n="div-no-delegate">Decisions CEO non-delegables</div>
+  <div class="no-delegate-list reveal">
+    <div class="no-delegate-item" data-i18n="nd-1">Changement de priorite entre projets/apps</div>
+    <div class="no-delegate-item" data-i18n="nd-2">Validation des specs fonctionnelles majeures</div>
+    <div class="no-delegate-item" data-i18n="nd-3">Decisions d'architecture structurantes</div>
+    <div class="no-delegate-item" data-i18n="nd-4">Budget et ressources (serveur, APIs, licences)</div>
+    <div class="no-delegate-item" data-i18n="nd-5">Lancement public d'un produit</div>
+    <div class="no-delegate-item" data-i18n="nd-6">Suppression d'une app (ex: WyzApp)</div>
+  </div>
+</section>
+
+<!-- TROUBLESHOOTING -->
+<section id="troubleshooting">
+  <div class="section-eyebrow" data-i18n="ey-troubleshooting">15 — Troubleshooting</div>
+  <h2 data-i18n="h2-troubleshooting">Problemes<br>courants</h2>
+
+  <div class="trouble-list reveal">
+    <div class="trouble-item">
+      <div class="trouble-q" onclick="toggleTrouble(this.parentElement)"><span data-i18n="trouble-q1">App down — que faire ?</span> <span>&#9660;</span></div>
+      <div class="trouble-a">
+        <div class="trouble-step"><div class="trouble-step-n">1</div><span data-i18n="trouble-1-1">Le QA detecte automatiquement dans les 30min (Health Pulse)</span></div>
+        <div class="trouble-step"><div class="trouble-step-n">2</div><span data-i18n="trouble-1-2">Si OOM/memory &#8594; le QA restart automatiquement le container</span></div>
+        <div class="trouble-step"><div class="trouble-step-n">3</div><span data-i18n="trouble-1-3">Si 3 fails &#8594; tache NocoDB P0 creee automatiquement</span></div>
+        <div class="trouble-step"><div class="trouble-step-n">4</div><span data-i18n="trouble-1-4">Manuel : <span class="ic">/vps restart &lt;container&gt;</span> via Claude Code</span></div>
+        <div class="trouble-step"><div class="trouble-step-n">5</div><span data-i18n="trouble-1-5">Verifier les logs : <span class="ic">/vps logs &lt;container&gt;</span></span></div>
+      </div>
+    </div>
+    <div class="trouble-item">
+      <div class="trouble-q" onclick="toggleTrouble(this.parentElement)"><span data-i18n="trouble-q2">API NocoDB retourne 401</span> <span>&#9660;</span></div>
+      <div class="trouble-a">
+        <div class="trouble-step"><div class="trouble-step-n">!</div><span data-i18n="trouble-2-1">TOUJOURS utiliser <span class="ic">xc-token</span> comme header (JAMAIS xc-auth)</span></div>
+        <div class="trouble-step"><div class="trouble-step-n">!</div><span data-i18n="trouble-2-2">xc-auth = token JWT session qui expire. xc-token = API token permanent.</span></div>
+      </div>
+    </div>
+    <div class="trouble-item">
+      <div class="trouble-q" onclick="toggleTrouble(this.parentElement)"><span data-i18n="trouble-q3">OpenClaw ne repond plus</span> <span>&#9660;</span></div>
+      <div class="trouble-a">
+        <div class="trouble-step"><div class="trouble-step-n">1</div><span data-i18n="trouble-3-1"><span class="ic">/vps logs openclaw-sc2b-openclaw-1</span></span></div>
+        <div class="trouble-step"><div class="trouble-step-n">2</div><span data-i18n="trouble-3-2"><span class="ic">/vps restart openclaw-sc2b-openclaw-1</span></span></div>
+        <div class="trouble-step"><div class="trouble-step-n">3</div><span data-i18n="trouble-3-3">Verifier que Discord est connecte dans les logs ("logged in to discord")</span></div>
+      </div>
+    </div>
+    <div class="trouble-item">
+      <div class="trouble-q" onclick="toggleTrouble(this.parentElement)"><span data-i18n="trouble-q4">Backup echoue</span> <span>&#9660;</span></div>
+      <div class="trouble-a">
+        <div class="trouble-step"><div class="trouble-step-n">1</div><span data-i18n="trouble-4-1"><span class="ic">/vps backup</span> pour lancer manuellement</span></div>
+        <div class="trouble-step"><div class="trouble-step-n">2</div><span data-i18n="trouble-4-2">Verifier les logs : <span class="ic">ssh VPS "cat /var/log/wyzlee-backup.log | tail -20"</span></span></div>
+        <div class="trouble-step"><div class="trouble-step-n">3</div><span data-i18n="trouble-4-3">Verifier l'espace disque : <span class="ic">/vps disk</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK REF -->
+<section id="quickref">
+  <div class="section-eyebrow" data-i18n="ey-quickref">16 — Reference rapide</div>
+  <h2 data-i18n="h2-quickref">Tout en<br>un coup d'oeil</h2>
+
+  <div class="quick-ref-grid reveal">
+    <div class="qr-card">
+      <div class="qr-header" data-i18n="qr-urls">URLs principales</div>
+      <div class="qr-body">
+        <div class="qr-row"><span class="qr-label">Portail SSO</span><span class="qr-val">wyzlee.com</span></div>
+        <div class="qr-row"><span class="qr-label">NocoDB</span><span class="qr-val">nocodb.wyzlee.cloud</span></div>
+        <div class="qr-row"><span class="qr-label">OpenClaw</span><span class="qr-val">openclaw.wyzlee.cloud</span></div>
+        <div class="qr-row"><span class="qr-label">Open Notebook</span><span class="qr-val">notebook.wyzlee.cloud</span></div>
+        <div class="qr-row"><span class="qr-label">MinIO</span><span class="qr-val">minio.wyzlee.cloud</span></div>
+        <div class="qr-row"><span class="qr-label">n8n</span><span class="qr-val">n8n.wyzlee.cloud</span></div>
+      </div>
+    </div>
+    <div class="qr-card">
+      <div class="qr-header" data-i18n="qr-ids">IDs & Config</div>
+      <div class="qr-body">
+        <div class="qr-row"><span class="qr-label">NocoDB Base ID</span><span class="qr-val">pmhomxaxcgde0zu</span></div>
+        <div class="qr-row"><span class="qr-label">API Header</span><span class="qr-val">xc-token</span></div>
+        <div class="qr-row"><span class="qr-label">SSO Project</span><span class="qr-val">9c5fa1a5</span></div>
+        <div class="qr-row"><span class="qr-label">WyzScrib Auth</span><span class="qr-val">bcdb4808</span></div>
+        <div class="qr-row"><span class="qr-label">KB Notebook ID</span><span class="qr-val">ium76b8qsiiaagvgayuo</span></div>
+        <div class="qr-row"><span class="qr-label">VPS IP</span><span class="qr-val">187.77.169.230</span></div>
+      </div>
+    </div>
+    <div class="qr-card">
+      <div class="qr-header">n8n (4 pipelines)</div>
+      <div class="qr-body">
+        <div class="qr-row"><span class="qr-label">P1 Gitea Webhook</span><span class="qr-val">push &#8594; Discord</span></div>
+        <div class="qr-row"><span class="qr-label">P2 Task Completion</span><span class="qr-val">NocoDB &#8594; Discord</span></div>
+        <div class="qr-row"><span class="qr-label">P3 GitOps Deploy</span><span class="qr-val">push main &#8594; deploy</span></div>
+        <div class="qr-row"><span class="qr-label">P4 Discord Deploy</span><span class="qr-val">/deploy &#8594; deploy</span></div>
+        <div class="qr-row"><span class="qr-label">Crons/LLM</span><span class="qr-val" style="opacity:0.4">archives</span></div>
+      </div>
+    </div>
+    <div class="qr-card">
+      <div class="qr-header">12 Agents</div>
+      <div class="qr-body">
+        <div class="qr-row"><span class="qr-label">CEO &middot; Lead Tech &middot; Secu &middot; QA &middot; Scrum</span><span class="qr-val">gemini-3-flash</span></div>
+        <div class="qr-row"><span class="qr-label">Designer &middot; Marketing &middot; SEO</span><span class="qr-val">qwen3.5</span></div>
+        <div class="qr-row"><span class="qr-label">Archi &middot; BA</span><span class="qr-val">deepseek-v3.2</span></div>
+        <div class="qr-row"><span class="qr-label">Recherche &middot; Juridique</span><span class="qr-val">kimi-k2.5</span></div>
+        <div class="qr-row"><span class="qr-label">Fallback</span><span class="qr-val">glm-5:cloud</span></div>
+      </div>
+    </div>
+    <div class="qr-card">
+      <div class="qr-header">8 Apps</div>
+      <div class="qr-body">
+        <div class="qr-row"><span class="qr-label">Wyzlee</span><span class="qr-val" style="color:#39d353">Hub SSO (Vercel)</span></div>
+        <div class="qr-row"><span class="qr-label">WyzScrib</span><span class="qr-val" style="color:#39d353">Live (VPS)</span></div>
+        <div class="qr-row"><span class="qr-label">WyzRFP</span><span class="qr-val" style="color:#39d353">Live (VPS)</span></div>
+        <div class="qr-row"><span class="qr-label">WyzChronos</span><span class="qr-val" style="color:#39d353">Live (VPS 3c)</span></div>
+        <div class="qr-row"><span class="qr-label">WyzFlow</span><span class="qr-val" style="color:#39d353">Live (VPS 4c)</span></div>
+        <div class="qr-row"><span class="qr-label">WyzApp</span><span class="qr-val" style="color:#fbbf24">SUSPENDED</span></div>
+        <div class="qr-row"><span class="qr-label">WyzClaw</span><span class="qr-val" style="color:#5865F2">Coming soon</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span data-i18n="footer-left">WYZLEE — Guide CEO v6.0 &middot; Workflow Agentique Autonome &middot; Mars 2026</span>
+  <span data-i18n="footer-right">12 agents &middot; 8 apps &middot; 11 tables &middot; 9 crons &middot; Score 9.4/10</span>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="scripts.js"></script>
+</body>
+</html>
