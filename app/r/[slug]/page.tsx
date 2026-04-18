@@ -29,7 +29,7 @@ export default async function PublicReportPage({
   const { slug } = await params
 
   const ip = getClientIp(await headers())
-  const rl = rateLimit(PUBLIC_REPORT_LIMIT, ip)
+  const rl = await rateLimit(PUBLIC_REPORT_LIMIT, ip)
   if (!rl.allowed) {
     logger.warn('report.public.rate_limited', {
       ip_hash: ip.slice(0, 12),

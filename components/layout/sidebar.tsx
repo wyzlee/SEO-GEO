@@ -9,6 +9,7 @@ import {
   FileSearch,
   PlusCircle,
   CalendarClock,
+  BarChart2,
   Settings,
   LogOut,
   ChevronLeft,
@@ -40,6 +41,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/dashboard/audits', label: 'Audits', icon: FileSearch },
       { href: '/dashboard/audits/new', label: 'Nouvel audit', icon: PlusCircle },
       { href: '/dashboard/audits/schedule', label: 'Planifiés', icon: CalendarClock },
+      { href: '/dashboard/usage', label: 'Utilisation', icon: BarChart2 },
     ],
   },
   {

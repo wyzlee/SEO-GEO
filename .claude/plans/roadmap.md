@@ -270,6 +270,7 @@ Objectif : **Palier C complet** + différenciation durable vs. concurrents.
 
 | Item | Effort | Raison du report |
 |------|--------|-----------------|
+| Programme affilié 30% récurrent (S3.2) | 3 jours | Reporté — à reprendre après PMF confirmé et premiers clients payants |
 | AST parsing code audit (remplacer regex) | 2 semaines | V1 regex fonctionnel, ROI faible avant >100 audits code/mois |
 | Playwright crawl (SPA rendering) | 1 semaine | cheerio suffit pour la majorité des sites |
 | Rate limiting Redis (Upstash) | 1 jour | In-memory OK jusqu'à >100 req/min |

@@ -15,6 +15,7 @@ import {
   type DomainStatus,
   type UpdateCustomDomainInput,
 } from '@/lib/hooks/use-organization'
+import { useInvitations, useInviteMember } from '@/lib/hooks/use-invitations'
 
 const HEX_REGEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 const HOSTNAME_REGEX = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
@@ -116,6 +117,13 @@ export default function SettingsPage() {
             style={{ color: 'var(--color-muted)' }}
           >
             Domaine
+          </a>
+          <a
+            href="#membres"
+            className="px-3 py-1.5 rounded"
+            style={{ color: 'var(--color-muted)' }}
+          >
+            Membres
           </a>
           <Link
             href="/dashboard/settings/webhooks"
@@ -245,8 +253,172 @@ export default function SettingsPage() {
           isDomainStatusLoading={isDomainStatusLoading}
         />
         )}
+
+        {!isLoading && canEdit && (
+          <MembersSection />
+        )}
       </section>
     </div>
+  )
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  member: 'Membre',
+  admin: 'Administrateur',
+}
+
+function MembersSection() {
+  const { data, isLoading } = useInvitations()
+  const invite = useInviteMember()
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState('member')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) return
+    invite.mutate(
+      { email: email.trim(), role },
+      {
+        onSuccess: () => {
+          toast.success(`Invitation envoyée à ${email.trim()}`)
+          setEmail('')
+          setRole('member')
+        },
+        onError: (err) =>
+          toast.error(
+            `Échec de l'invitation : ${err instanceof Error ? err.message : 'erreur inconnue'}`,
+          ),
+      },
+    )
+  }
+
+  const invitations = data?.invitations ?? []
+
+  return (
+    <section id="membres" className="mt-6 card-premium">
+      <header className="pb-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+        <h2 className="text-lg font-[family-name:var(--font-display)] font-semibold">
+          Membres de l'équipe
+        </h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-muted)' }}>
+          Invitez des collaborateurs à rejoindre votre organisation.
+        </p>
+      </header>
+
+      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <label
+              htmlFor="invite-email"
+              className="block text-xs font-[family-name:var(--font-display)] mb-1"
+              style={{ color: 'var(--color-text)' }}
+            >
+              Adresse email
+            </label>
+            <input
+              id="invite-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="collaborateur@agence.com"
+              className="w-full px-3 py-2 rounded-md text-sm font-[family-name:var(--font-sans)]"
+              style={{
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text)',
+                minHeight: '44px',
+              }}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="invite-role"
+              className="block text-xs font-[family-name:var(--font-display)] mb-1"
+              style={{ color: 'var(--color-text)' }}
+            >
+              Rôle
+            </label>
+            <select
+              id="invite-role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="px-3 py-2 rounded-md text-sm font-[family-name:var(--font-sans)] cursor-pointer"
+              style={{
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text)',
+                minHeight: '44px',
+                minWidth: '160px',
+              }}
+            >
+              <option value="member">Membre</option>
+              <option value="admin">Administrateur</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={invite.isPending || !email.trim()}
+            className="btn-primary"
+            style={{ opacity: invite.isPending || !email.trim() ? 0.5 : 1 }}
+          >
+            {invite.isPending ? 'Envoi…' : 'Envoyer l\'invitation'}
+          </button>
+        </div>
+      </form>
+
+      {isLoading ? (
+        <p
+          role="status"
+          className="mt-4 text-sm py-4 text-center"
+          style={{ color: 'var(--color-muted)' }}
+        >
+          Chargement…
+        </p>
+      ) : invitations.length > 0 ? (
+        <div className="mt-5 space-y-2">
+          <p
+            className="text-xs font-[family-name:var(--font-display)] uppercase tracking-wide"
+            style={{ color: 'var(--color-muted)' }}
+          >
+            Invitations en attente
+          </p>
+          <ul className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
+            {invitations.slice(0, 5).map((inv) => (
+              <li
+                key={inv.id}
+                className="flex items-center justify-between py-3 gap-4 text-sm font-[family-name:var(--font-sans)]"
+              >
+                <span style={{ color: 'var(--color-text)' }}>{inv.email}</span>
+                <span style={{ color: 'var(--color-muted)' }}>
+                  {ROLE_LABELS[inv.role] ?? inv.role}
+                </span>
+                <span style={{ color: 'var(--color-muted)' }}>
+                  Expire le{' '}
+                  {new Date(inv.expiresAt).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+                <span
+                  className="inline-flex items-center text-xs px-2 py-0.5 rounded-full whitespace-nowrap"
+                  style={{
+                    background: 'color-mix(in srgb, var(--color-amber, #F59E0B) 15%, transparent)',
+                    color: 'var(--color-amber, #F59E0B)',
+                    border: '1px solid color-mix(in srgb, var(--color-amber, #F59E0B) 40%, transparent)',
+                  }}
+                >
+                  En attente
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
   )
 }
 

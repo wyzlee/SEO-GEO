@@ -18,6 +18,55 @@ vi.mock('@/lib/security/url-guard', async (importOriginal) => {
   }
 })
 
+// Mocks Upstash : rate-limit.ts doit fonctionner avec un compteur in-memory.
+vi.mock('@upstash/ratelimit', () => {
+  type Win = { count: number; resetAt: number }
+  const stores = new Map<string, Map<string, Win>>()
+  ;(globalThis as Record<string, unknown>).__flash_rl_stores = stores
+
+  class Ratelimit {
+    private max: number
+    private windowMs: number
+    private store: Map<string, Win>
+
+    constructor(opts: { redis: unknown; limiter: { max: number; windowMs: number }; prefix: string }) {
+      this.max = opts.limiter.max
+      this.windowMs = opts.limiter.windowMs
+      if (!stores.has(opts.prefix)) stores.set(opts.prefix, new Map())
+      this.store = stores.get(opts.prefix)!
+    }
+
+    async limit(identifier: string) {
+      const now = Date.now()
+      const win = this.store.get(identifier)
+      if (!win || win.resetAt <= now) {
+        const resetAt = now + this.windowMs
+        this.store.set(identifier, { count: 1, resetAt })
+        return { success: true, remaining: this.max - 1, reset: resetAt, pending: Promise.resolve() }
+      }
+      if (win.count >= this.max) {
+        return { success: false, remaining: 0, reset: win.resetAt, pending: Promise.resolve() }
+      }
+      win.count += 1
+      return { success: true, remaining: this.max - win.count, reset: win.resetAt, pending: Promise.resolve() }
+    }
+
+    static slidingWindow(max: number, windowStr: string) {
+      return { max, windowMs: parseInt(windowStr, 10) }
+    }
+  }
+
+  return { Ratelimit }
+})
+
+vi.mock('@upstash/redis', () => {
+  class Redis { constructor(_opts: { url: string; token: string }) {} }
+  return { Redis }
+})
+
+vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://test.upstash.io')
+vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'test-token')
+
 const FLASH_RESULT = {
   url: 'https://example.com',
   score: 72,
@@ -52,6 +101,8 @@ describe('POST /api/audit/flash', () => {
     flashMock.mockReset()
     assertSafeUrlMock.mockReset()
     __resetRateLimits()
+    const stores = (globalThis as Record<string, unknown>).__flash_rl_stores
+    if (stores instanceof Map) stores.clear()
 
     // Default: safe URL returns a URL object, flash returns result
     assertSafeUrlMock.mockImplementation((url: string) => new URL(url))
@@ -60,6 +111,8 @@ describe('POST /api/audit/flash', () => {
 
   afterEach(() => {
     __resetRateLimits()
+    const stores = (globalThis as Record<string, unknown>).__flash_rl_stores
+    if (stores instanceof Map) stores.clear()
   })
 
   it('returns 400 on invalid JSON', async () => {

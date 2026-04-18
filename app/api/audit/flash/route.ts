@@ -21,7 +21,7 @@ function getClientIp(req: Request): string {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req)
-  const rl = rateLimit(FLASH_RATE_LIMIT, ip)
+  const rl = await rateLimit(FLASH_RATE_LIMIT, ip)
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Trop de requêtes. Réessayez dans une heure.', retryAfterSeconds: rl.retryAfterSeconds },

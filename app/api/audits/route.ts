@@ -147,7 +147,7 @@ export async function POST(request: Request) {
   const resolvedMode =
     planId === 'studio' || planId === 'agency' ? requestedMode : 'standard'
 
-  const userBurst = rateLimit(BURST_LIMIT, `u:${ctx.user.id}`)
+  const userBurst = await rateLimit(BURST_LIMIT, `u:${ctx.user.id}`)
   if (!userBurst.allowed) {
     return NextResponse.json(
       {
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
       },
     )
   }
-  const orgDaily = rateLimit(DAILY_LIMIT, `o:${ctx.organizationId}`)
+  const orgDaily = await rateLimit(DAILY_LIMIT, `o:${ctx.organizationId}`)
   if (!orgDaily.allowed) {
     return NextResponse.json(
       {

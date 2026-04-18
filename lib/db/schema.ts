@@ -263,6 +263,33 @@ export const scheduledAudits = pgTable(
   }),
 )
 
+export const invitations = pgTable(
+  'invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    invitedBy: uuid('invited_by')
+      .notNull()
+      .references(() => users.id),
+    email: text('email').notNull(),
+    role: text('role').notNull().default('member'),
+    token: text('token').unique().notNull(),
+    acceptedAt: timestamp('accepted_at'),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    orgIdx: index('invitations_org_idx').on(t.organizationId),
+    tokenIdx: index('invitations_token_idx').on(t.token),
+    emailIdx: index('invitations_email_idx').on(t.email),
+  }),
+)
+
+export type Invitation = typeof invitations.$inferSelect
+export type NewInvitation = typeof invitations.$inferInsert
+
 export type Organization = typeof organizations.$inferSelect
 export type NewOrganization = typeof organizations.$inferInsert
 export type User = typeof users.$inferSelect

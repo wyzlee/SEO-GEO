@@ -83,10 +83,12 @@ export default async function proxy(request: NextRequest) {
     '/auth/callback',
     '/auth/logout',
     '/r',
+    '/invite',
     '/legal',
     '/blog',
     '/api/health',
     '/api/webhooks',
+    '/api/invitations',
   ]
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + '/'),

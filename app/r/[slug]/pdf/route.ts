@@ -31,7 +31,7 @@ export async function GET(
   const { slug } = await params
 
   const ip = getClientIp(request.headers)
-  const rl = rateLimit(PDF_LIMIT, ip)
+  const rl = await rateLimit(PDF_LIMIT, ip)
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Too many requests' },

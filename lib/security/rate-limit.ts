@@ -1,25 +1,5 @@
-/**
- * In-memory sliding window rate limiter.
- *
- * Design : 2 tiers per endpoint
- *  - burst : max N requests per user in a short window (anti-spam)
- *  - daily : max N requests per organization per 24 h (quota hygiene)
- *
- * V1 : in-memory only (single-VPS setup is fine). V2 : plug Redis / Upstash
- * when horizontal scaling is needed.
- */
-
-interface Window {
-  count: number
-  resetAt: number
-}
-
-const stores: Record<string, Map<string, Window>> = {}
-
-function getStore(name: string): Map<string, Window> {
-  if (!stores[name]) stores[name] = new Map()
-  return stores[name]
-}
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 
 export interface RateLimitConfig {
   /** Unique name of the limiter (used as bucket key). */
@@ -37,47 +17,74 @@ export interface RateLimitResult {
   retryAfterSeconds: number
 }
 
-export function rateLimit(
+let _redis: Redis | null = null
+const _limiters: Map<string, Ratelimit> = new Map()
+
+function getRedis(): Redis | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  if (!_redis) {
+    _redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  }
+  return _redis
+}
+
+function getLimiter(config: RateLimitConfig): Ratelimit | null {
+  const redis = getRedis()
+  if (!redis) return null
+
+  const key = `${config.name}:${config.max}:${config.windowMs}`
+  if (!_limiters.has(key)) {
+    _limiters.set(
+      key,
+      new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(config.max, `${config.windowMs}ms`),
+        prefix: `rl:${config.name}`,
+      }),
+    )
+  }
+  return _limiters.get(key)!
+}
+
+export async function rateLimit(
   config: RateLimitConfig,
   identity: string,
-): RateLimitResult {
-  const store = getStore(config.name)
-  const now = Date.now()
-  const current = store.get(identity)
+): Promise<RateLimitResult> {
+  const limiter = getLimiter(config)
 
-  if (!current || current.resetAt <= now) {
-    const resetAt = now + config.windowMs
-    store.set(identity, { count: 1, resetAt })
-    return {
-      allowed: true,
-      remaining: config.max - 1,
-      resetAt,
-      retryAfterSeconds: 0,
-    }
+  if (!limiter) {
+    return { allowed: true, remaining: 999, resetAt: Date.now() + config.windowMs, retryAfterSeconds: 0 }
   }
 
-  if (current.count >= config.max) {
+  const result = await limiter.limit(identity)
+
+  if (!result.success) {
     return {
       allowed: false,
       remaining: 0,
-      resetAt: current.resetAt,
-      retryAfterSeconds: Math.max(1, Math.ceil((current.resetAt - now) / 1000)),
+      resetAt: result.reset,
+      retryAfterSeconds: Math.max(1, Math.ceil((result.reset - Date.now()) / 1000)),
     }
   }
 
-  current.count += 1
   return {
     allowed: true,
-    remaining: Math.max(0, config.max - current.count),
-    resetAt: current.resetAt,
+    remaining: result.remaining,
+    resetAt: result.reset,
     retryAfterSeconds: 0,
   }
 }
 
 /**
- * Test-only reset helper. Not exported via index ; callers must import
- * from this file explicitly in unit tests.
+ * Test-only reset helper. Clears the singleton limiter cache.
+ * Import explicitly from this file in unit tests.
  */
 export function __resetRateLimits(): void {
-  for (const key of Object.keys(stores)) delete stores[key]
+  _limiters.clear()
+  _redis = null
 }
