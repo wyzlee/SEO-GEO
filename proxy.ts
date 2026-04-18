@@ -92,6 +92,26 @@ export default async function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + '/'),
   )
 
+  const mainHost = process.env.NEXT_PUBLIC_APP_HOST || 'seo-geo-orcin.vercel.app'
+  const requestHost = request.headers.get('host') || ''
+  // Exclure localhost et toutes les URLs Vercel (.vercel.app) pour ne pas
+  // bloquer les preview deployments sur les branches feature.
+  const isCustomDomain =
+    requestHost !== '' &&
+    requestHost !== mainHost &&
+    !requestHost.startsWith('localhost') &&
+    !requestHost.endsWith('.vercel.app')
+
+  if (isCustomDomain) {
+    if (!pathname.startsWith('/r/') && pathname !== '/r') {
+      const url = request.nextUrl.clone()
+      url.host = mainHost
+      url.protocol = 'https:'
+      return NextResponse.redirect(url)
+    }
+    return response
+  }
+
   const isProtectedPath =
     !isPublicRoute &&
     !pathname.startsWith('/api/') &&

@@ -32,6 +32,7 @@ export async function notifyAuditCompleted(auditId: string): Promise<void> {
         userEmail: users.email,
         userDisplayName: users.displayName,
         orgBranding: organizations.branding,
+        orgCustomEmailFromName: organizations.customEmailFromName,
       })
       .from(audits)
       .innerJoin(users, eq(users.id, audits.createdBy))
@@ -61,12 +62,17 @@ export async function notifyAuditCompleted(auditId: string): Promise<void> {
       appUrl: base,
     })
 
+    const from = row.orgCustomEmailFromName
+      ? `${row.orgCustomEmailFromName} <notifications@wyzlee.cloud>`
+      : undefined
+
     await sendEmail({
       to: row.userEmail,
       subject,
       html,
       text,
       tag: 'audit.completed',
+      ...(from ? { from } : {}),
     })
   } catch (error) {
     logger.error('audit.notify.exception', { audit_id: auditId, error })

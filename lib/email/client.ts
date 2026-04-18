@@ -20,6 +20,7 @@ export interface SendEmailInput {
   text?: string
   replyTo?: string
   tag?: string
+  from?: string // override du From ; si absent, fallback sur EMAIL_FROM
 }
 
 export interface SendEmailResult {
@@ -36,7 +37,8 @@ export async function sendEmail(
   input: SendEmailInput,
 ): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM || 'SEO-GEO <no-reply@wyzlee.cloud>'
+  const from =
+    input.from || process.env.EMAIL_FROM || 'SEO-GEO <no-reply@wyzlee.cloud>'
   const replyTo = input.replyTo || process.env.EMAIL_REPLY_TO
 
   const recipients = Array.isArray(input.to) ? input.to : [input.to]

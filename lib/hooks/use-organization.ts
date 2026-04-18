@@ -20,6 +20,8 @@ export interface OrgResponse {
   stripeCustomerId: string | null
   subscriptionStatus: string | null
   auditUsage: number
+  customDomain?: string | null
+  customEmailFromName?: string | null
 }
 
 export function useOrganization() {
@@ -48,5 +50,43 @@ export function useUpdateBranding() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['organization', 'me'] })
     },
+  })
+}
+
+export interface UpdateCustomDomainInput {
+  customDomain?: string | null
+  customEmailFromName?: string | null
+}
+
+export function useUpdateCustomDomain() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: UpdateCustomDomainInput) =>
+      apiJson<OrgResponse>('/api/organizations/me', {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['organization', 'me'] })
+      qc.invalidateQueries({ queryKey: ['organization', 'domain-status'] })
+    },
+  })
+}
+
+export interface DomainStatus {
+  domain: string
+  status: 'pending' | 'verified' | 'error'
+  cname: string | null
+  error: string | null
+}
+
+export function useDomainStatus(customDomain: string | null | undefined) {
+  return useQuery({
+    queryKey: ['organization', 'domain-status'],
+    queryFn: () => apiJson<DomainStatus>('/api/organizations/me/domain-status'),
+    enabled: !!customDomain,
+    refetchInterval: (query) =>
+      query.state.data?.status === 'pending' ? 30_000 : false,
+    staleTime: 15_000,
   })
 }

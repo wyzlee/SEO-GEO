@@ -77,8 +77,8 @@
 
 | Item | Description | Effort | Impact | État |
 |------|-------------|--------|--------|------|
-| S3.1 | White-label Silver (custom domain + email) | 5j | 🔵 AGENCE | ⬜ TODO |
-| S3.2 | Programme affilié 30% récurrent | 3j | 🔵 ACQUISITION | ⬜ TODO |
+| S3.1 | White-label Silver (custom domain + email) | 5j | 🔵 AGENCE | ✅ DONE — 2026-04-18 |
+| S3.2 | Programme affilié 30% récurrent | 3j | 🔵 ACQUISITION | ⏸ BACKLOG — après PMF |
 | S3.3 | Audit scheduling (cron mensuel) | 2j | 🔵 RÉTENTION | ✅ DONE — 2026-04-18 |
 | S3.4 | Multi-org switcher | 1j | 🔵 AGENCE | ✅ DONE — 2026-04-18 |
 | S3.5 | Blog + docs SEO (MDX) | continu | 🔵 ACQUISITION | ✅ DONE (scaffold) — 2026-04-18 |
@@ -103,9 +103,18 @@
 - `app/blog/` : layout + liste + page article avec MDXRemote/rsc
 - Lien "Blog" ajouté dans la landing page nav
 
+**S3.1 — Détails :**
+- Migration Neon prod : colonnes `custom_domain UNIQUE` + `custom_email_from_name` dans `organizations`
+- `lib/vercel/domains.ts` : `addDomain`, `removeDomain`, `getDomainStatus` via API Vercel REST
+- `proxy.ts` : Host header routing → domaine custom redirige tout sauf `/r/**` vers le domaine principal (preview `.vercel.app` exclus)
+- PATCH `/api/organizations/me` étendu : gère `customDomain` (plan gate studio/agency) + `customEmailFromName`
+- GET `/api/organizations/me/domain-status` : vérifie CNAME via Vercel
+- Settings UI : section "Domaine personnalisé" avec formulaire, instructions CNAME, badge DNS
+- Email : `sendEmail` accepte `from?` → expéditeur custom `"Agence <notifications@wyzlee.cloud>"`
+- Env vars requises sur Vercel : `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID` (optionnel : `VERCEL_TEAM_ID`), `NEXT_PUBLIC_APP_HOST`
+
 **Reste Sprint 3 :**
-- S3.1 : White-label Silver — custom domain CNAME + email @agence via Resend domain
-- S3.2 : Programme affilié — nécessite choix plateforme (Rewardful vs Lemon Squeezy)
+- S3.2 : Programme affilié — ⏸ BACKLOG après PMF
 - Note build : erreur Stripe checkout pré-existante Sprint 2 (STRIPE_SECRET_KEY manquant en local uniquement)
 
 ---

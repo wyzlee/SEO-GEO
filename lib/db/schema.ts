@@ -27,6 +27,8 @@ export const organizations = pgTable('organizations', {
   stripePriceId: text('stripe_price_id'),
   subscriptionStatus: text('subscription_status'), // active | trialing | canceled | past_due | null
   auditUsage: integer('audit_usage').notNull().default(0),
+  customDomain: text('custom_domain').unique(),
+  customEmailFromName: text('custom_email_from_name'),
 })
 
 export const users = pgTable('users', {
