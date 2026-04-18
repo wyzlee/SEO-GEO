@@ -54,7 +54,7 @@ const createAuditBody = z
       .string()
       .max(400)
       .regex(
-        /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:@[^\-][\w./-]*)?|https?:\/\/github\.com\/[^\s]+)$/,
+        /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:@[^-][\w./-]*)?|https?:\/\/github\.com\/[^\s]+)$/,
       )
       .optional(),
     clientName: z.string().max(200).optional(),
