@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth/context'
@@ -84,6 +85,13 @@ export default function LoginPage() {
         <button type="submit" disabled={submitting} className="btn-primary w-full">
           {submitting ? 'Connexion…' : 'Se connecter'}
         </button>
+
+        <p className="text-center text-xs" style={{ color: 'var(--color-muted)' }}>
+          Curieux ?{' '}
+          <Link href="/guide" style={{ color: 'var(--color-accent)' }}>
+            Voir le guide produit →
+          </Link>
+        </p>
       </form>
     </main>
   )

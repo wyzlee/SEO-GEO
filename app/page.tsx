@@ -103,6 +103,9 @@ export default function LandingPage() {
             <Link href="/blog" style={{ color: 'var(--color-muted)' }}>
               Blog
             </Link>
+            <Link href="/guide" style={{ color: 'var(--color-muted)' }}>
+              Guide produit
+            </Link>
             <Link href="/login" className="btn-secondary">
               Connexion
             </Link>
@@ -141,8 +144,11 @@ export default function LandingPage() {
             <Link href="/onboarding" className="btn-primary">
               Commencer gratuitement
             </Link>
-            <a href="#offres" className="btn-secondary">
-              Découvrir les offres
+            <Link href="/guide" className="btn-secondary">
+              Voir le guide produit →
+            </Link>
+            <a href="#offres" style={{ color: 'var(--color-muted)', fontSize: '0.875rem', display: 'flex', alignItems: 'center' }}>
+              Voir les offres
             </a>
           </div>
 
@@ -338,6 +344,7 @@ export default function LandingPage() {
           style={{ color: 'var(--color-muted)' }}>
           <span>© {new Date().getFullYear()} Wyzlee — SEO-GEO</span>
           <nav className="flex gap-4">
+            <Link href="/guide">Guide produit</Link>
             <Link href="/legal/mentions">Mentions légales</Link>
             <Link href="/legal/cgu">CGU</Link>
             <Link href="/legal/privacy">Confidentialité</Link>
