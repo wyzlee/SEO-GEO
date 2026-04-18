@@ -42,7 +42,7 @@ export default function AuditComparePage({
         }
       />
 
-      <section className="p-6 space-y-6">
+      <section className="p-4 md:p-6 space-y-6">
         {compare.isLoading || audit.isLoading ? (
           <div
             className="card-premium text-sm py-8 text-center"
@@ -146,7 +146,8 @@ function PhaseDeltaTable({ phases }: { phases: PhaseDeltaRow[] }) {
       >
         Évolution par phase
       </h2>
-      <table className="w-full text-sm font-[family-name:var(--font-sans)]">
+      <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+      <table className="w-full min-w-[520px] text-sm font-[family-name:var(--font-sans)]">
         <thead>
           <tr
             className="text-left border-b"
@@ -196,6 +197,7 @@ function PhaseDeltaTable({ phases }: { phases: PhaseDeltaRow[] }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

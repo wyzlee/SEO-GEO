@@ -9,7 +9,7 @@ function BillingPageInner() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div
           className="card-premium text-sm py-10 text-center"
           role="status"
@@ -24,7 +24,7 @@ function BillingPageInner() {
 
   if (!org) {
     return (
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div
           className="card-premium text-sm py-10 text-center"
           style={{ color: 'var(--color-muted)' }}

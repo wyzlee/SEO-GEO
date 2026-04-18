@@ -26,7 +26,7 @@ export default function DashboardPage() {
         }
       />
 
-      <section className="p-6">
+      <section className="p-4 md:p-6">
         {isLoading ? (
           <div className="card-premium text-sm py-6 text-center" style={{ color: 'var(--color-muted)' }}>
             Chargement…

@@ -48,7 +48,7 @@ export default function NewScheduledAuditPage() {
         description="Configurez un audit récurrent automatique."
       />
 
-      <section className="p-6 max-w-xl">
+      <section className="p-4 md:p-6 max-w-xl">
         <form onSubmit={onSubmit} className="card-premium space-y-5">
           <div>
             <label

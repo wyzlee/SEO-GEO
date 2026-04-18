@@ -108,7 +108,7 @@ export default function NewAuditPage() {
         description="URL, archive .zip de code source, ou dépôt GitHub public."
       />
 
-      <section className="p-6 max-w-2xl">
+      <section className="p-4 md:p-6 max-w-2xl">
         {/* Input mode tabs */}
         <div
           className="flex gap-2 mb-5 p-1 rounded-lg"

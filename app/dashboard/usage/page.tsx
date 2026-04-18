@@ -134,7 +134,7 @@ function DayBars({ auditsByDay }: { auditsByDay: { date: string; count: number }
 
 function UsageSkeleton() {
   return (
-    <div className="space-y-4 p-6" role="status" aria-label="Chargement…">
+    <div className="space-y-4 p-4 md:p-6" role="status" aria-label="Chargement…">
       {[...Array(3)].map((_, i) => (
         <div
           key={i}
@@ -177,7 +177,7 @@ export default function UsagePage() {
       {isLoading ? (
         <UsageSkeleton />
       ) : error ? (
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           <div
             className="card-premium text-sm text-center py-8"
             style={{ color: 'var(--color-red)' }}
@@ -186,7 +186,7 @@ export default function UsagePage() {
           </div>
         </div>
       ) : data ? (
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-6">
           {/* Card quota */}
           <section
             className="card-premium space-y-4"
