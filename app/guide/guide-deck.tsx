@@ -6,9 +6,9 @@ import { useAuth } from '@/lib/auth/context'
 
 const TOTAL = 12
 
-// Palette fixe de la présentation (indépendante du thème clair/sombre)
-const IND = '#4F46E5'
-const VIO = '#7C3AED'
+// Palette — accents principaux alignés sur le design system Wyzlee (orange)
+const IND = 'var(--color-accent)'   // orange #FF6B35
+const VIO = 'var(--color-accent2)'  // orange foncé #E55A22
 const GRN = '#39d353'
 const PUR = '#c084fc'
 const AMB = '#fbbf24'
@@ -22,10 +22,10 @@ function Eyebrow({ children }: { children: string }) {
   return (
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 8,
-      fontSize: '0.6rem', color: PUR, letterSpacing: '0.2em',
+      fontSize: '0.6rem', color: IND, letterSpacing: '0.2em',
       textTransform: 'uppercase' as const, marginBottom: 20,
-      border: '1px solid rgba(192,132,252,0.25)', padding: '4px 12px',
-      borderRadius: 4, background: 'rgba(192,132,252,0.06)',
+      border: '1px solid rgba(255,107,53,0.3)', padding: '4px 12px',
+      borderRadius: 4, background: 'rgba(255,107,53,0.07)',
     }}>
       {children}
     </div>
@@ -124,7 +124,7 @@ function PersonaCard({ color, emoji, name, desc, need }: { color: string; emoji:
 function Slide1() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(24px, 6vw, 80px)' }}>
-      <div style={{ position: 'absolute', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(79,70,229,0.12) 0%, transparent 70%)', top: '50%', left: '30%', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(255,107,53,0.12) 0%, transparent 70%)', top: '50%', left: '30%', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }} />
       <Eyebrow>◆ Wyzlee — Produit SEO-GEO</Eyebrow>
       <h1 style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', fontSize: 'clamp(3rem, 8vw, 7rem)', marginBottom: 20 }}>
         <span style={{ color: IND }}>SEO</span><span style={{ color: VIO }}>-GEO</span><br />
@@ -257,7 +257,7 @@ function Slide6() {
           <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, fontSize: '2rem', color: VIO, marginBottom: 16, lineHeight: 1.1 }}>Visibilité IA</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {items.map(({ icon, title, desc }) => (
-              <div key={title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 16px', background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: 6, fontSize: '0.71rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
+              <div key={title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 16px', background: 'rgba(229,90,34,0.05)', border: '1px solid rgba(229,90,34,0.15)', borderRadius: 6, fontSize: '0.71rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
                 <span style={{ fontSize: '1rem', flexShrink: 0 }}>{icon}</span>
                 <div><strong style={{ color: 'var(--color-text)' }}>{title}</strong> — {desc}</div>
               </div>
@@ -283,7 +283,7 @@ function Slide7() {
       <Eyebrow>06 — Le livrable</Eyebrow>
       <Heading>Un rapport client-ready.<br />En moins de 10 minutes.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, marginTop: 8 }}>
-        <div style={{ background: 'linear-gradient(135deg, rgba(79,70,229,0.12), rgba(124,58,237,0.05))', border: `1px solid rgba(79,70,229,0.3)`, borderRadius: 12, padding: 32, display: 'flex', flexDirection: 'column', gap: 16, justifyContent: 'center' }}>
+        <div style={{ background: 'linear-gradient(135deg, rgba(255,107,53,0.12), rgba(229,90,34,0.05))', border: `1px solid rgba(255,107,53,0.3)`, borderRadius: 12, padding: 32, display: 'flex', flexDirection: 'column', gap: 16, justifyContent: 'center' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, fontSize: '5rem', color: IND, lineHeight: 1 }}>74</div>
             <div style={{ fontSize: '0.62rem', color: 'var(--color-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.15em' }}>Score SEO-GEO / 100</div>
@@ -439,7 +439,7 @@ function Slide11() {
 function Slide12({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', height: '100%', padding: '48px clamp(24px, 6vw, 80px)' }}>
-      <div style={{ position: 'absolute', width: 700, height: 400, background: 'radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', width: 700, height: 400, background: 'radial-gradient(ellipse, rgba(229,90,34,0.1) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }} />
       <Eyebrow>Prochaine étape</Eyebrow>
       <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, fontSize: 'clamp(2rem, 5vw, 4rem)', lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 20, color: 'var(--color-text)' }}>
         Prêt à lancer<br />
@@ -452,15 +452,15 @@ function Slide12({ isAuthenticated }: { isAuthenticated: boolean }) {
       </Lead>
       <div style={{ display: 'flex', gap: 16, marginTop: 28, flexWrap: 'wrap' as const, justifyContent: 'center' }}>
         {isAuthenticated ? (
-          <Link href="/dashboard/audits/new" style={{ background: `rgba(79,70,229,0.15)`, border: `1px solid rgba(79,70,229,0.4)`, borderRadius: 8, padding: '12px 24px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: IND, textDecoration: 'none' }}>
+          <Link href="/dashboard/audits/new" style={{ background: `rgba(255,107,53,0.15)`, border: `1px solid rgba(255,107,53,0.4)`, borderRadius: 8, padding: '12px 24px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: IND, textDecoration: 'none' }}>
             🏆 Lancer un audit URL
           </Link>
         ) : (
           <>
-            <Link href="/login" style={{ background: `linear-gradient(135deg, ${IND}, ${VIO})`, borderRadius: 8, padding: '12px 28px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: '#fff', textDecoration: 'none', boxShadow: '0 4px 20px rgba(79,70,229,0.35)' }}>
+            <Link href="/login" style={{ background: `linear-gradient(135deg, ${IND}, ${VIO})`, borderRadius: 8, padding: '12px 28px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: '#fff', textDecoration: 'none', boxShadow: '0 4px 20px rgba(255,107,53,0.35)' }}>
               🚀 Créer un compte gratuit
             </Link>
-            <Link href="/login" style={{ background: `rgba(124,58,237,0.1)`, border: `1px solid rgba(124,58,237,0.3)`, borderRadius: 8, padding: '12px 24px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: VIO, textDecoration: 'none' }}>
+            <Link href="/login" style={{ background: `rgba(229,90,34,0.1)`, border: `1px solid rgba(229,90,34,0.3)`, borderRadius: 8, padding: '12px 24px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: VIO, textDecoration: 'none' }}>
               Se connecter →
             </Link>
           </>
