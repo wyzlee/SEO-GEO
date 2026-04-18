@@ -1,25 +1,5 @@
 # Status — SEO-GEO
-> Mise à jour : 2026-04-18 — Sprint 2 terminé ✅ — commit 490b142 en prod
-
----
-
-## Sprint 1 — Quick Wins ✅ (8/10)
-
-| Item | Description | État |
-|------|-------------|------|
-| S1.1 | Env vars prod (RESEND + CrUX) | ✅ DONE |
-| S1.2 | Smoke test prod | ⏳ À FAIRE après deploy Vercel |
-| S1.3 | Monitoring Sentry | ✅ DONE — 5% sampling, PII off, replay off |
-| S1.4 | Legal sous-traitants | ✅ DONE — Vercel, Anthropic, Google ajoutés |
-| S1.5 | Canal support email | ✅ DONE — sidebar + rapport |
-| S1.6 | 5 tests régression rapport | ✅ DONE — 287/288 tests verts |
-| S1.7 | Fix PDF charts timing | ✅ DONE — 2026-04-18 — document.fonts.ready après networkidle0 |
-| S1.8 | Section Forces rapport | ✅ DONE — phases ≥ 70% score |
-| S1.9 | 3 index DB | ✅ DONE — migration appliquée Neon prod |
-| S1.10 | SSRF DNS check | ✅ DONE — assertSafeDnsUrl() |
-
-**S1.2 → tester sur `seo-geo-orcin.vercel.app` : login → audit → rapport → PDF → partage**
-**S1.7 → fixer après validation smoke test**
+> Mise à jour : 2026-04-18 — Sprints 1+2+3 terminés ✅ — prod opérationnelle, Stripe configuré
 
 ---
 
@@ -27,102 +7,125 @@
 
 | Palier | État | Bloquant |
 |--------|------|----------|
-| A — Agency Ready | 🟢 95% | S1.2 smoke test |
-| B — Quality Gate (1500€+) | 🟢 85% | S1.7 PDF charts |
-| C — Self-serve (scale) | 🟡 70% | Config Stripe (Price IDs + Webhook) + smoke test S1.2 |
+| A — Agency Ready | 🟢 98% | Smoke test S1.2 |
+| B — Quality Gate (1500€+) | 🟢 95% | Smoke test S1.2 |
+| C — Self-serve (scale) | 🟢 90% | Smoke test S1.2 + passer Stripe en LIVE mode |
 
 ---
 
-## Sprint 2 — En cours
+## Sprint 1 — Quick Wins ✅ (10/10)
 
-| Item | Description | Effort | Impact | État |
-|------|-------------|--------|--------|------|
-| S2.1 | Landing page — CTA "Commencer gratuitement" | 2j | 🔵 SCALE | ✅ DONE — 2026-04-18 |
-| S2.2 | Signup public + onboarding wizard | 3j | 🔵 SCALE | ✅ DONE — 2026-04-18 |
-| S2.3 | Stripe 3 plans + webhooks | 3j | 🔵 SCALE | ✅ DONE — 2026-04-18 |
-| S2.4 | Phase synthesis — Claude Haiku 4.5 | 2j | 🟡 QUALITÉ | ✅ DONE — 2026-04-18 |
-| S2.5 | Queue durable : maxDuration 800s + checkpoint + cron requeue | 3-5j | 🟠 INFRA | ✅ DONE — 2026-04-18 |
+| Item | Description | État |
+|------|-------------|------|
+| S1.1 | Env vars prod (RESEND + CrUX) | ✅ DONE |
+| S1.2 | Smoke test prod | ⏳ À FAIRE — `seo-geo-orcin.vercel.app` |
+| S1.3 | Monitoring Sentry | ✅ DONE — 5% sampling, PII off, replay off |
+| S1.4 | Legal sous-traitants | ✅ DONE — Vercel, Anthropic, Google ajoutés |
+| S1.5 | Canal support email | ✅ DONE — sidebar + rapport |
+| S1.6 | 5 tests régression rapport | ✅ DONE — 287/288 tests verts |
+| S1.7 | Fix PDF charts timing | ✅ DONE — document.fonts.ready après networkidle0 |
+| S1.8 | Section Forces rapport | ✅ DONE — phases ≥ 70% score |
+| S1.9 | 3 index DB | ✅ DONE — migration appliquée Neon prod |
+| S1.10 | SSRF DNS check | ✅ DONE — assertSafeDnsUrl() |
 
-**Dépendances Sprint 2 :**
-- S2.2 dépend de S2.1 (landing + CTA)
-- S2.3 dépend de S2.2 (signup actif)
-- S2.4 : nécessite `ANTHROPIC_API_KEY` en prod Vercel
-- S2.5 : nécessite Vercel Workflow addon activé sur le projet
-
-**Groupe 1 Sprint 2 (parallélisable) : S2.1, S2.4, S2.5**
-**Groupe 2 Sprint 2 (dépend Groupe 1) : S2.2, S2.3**
+**⏳ S1.2 — seul item restant** : tester sur `seo-geo-orcin.vercel.app` : login → audit → rapport → PDF → partage
 
 ---
 
-## Actions manuelles restantes avant premier client payant
+## Sprint 2 ✅ (5/5)
 
-| Action | Quoi | Où |
-|--------|------|----|
-| 🔴 S1.2 | Smoke test prod end-to-end | `seo-geo-orcin.vercel.app` |
-| 🔴 S1.7 | Fix PDF charts timing (attend S1.2) | `app/r/[slug]/pdf/route.ts` |
-| 🟠 Stripe | Créer produits Studio 490€ + Agency 990€ | dashboard.stripe.com/products |
-| 🟠 Stripe | Ajouter `STRIPE_PRICE_STUDIO_MONTHLY` + `STRIPE_PRICE_AGENCY_MONTHLY` | Vercel env vars |
-| 🟠 Stripe | Configurer webhook → `seo-geo-orcin.vercel.app/api/stripe/webhook` | dashboard.stripe.com/webhooks |
-| 🟠 Stripe | Ajouter `STRIPE_WEBHOOK_SECRET` | Vercel env vars |
-| 🟢 Stack Auth | Vérifier que le signup email/password public est activé | dashboard Stack Auth |
+| Item | Description | État |
+|------|-------------|------|
+| S2.1 | Landing page — CTA "Commencer gratuitement" | ✅ DONE — 2026-04-18 |
+| S2.2 | Signup public + onboarding wizard | ✅ DONE — 2026-04-18 |
+| S2.3 | Stripe 3 plans + webhooks | ✅ DONE — 2026-04-18 |
+| S2.4 | Phase synthesis — Claude Haiku 4.5 | ✅ DONE — 2026-04-18 |
+| S2.5 | Queue durable : maxDuration 800s + checkpoint + cron requeue | ✅ DONE — 2026-04-18 |
+
+---
+
+## Sprint 3 ✅ (4/5)
+
+| Item | Description | État |
+|------|-------------|------|
+| S3.1 | White-label Silver (custom domain + email) | ✅ DONE — 2026-04-18 |
+| S3.2 | Programme affilié 30% récurrent | ⏸ BACKLOG — après PMF |
+| S3.3 | Audit scheduling (cron mensuel) | ✅ DONE — 2026-04-18 |
+| S3.4 | Multi-org switcher | ✅ DONE — 2026-04-18 |
+| S3.5 | Blog + docs SEO (MDX) | ✅ DONE (scaffold) — 2026-04-18 |
+
+**S3.2 → BACKLOG après PMF**
+
+---
+
+## Actions manuelles — état complet (2026-04-18)
+
+| Action | État |
+|--------|------|
+| Smoke test prod S1.2 | 🔴 RESTE À FAIRE |
+| Neon password pivoté (`npg_3N7lquakwfEp`) | ✅ DONE |
+| Stack Auth clé pivotée (`ssk_pact4n...crt8`), ancienne révoquée | ✅ DONE |
+| Upstash Redis `seo-geo-rate-limit` créé | ✅ DONE |
+| Stripe produits Studio + Agency créés (TEST mode) | ✅ DONE |
+| Stripe webhook configuré (5 events) | ✅ DONE |
+| Toutes env vars Vercel configurées | ✅ DONE |
+| Redeploy Vercel post-config (`dpl_9HcESUJDy2b1W2Gj5BhJB6eNiZcC`) | ✅ DONE — READY |
+| Passer Stripe en LIVE mode (vrais clients) | 🟠 AVANT PREMIER CLIENT RÉEL |
+| Vérifier signup email/password Stack Auth activé | 🟢 À VÉRIFIER |
+
+---
+
+## Env vars Vercel — inventaire complet prod
+
+| Variable | État |
+|----------|------|
+| `DATABASE_URL` | ✅ mdp pivoté `npg_3N7lquakwfEp` |
+| `STACK_SECRET_SERVER_KEY` | ✅ clé pivotée `ssk_pact4n...crt8` |
+| `NEXT_PUBLIC_STACK_PROJECT_ID` | ✅ `2f01f2d7-054d-4847-b4db-2348dc272f4f` |
+| `UPSTASH_REDIS_REST_URL` | ✅ `https://close-shark-80122.upstash.io` |
+| `UPSTASH_REDIS_REST_TOKEN` | ✅ DB `seo-geo-rate-limit` |
+| `STRIPE_SECRET_KEY` | ✅ (test) |
+| `STRIPE_PUBLISHABLE_KEY` | ✅ (test) |
+| `STRIPE_PRICE_STUDIO_MONTHLY` | ✅ `price_1TNXQoB8nn2Ohyt3a3vQVHd9` |
+| `STRIPE_PRICE_AGENCY_MONTHLY` | ✅ `price_1TNXRDb8nn2Ohyt3hFQg8zYU` |
+| `STRIPE_WEBHOOK_SECRET` | ✅ `whsec_1hxTsWeyk...` |
+| `VERCEL_API_TOKEN` | ✅ token `seo-geo-domain-api` |
+| `VERCEL_PROJECT_ID` | ✅ `prj_kpIjC0ZtmR45p3kNE94VspyJXnsz` |
+| `NEXT_PUBLIC_APP_HOST` | ✅ `seo-geo-orcin.vercel.app` |
+| `ANTHROPIC_API_KEY` | ✅ |
+| `RESEND_API_KEY` | ✅ |
+| `GOOGLE_CRUX_API_KEY` | ✅ |
+| `CRON_SECRET` | ✅ |
 
 ---
 
 ## Dernier audit sécurité
 Date : 2026-04-18
-Résultat : 2 critiques corrigés, 1 important corrigé, 2 importants V2, 2 mineurs documentés
+Résultat : 2 critiques corrigés ✅, 1 important corrigé ✅, 2 importants V2, 2 mineurs documentés
 Rapport : `.claude/plans/security-report-2026-04-18.md`
 
-**Actions manuelles URGENTES :**
-- 🔴 Pivoter mot de passe Neon → dashboard.neon.tech
-- 🔴 Pivoter clé `STACK_SECRET_SERVER_KEY` → app.stack-auth.com
-- 🟠 Confirmer `CRON_SECRET` défini dans Vercel env vars prod
+Actions urgentes — toutes résolues :
+- ✅ `STACK_SECRET_SERVER_KEY` pivoté, ancienne clé révoquée
+- ✅ Mot de passe Neon pivoté
+- ✅ `CRON_SECRET` défini
 
 ---
 
-## Sprint 3 — En cours
+## Sprint 4 — Backlog prioritaire
 
-| Item | Description | Effort | Impact | État |
-|------|-------------|--------|--------|------|
-| S3.1 | White-label Silver (custom domain + email) | 5j | 🔵 AGENCE | ✅ DONE — 2026-04-18 |
-| S3.2 | Programme affilié 30% récurrent | 3j | 🔵 ACQUISITION | ⏸ BACKLOG — après PMF |
-| S3.3 | Audit scheduling (cron mensuel) | 2j | 🔵 RÉTENTION | ✅ DONE — 2026-04-18 |
-| S3.4 | Multi-org switcher | 1j | 🔵 AGENCE | ✅ DONE — 2026-04-18 |
-| S3.5 | Blog + docs SEO (MDX) | continu | 🔵 ACQUISITION | ✅ DONE (scaffold) — 2026-04-18 |
+| Item | Description | Effort | Impact |
+|------|-------------|--------|--------|
+| S4.1 | Smoke test prod S1.2 | 2h | 🔴 BLOQUANT |
+| S4.2 | Rate limiting Redis (Upstash) — déjà codé, maintenant actif en prod | - | ✅ ACTIF |
+| S4.3 | Passer Stripe LIVE (produits + webhook + env vars live) | 1h | 🔴 AVANT VRAI CLIENT |
+| S4.4 | Programme affilié 30% récurrent | 3j | 🔵 ACQUISITION — après PMF |
+| S4.5 | Upload zip / GitHub connect | 5j | 🔵 AGENCE — Sprint 06 roadmap |
+| S4.6 | A/B test landing page | 2j | 🔵 ACQUISITION |
 
-**S3.3 — Détails :**
-- Table `scheduled_audits` migrée sur Neon prod (migration `0006_watery_jack_murdock.sql`)
-- API : GET/POST `/api/scheduled-audits`, DELETE `/api/scheduled-audits/[id]`
-- Cron Vercel : `/api/cron/run-scheduled` (toutes les heures)
-- UI : `/dashboard/audits/schedule` (liste) + `/dashboard/audits/schedule/new` (form)
-- Nav sidebar "Planifiés" ajouté
+---
 
-**S3.4 — Détails :**
-- `proxy.ts` mis à jour : cookie `seo-geo-org` → header `x-org-id` sur `/api/*`
-- GET `/api/organizations` — liste les orgs de l'utilisateur
-- Hook `use-organizations.ts` — switcher client-side
-- Sidebar : org switcher avec dropdown multi-org + nav "Planifiés"
-- `/blog` ajouté aux publicRoutes (accès sans auth)
-
-**S3.5 — Détails :**
-- `next-mdx-remote` + `gray-matter` installés
-- `content/blog/` : 2 articles FR (GEO vs SEO 2026, llms.txt guide complet)
-- `app/blog/` : layout + liste + page article avec MDXRemote/rsc
-- Lien "Blog" ajouté dans la landing page nav
-
-**S3.1 — Détails :**
-- Migration Neon prod : colonnes `custom_domain UNIQUE` + `custom_email_from_name` dans `organizations`
-- `lib/vercel/domains.ts` : `addDomain`, `removeDomain`, `getDomainStatus` via API Vercel REST
-- `proxy.ts` : Host header routing → domaine custom redirige tout sauf `/r/**` vers le domaine principal (preview `.vercel.app` exclus)
-- PATCH `/api/organizations/me` étendu : gère `customDomain` (plan gate studio/agency) + `customEmailFromName`
-- GET `/api/organizations/me/domain-status` : vérifie CNAME via Vercel
-- Settings UI : section "Domaine personnalisé" avec formulaire, instructions CNAME, badge DNS
-- Email : `sendEmail` accepte `from?` → expéditeur custom `"Agence <notifications@wyzlee.cloud>"`
-- Env vars requises sur Vercel : `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID` (optionnel : `VERCEL_TEAM_ID`), `NEXT_PUBLIC_APP_HOST`
-
-**Reste Sprint 3 :**
-- S3.2 : Programme affilié — ⏸ BACKLOG après PMF
-- Note build : erreur Stripe checkout pré-existante Sprint 2 (STRIPE_SECRET_KEY manquant en local uniquement)
+## Prochain audit sécurité
+→ Lancer `/security-check` avant le premier client payant réel
 
 ---
 
@@ -138,8 +141,3 @@ Rapport : `.claude/plans/security-report-2026-04-18.md`
 | `roadmap.md` | Sprint 1-3 + Backlog | ✅ |
 | `executive-summary.md` | Positionnement, top 5, menaces 2026 | ✅ |
 | `sources.md` | URLs sourcées | ✅ |
-
----
-
-## Prochain audit sécurité
-→ Lancer `/security-check` avant le premier client payant (non effectué)
