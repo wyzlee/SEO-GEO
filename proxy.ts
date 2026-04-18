@@ -19,11 +19,18 @@ import type { NextRequest } from 'next/server'
  *    historique sans redéploiement (rollback sans rebuild).
  */
 export default async function proxy(request: NextRequest) {
+  // Nonce cryptographique par requête — consommé via `headers().get('x-nonce')`
+  // dans les Server Components pour marquer les <script nonce={nonce}>.
+  // Avec `'strict-dynamic'` dans la CSP, les browsers CSP3 (Chrome/FF/Safari
+  // récents) ignorent `'unsafe-inline'` en présence du nonce. On garde donc
+  // `'unsafe-inline'` pour la compat navigateurs anciens (qui, eux, ignorent
+  // `'strict-dynamic'`). Résultat : safe sur browsers modernes, fonctionnel
+  // sur legacy — pas de régression.
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
 
   const strictCsp = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' https:;
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https:;
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https:;
     font-src 'self' data: https:;
@@ -39,7 +46,7 @@ export default async function proxy(request: NextRequest) {
 
   const relaxedCsp = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https:;
+    script-src 'self' 'nonce-${nonce}' 'unsafe-eval' 'unsafe-inline' https:;
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https:;
     font-src 'self' data: https:;

@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { logger } from '@/lib/observability/logger'
 
 export interface RateLimitConfig {
   /** Unique name of the limiter (used as bucket key). */
@@ -19,6 +20,7 @@ export interface RateLimitResult {
 
 let _redis: Redis | null = null
 const _limiters: Map<string, Ratelimit> = new Map()
+let _prodMissingLogged = false
 
 function getRedis(): Redis | null {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -58,6 +60,34 @@ export async function rateLimit(
   const limiter = getLimiter(config)
 
   if (!limiter) {
+    // Fail-closed en production : sans backend Redis, on ne peut pas
+    // garantir le rate limiting cross-instances → on refuse la requête
+    // plutôt que de laisser passer un burst. Log + Sentry via logger.error.
+    if (process.env.NODE_ENV === 'production') {
+      if (!_prodMissingLogged) {
+        logger.error('rate_limit.redis_missing', {
+          limiter: config.name,
+          message:
+            'UPSTASH_REDIS_REST_URL/TOKEN non configuré en prod — rate limiter fail-closed.',
+        })
+        _prodMissingLogged = true
+      }
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: Date.now() + config.windowMs,
+        retryAfterSeconds: Math.ceil(config.windowMs / 1000),
+      }
+    }
+    // Dev/test : passthrough (avec log.warn une seule fois pour signaler).
+    if (!_prodMissingLogged) {
+      logger.warn('rate_limit.passthrough', {
+        limiter: config.name,
+        env: process.env.NODE_ENV ?? 'unknown',
+        note: 'Redis Upstash absent — rate limiter désactivé en dev/test.',
+      })
+      _prodMissingLogged = true
+    }
     return { allowed: true, remaining: 999, resetAt: Date.now() + config.windowMs, retryAfterSeconds: 0 }
   }
 
@@ -87,4 +117,5 @@ export async function rateLimit(
 export function __resetRateLimits(): void {
   _limiters.clear()
   _redis = null
+  _prodMissingLogged = false
 }

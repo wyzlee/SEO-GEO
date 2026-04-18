@@ -1,0 +1,50 @@
+name: security
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+    branches: [main]
+  schedule:
+    # Scan hebdo le lundi 04:00 UTC pour détecter les CVEs apparues depuis
+    # le dernier build sans nouveau commit.
+    - cron: '0 4 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets-scan:
+    name: gitleaks (scan secrets dans l'historique)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          # Token public OK : gitleaks-action s'en sert pour publier les
+          # findings en tant que PR comment / check.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dep-audit:
+    name: npm audit (dépendances CVE high+)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Échoue si high ou critical trouvé. Les moderate/low remontent en
+      # output mais ne font pas échouer le build (trop bruyant).
+      - name: npm audit
+        run: npm audit --audit-level=high

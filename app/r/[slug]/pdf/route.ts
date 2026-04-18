@@ -7,6 +7,7 @@ import {
   buildPdfFilename,
   renderPdf,
 } from '@/lib/report/pdf'
+import { sanitizeReportDocument } from '@/lib/report/sanitize'
 import { getClientIp } from '@/lib/security/ip'
 import { rateLimit } from '@/lib/security/rate-limit'
 import { logger } from '@/lib/observability/logger'
@@ -79,7 +80,7 @@ export async function GET(
     .limit(1)
 
   try {
-    const pdf = await renderPdf({ html: report.contentHtml })
+    const pdf = await renderPdf({ html: sanitizeReportDocument(report.contentHtml) })
     const filename = buildPdfFilename(
       audit ?? { id: report.auditId },
       audit?.finishedAt,

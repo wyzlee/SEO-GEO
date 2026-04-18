@@ -5,6 +5,7 @@ import { audits, organizations, scheduledAudits } from '@/lib/db/schema'
 import { processAudit } from '@/lib/audit/process'
 import { computeNextRunAt } from '@/lib/audit/schedule'
 import { logger } from '@/lib/observability/logger'
+import { verifyBearerSecret } from '@/lib/security/constant-time'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -31,10 +32,9 @@ async function findPreviousAuditId(
 }
 
 export async function GET(request: Request) {
-  const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!verifyBearerSecret(authHeader, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

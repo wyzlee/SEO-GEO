@@ -3,6 +3,60 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthError } from '@/lib/auth/server'
 import { __resetRateLimits } from '@/lib/security/rate-limit'
 
+// Active le rate limiter in-process (mock Upstash) pour que les assertions 429
+// sur la 4ème requête fonctionnent sans Redis réel.
+process.env.UPSTASH_REDIS_REST_URL = 'http://mock-upstash.local'
+process.env.UPSTASH_REDIS_REST_TOKEN = 'mock-token'
+
+vi.mock('@upstash/redis', () => {
+  class Redis {
+    constructor(_opts: unknown) {}
+  }
+  return { Redis }
+})
+
+vi.mock('@upstash/ratelimit', () => {
+  type Opts = { redis: unknown; limiter: { max: number; windowMs: number }; prefix: string }
+  type Win = { count: number; resetAt: number }
+  const stores = new Map<string, Map<string, Win>>()
+  ;(globalThis as Record<string, unknown>).__rl_mock_stores_audits_post = stores
+
+  class Ratelimit {
+    private max: number
+    private windowMs: number
+    private store: Map<string, Win>
+
+    constructor(opts: Opts) {
+      this.max = opts.limiter.max
+      this.windowMs = opts.limiter.windowMs
+      if (!stores.has(opts.prefix)) stores.set(opts.prefix, new Map())
+      this.store = stores.get(opts.prefix)!
+    }
+
+    async limit(identifier: string) {
+      const now = Date.now()
+      const win = this.store.get(identifier)
+      if (!win || win.resetAt <= now) {
+        const resetAt = now + this.windowMs
+        this.store.set(identifier, { count: 1, resetAt })
+        return { success: true, remaining: this.max - 1, reset: resetAt, pending: Promise.resolve() }
+      }
+      if (win.count >= this.max) {
+        return { success: false, remaining: 0, reset: win.resetAt, pending: Promise.resolve() }
+      }
+      win.count += 1
+      return { success: true, remaining: this.max - win.count, reset: win.resetAt, pending: Promise.resolve() }
+    }
+
+    static slidingWindow(max: number, window: string) {
+      const windowMs = parseInt(window.replace('ms', ''))
+      return { max, windowMs }
+    }
+  }
+
+  return { Ratelimit }
+})
+
 const authenticateAutoMock = vi.fn()
 const processAuditMock = vi.fn()
 const afterMock = vi.fn()
@@ -30,7 +84,7 @@ vi.mock('next/server', async (importOriginal) => {
 })
 
 vi.mock('@/lib/db', () => {
-  const builder = {
+  const builder: Record<string, unknown> = {
     insert: () => builder,
     values: () => builder,
     returning: async () => {
@@ -44,6 +98,9 @@ vi.mock('@/lib/db', () => {
     where: () => builder,
     orderBy: () => builder,
     limit: async () => [],
+    // Permet `await db.select().from().where(...)` sans `.limit()` terminal
+    // (ex. count query dans l'enforcement de plan) → résout à [].
+    then: (resolve: (v: unknown) => unknown) => resolve([]),
   }
   return { db: builder }
 })
@@ -69,6 +126,11 @@ describe('POST /api/audits', () => {
     insertedIds.length = 0
     nextAuditId = 0
     __resetRateLimits()
+    // Vider aussi le store in-process du mock Upstash (persiste entre tests).
+    const stores = (globalThis as Record<string, unknown>).__rl_mock_stores_audits_post as
+      | Map<string, Map<string, unknown>>
+      | undefined
+    stores?.forEach((bucket) => bucket.clear())
     authenticateAutoMock.mockResolvedValue({
       user: { id: 'user-1', email: 'olivier@wyzlee.cloud' },
       organizationId: 'org-1',
