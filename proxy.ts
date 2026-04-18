@@ -23,9 +23,13 @@ export default async function proxy(request: NextRequest) {
   // Consommé via `headers().get('x-nonce')` dans les Server Components.
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
 
+  // NOTE CSP : la présence d'un nonce dans script-src annule 'unsafe-inline'
+  // (spec CSP3, indépendamment de strict-dynamic). Tant que le layout ne
+  // passe pas le nonce aux <script>, il ne doit PAS figurer dans le CSP.
+  // Le nonce reste généré + exposé via x-nonce pour la migration V2.
   const strictCsp = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https:;
+    script-src 'self' 'unsafe-inline' https:;
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https:;
     font-src 'self' data: https:;
@@ -41,7 +45,7 @@ export default async function proxy(request: NextRequest) {
 
   const relaxedCsp = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'unsafe-eval' 'unsafe-inline' https:;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https:;
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https:;
     font-src 'self' data: https:;
@@ -88,6 +92,7 @@ export default async function proxy(request: NextRequest) {
     '/invite',
     '/legal',
     '/blog',
+    '/monitoring', // tunnel Sentry (next.config tunnelRoute) — POST, sans auth
     '/api/health',
     '/api/webhooks',
     '/api/invitations',
