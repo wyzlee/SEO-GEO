@@ -33,15 +33,15 @@
 
 ---
 
-## Sprint 2 — En attente d'exécution
+## Sprint 2 — En cours
 
 | Item | Description | Effort | Impact | État |
 |------|-------------|--------|--------|------|
-| S2.1 | Landing page marketing | 2j | 🔵 SCALE | ⬜ TODO |
-| S2.2 | Signup public + onboarding wizard | 3j | 🔵 SCALE | ⬜ TODO |
-| S2.3 | Stripe 3 plans + webhooks | 3j | 🔵 SCALE | ⬜ TODO |
-| S2.4 | Phase synthesis — Claude Haiku 4.5 | 2j | 🟡 QUALITÉ | ⬜ TODO |
-| S2.5 | Vercel Workflow WDK (queue durable) | 3-5j | 🟠 INFRA | ⬜ TODO |
+| S2.1 | Landing page — CTA "Commencer gratuitement" | 2j | 🔵 SCALE | ✅ DONE — 2026-04-18 |
+| S2.2 | Signup public + onboarding wizard | 3j | 🔵 SCALE | ✅ DONE — 2026-04-18 |
+| S2.3 | Stripe 3 plans + webhooks | 3j | 🔵 SCALE | ✅ DONE — 2026-04-18 |
+| S2.4 | Phase synthesis — Claude Haiku 4.5 | 2j | 🟡 QUALITÉ | ✅ DONE — 2026-04-18 |
+| S2.5 | Queue durable : maxDuration 800s + checkpoint + cron requeue | 3-5j | 🟠 INFRA | ✅ DONE — 2026-04-18 |
 
 **Dépendances Sprint 2 :**
 - S2.2 dépend de S2.1 (landing + CTA)

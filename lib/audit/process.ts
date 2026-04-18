@@ -2,9 +2,9 @@
  * Full audit pipeline : resolveInput (crawl URL / extract zip / clone github)
  * → 11 phases → persist at each step.
  */
-import { eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { audits } from '@/lib/db/schema'
+import { audits, auditPhases, findings } from '@/lib/db/schema'
 import { crawlUrl } from './crawl'
 import { runTechnicalPhase } from './phases/technical'
 import { runStructuredDataPhase } from './phases/structured-data'
@@ -229,6 +229,22 @@ async function runProcessAudit(auditId: string): Promise<void> {
     }
     await seedAuditPhases(auditId, cfg.phases)
 
+    // Checkpoint-resume : charger les phases déjà completées (cas requeue après timeout).
+    // seedAuditPhases utilise onConflictDoNothing, donc les rows existantes sont préservées.
+    const existingRows = await db
+      .select({
+        phaseKey: auditPhases.phaseKey,
+        status: auditPhases.status,
+        score: auditPhases.score,
+        scoreMax: auditPhases.scoreMax,
+      })
+      .from(auditPhases)
+      .where(eq(auditPhases.auditId, auditId))
+    const completedPhaseKeys = existingRows
+      .filter((r) => r.status === 'completed')
+      .map((r) => r.phaseKey as PhaseKey)
+    const completedSet = new Set(completedPhaseKeys)
+
     const ctx = await resolveInput(
       {
         inputType: audit.inputType,
@@ -248,12 +264,37 @@ async function runProcessAudit(auditId: string): Promise<void> {
     let effectiveScore = 0
     let effectiveScoreMax = 0
 
+    // Pré-charger findings + scores des phases déjà complétées pour la synthèse.
+    if (completedPhaseKeys.length > 0) {
+      const prevFindings = await db
+        .select()
+        .from(findings)
+        .where(
+          and(
+            eq(findings.auditId, auditId),
+            inArray(findings.phaseKey, completedPhaseKeys),
+          ),
+        )
+      allFindings.push(...(prevFindings as Finding[]))
+
+      for (const row of existingRows.filter((r) => completedSet.has(r.phaseKey as PhaseKey))) {
+        const key = row.phaseKey as PhaseKey
+        if (row.score != null && row.scoreMax != null && row.scoreMax > 0) {
+          breakdown[key] = row.score
+          detailedBreakdown[key] = { score: row.score, scoreMax: row.scoreMax }
+          effectiveScore += row.score
+          effectiveScoreMax += row.scoreMax
+        }
+      }
+    }
+
     for (const key of cfg.phases) {
+      if (completedSet.has(key)) continue // checkpoint : phase déjà terminée
       try {
         await markPhaseRunning(auditId, key)
         let result: PhaseResult
         if (key === 'synthesis') {
-          result = runSynthesisPhase({
+          result = await runSynthesisPhase({
             findings: allFindings,
             breakdown: detailedBreakdown,
           })

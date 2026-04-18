@@ -36,6 +36,9 @@ export async function GET(request: Request) {
       slug: organizations.slug,
       plan: organizations.plan,
       branding: organizations.branding,
+      stripeCustomerId: organizations.stripeCustomerId,
+      subscriptionStatus: organizations.subscriptionStatus,
+      auditUsage: organizations.auditUsage,
     })
     .from(organizations)
     .where(eq(organizations.id, ctx.organizationId))
@@ -52,6 +55,9 @@ export async function GET(request: Request) {
     plan: org.plan,
     role: ctx.role,
     branding: brandingFromRecord(org.branding as StoredBranding | null),
+    stripeCustomerId: org.stripeCustomerId,
+    subscriptionStatus: org.subscriptionStatus,
+    auditUsage: org.auditUsage,
   })
 }
 

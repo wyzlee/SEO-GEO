@@ -17,6 +17,9 @@ export interface OrgResponse {
   plan: string
   role: string
   branding: OrgBranding | null
+  stripeCustomerId: string | null
+  subscriptionStatus: string | null
+  auditUsage: number
 }
 
 export function useOrganization() {

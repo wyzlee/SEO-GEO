@@ -5,7 +5,12 @@
  * cross-phase : hotspots URL, quick-wins, corrélations faibles. Ne retire
  * pas de points (pointsLost = 0) — sert uniquement au livrable client et
  * au dashboard interne pour prioriser.
+ *
+ * Génère un résumé exécutif via Claude Haiku 4.5 si ANTHROPIC_API_KEY est
+ * définie. Fallback sur une string statique si absent ou si l'appel échoue.
  */
+import Anthropic from '@anthropic-ai/sdk'
+import { logger } from '@/lib/observability/logger'
 import type { Finding, PhaseKey, PhaseResult } from '../types'
 
 const PHASE_KEY = 'synthesis' as const
@@ -33,7 +38,107 @@ const SEVERITY_RANK: Record<Finding['severity'], number> = {
   info: 0,
 }
 
-export function runSynthesisPhase(context: SynthesisContext): PhaseResult {
+const SYSTEM_PROMPT =
+  "Tu es un expert SEO senior qui rédige des synthèses d'audit pour des clients agences et directions marketing. Rédige en français professionnel, jargon technique minimum, orienté business. Tes analyses sont concises, factuelles, actionnables."
+
+async function generateExecutiveSummary(
+  context: SynthesisContext,
+  fallbackSummary: string,
+): Promise<string> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    logger.info('synthesis.llm.skipped', { reason: 'ANTHROPIC_API_KEY absent' })
+    return fallbackSummary
+  }
+
+  try {
+    const { findings: allFindings, breakdown } = context
+
+    // Score global
+    let totalScore = 0
+    let totalMax = 0
+    for (const [key, b] of Object.entries(breakdown)) {
+      if (!b || b.scoreMax === 0 || key === 'synthesis') continue
+      totalScore += b.score
+      totalMax += b.scoreMax
+    }
+    const globalPct =
+      totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0
+
+    // Top 3 critical/high
+    const top3 = allFindings
+      .filter((f) => f.severity === 'critical' || f.severity === 'high')
+      .sort((a, b) => {
+        const sevDiff = SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]
+        return sevDiff !== 0 ? sevDiff : b.pointsLost - a.pointsLost
+      })
+      .slice(0, 3)
+
+    // Phases faibles < 50 %
+    const weakPhases = Object.entries(breakdown)
+      .filter(([key, b]) => {
+        if (!b || b.scoreMax === 0 || key === 'synthesis') return false
+        return b.score / b.scoreMax < 0.5
+      })
+      .map(([key, b]) => `${key} (${Math.round((b!.score / b!.scoreMax) * 100)} %)`)
+
+    // Quick-wins
+    const quickWins = allFindings.filter(
+      (f) => f.effort === 'quick' && f.pointsLost >= 0.5,
+    )
+    const quickWinsPoints =
+      Math.round(
+        quickWins.reduce((acc, f) => acc + f.pointsLost, 0) * 10,
+      ) / 10
+
+    const userPrompt = [
+      `Score global : ${globalPct}/100`,
+      '',
+      `Top ${top3.length} constat(s) critique(s)/high :`,
+      ...top3.map(
+        (f, i) =>
+          `${i + 1}. [${f.phaseKey}] ${f.title} — ${f.pointsLost} pt(s) perdus`,
+      ),
+      '',
+      weakPhases.length > 0
+        ? `Phases faibles (< 50 %) : ${weakPhases.join(', ')}`
+        : 'Aucune phase sous 50 %.',
+      '',
+      `Quick-wins : ${quickWins.length} constat(s) récupérables rapidement (${quickWinsPoints} pts potentiels)`,
+      `Total constats : ${allFindings.length}`,
+      '',
+      'Rédige 3 paragraphes séparés par une ligne vide :',
+      '1. Diagnostic global (état du site, score, niveau de risque)',
+      '2. Priorités immédiates (top constats et pourquoi urgents)',
+      '3. Feuille de route 90 jours (quick-wins en premier, puis fondamentaux)',
+    ].join('\n')
+
+    const client = new Anthropic()
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 800,
+      system: [
+        {
+          type: 'text',
+          text: SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [{ role: 'user', content: userPrompt }],
+    })
+
+    const block = message.content.find((b) => b.type === 'text')
+    return block?.type === 'text' ? block.text : fallbackSummary
+  } catch (err) {
+    logger.warn('synthesis.llm.failed', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return fallbackSummary
+  }
+}
+
+export async function runSynthesisPhase(
+  context: SynthesisContext,
+): Promise<PhaseResult> {
   const findings: Finding[] = []
   const { findings: allFindings, breakdown } = context
 
@@ -180,12 +285,15 @@ export function runSynthesisPhase(context: SynthesisContext): PhaseResult {
     metricValue: `${allFindings.length} total`,
   })
 
+  const fallbackSummary = `Synthèse — ${findings.length} insight(s) cross-phase`
+  const summary = await generateExecutiveSummary(context, fallbackSummary)
+
   return {
     phaseKey: PHASE_KEY,
     score: 0,
     scoreMax: 0,
     status: 'completed',
-    summary: `Synthèse — ${findings.length} insight(s) cross-phase`,
+    summary,
     findings,
   }
 }

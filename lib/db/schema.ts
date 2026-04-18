@@ -17,9 +17,15 @@ export const organizations = pgTable('organizations', {
   name: text('name').notNull(),
   slug: text('slug').unique().notNull(),
   branding: jsonb('branding'),
-  plan: text('plan').notNull().default('free'),
+  plan: text('plan').notNull().default('discovery'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  // Stripe billing
+  stripeCustomerId: text('stripe_customer_id').unique(),
+  stripeSubscriptionId: text('stripe_subscription_id').unique(),
+  stripePriceId: text('stripe_price_id'),
+  subscriptionStatus: text('subscription_status'), // active | trialing | canceled | past_due | null
+  auditUsage: integer('audit_usage').notNull().default(0),
 })
 
 export const users = pgTable('users', {

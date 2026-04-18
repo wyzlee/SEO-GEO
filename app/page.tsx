@@ -103,6 +103,9 @@ export default function LandingPage() {
             <Link href="/login" className="btn-secondary">
               Connexion
             </Link>
+            <Link href="/onboarding" className="btn-primary">
+              Commencer gratuitement
+            </Link>
           </nav>
         </div>
       </header>
@@ -132,14 +135,11 @@ export default function LandingPage() {
             agence partenaire.
           </p>
           <div className="mt-10 flex flex-wrap gap-3 justify-center">
-            <a href="#offres" className="btn-primary">
+            <Link href="/onboarding" className="btn-primary">
+              Commencer gratuitement
+            </Link>
+            <a href="#offres" className="btn-secondary">
               Découvrir les offres
-            </a>
-            <a
-              href="mailto:contact@wyzlee.com?subject=Audit%20SEO-GEO"
-              className="btn-secondary"
-            >
-              Demander un audit
             </a>
           </div>
 

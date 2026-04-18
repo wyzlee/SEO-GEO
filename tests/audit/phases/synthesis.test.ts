@@ -17,8 +17,8 @@ function finding(
 }
 
 describe('runSynthesisPhase', () => {
-  it('returns severity breakdown even on empty input', () => {
-    const result = runSynthesisPhase({ findings: [], breakdown: {} })
+  it('returns severity breakdown even on empty input', async () => {
+    const result = await runSynthesisPhase({ findings: [], breakdown: {} })
     expect(result.status).toBe('completed')
     expect(result.scoreMax).toBe(0)
     expect(result.score).toBe(0)
@@ -28,14 +28,14 @@ describe('runSynthesisPhase', () => {
     expect(breakdown).toBeDefined()
   })
 
-  it('surfaces top critical findings ordered by severity then points', () => {
+  it('surfaces top critical findings ordered by severity then points', async () => {
     const findings: Finding[] = [
       finding({ phaseKey: 'geo', severity: 'high', title: 'H1', pointsLost: 3 }),
       finding({ phaseKey: 'technical', severity: 'critical', title: 'C1', pointsLost: 2 }),
       finding({ phaseKey: 'eeat', severity: 'low', title: 'L1', pointsLost: 0.5 }),
       finding({ phaseKey: 'geo', severity: 'critical', title: 'C2', pointsLost: 4 }),
     ]
-    const result = runSynthesisPhase({ findings, breakdown: {} })
+    const result = await runSynthesisPhase({ findings, breakdown: {} })
     const top = result.findings.find(
       (f) => f.category === 'synthesis-top-critical',
     )
@@ -46,14 +46,14 @@ describe('runSynthesisPhase', () => {
     expect(top!.description).toContain('H1')
   })
 
-  it('surfaces quick wins when ≥ 3 findings avec effort quick', () => {
+  it('surfaces quick wins when ≥ 3 findings avec effort quick', async () => {
     const findings: Finding[] = [
       finding({ phaseKey: 'technical', effort: 'quick', pointsLost: 1 }),
       finding({ phaseKey: 'geo', effort: 'quick', pointsLost: 0.5 }),
       finding({ phaseKey: 'eeat', effort: 'quick', pointsLost: 0.5 }),
       finding({ phaseKey: 'structured_data', effort: 'heavy', pointsLost: 2 }),
     ]
-    const result = runSynthesisPhase({ findings, breakdown: {} })
+    const result = await runSynthesisPhase({ findings, breakdown: {} })
     const qw = result.findings.find(
       (f) => f.category === 'synthesis-quick-wins',
     )
@@ -61,7 +61,7 @@ describe('runSynthesisPhase', () => {
     expect(qw!.title).toContain('2')
   })
 
-  it('detects hotspot URLs (≥ 3 findings sur ≥ 2 phases)', () => {
+  it('detects hotspot URLs (≥ 3 findings sur ≥ 2 phases)', async () => {
     const findings: Finding[] = [
       finding({
         phaseKey: 'geo',
@@ -80,7 +80,7 @@ describe('runSynthesisPhase', () => {
         locationUrl: 'https://site.com/home',
       }),
     ]
-    const result = runSynthesisPhase({ findings, breakdown: {} })
+    const result = await runSynthesisPhase({ findings, breakdown: {} })
     const hotspot = result.findings.find(
       (f) => f.category === 'synthesis-hotspot-urls',
     )
@@ -89,8 +89,8 @@ describe('runSynthesisPhase', () => {
     expect(hotspot!.description).not.toContain('home')
   })
 
-  it('flags weak fundamentals when ≥ 3 phases < 50 %', () => {
-    const result = runSynthesisPhase({
+  it('flags weak fundamentals when ≥ 3 phases < 50 %', async () => {
+    const result = await runSynthesisPhase({
       findings: [],
       breakdown: {
         technical: { score: 4, scoreMax: 12 },
@@ -107,8 +107,8 @@ describe('runSynthesisPhase', () => {
     expect(weak!.description).toContain('structured_data')
   })
 
-  it('ignores synthesis phase itself in fundamentals check', () => {
-    const result = runSynthesisPhase({
+  it('ignores synthesis phase itself in fundamentals check', async () => {
+    const result = await runSynthesisPhase({
       findings: [],
       breakdown: {
         technical: { score: 11, scoreMax: 12 },

@@ -1,5 +1,5 @@
 import { NextResponse, after } from 'next/server'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq, gte, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { audits, organizations } from '@/lib/db/schema'
@@ -8,6 +8,7 @@ import { processAudit } from '@/lib/audit/process'
 import { assertSafeUrl, UnsafeUrlError } from '@/lib/security/url-guard'
 import { rateLimit } from '@/lib/security/rate-limit'
 import { logger } from '@/lib/observability/logger'
+import { PLANS } from '@/lib/billing/stripe'
 
 /**
  * Trouve le dernier audit `completed` de la même org + même cible (targetUrl
@@ -41,6 +42,7 @@ const DAILY_LIMIT = { name: 'audits.post.daily', max: 50, windowMs: 86_400_000 }
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 800
 
 const createAuditBody = z
   .object({
@@ -101,16 +103,49 @@ export async function POST(request: Request) {
     }
   }
 
-  // Plan gating : free plan → mode forcé à 'standard'
+  // Plan gating : récupérer l'org pour quota + mode
   const orgRow = await db
-    .select({ plan: organizations.plan })
+    .select({ plan: organizations.plan, id: organizations.id })
     .from(organizations)
     .where(eq(organizations.id, ctx.organizationId))
     .limit(1)
-  const plan = orgRow[0]?.plan ?? 'free'
+  const org = orgRow[0]
+  const planId = (org?.plan ?? 'discovery') as keyof typeof PLANS
+  const planConfig = PLANS[planId] ?? PLANS.discovery
+
+  // Vérification du quota mensuel
+  if (planConfig.auditLimit !== -1) {
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    // On exclut les audits failed : un audit crashé ne consomme pas de quota.
+    const [usageRow] = await db
+      .select({ total: count() })
+      .from(audits)
+      .where(
+        and(
+          eq(audits.organizationId, ctx.organizationId),
+          gte(audits.createdAt, startOfMonth),
+          ne(audits.status, 'failed'),
+        ),
+      )
+
+    const usedThisMonth = usageRow?.total ?? 0
+    if (usedThisMonth >= planConfig.auditLimit) {
+      return NextResponse.json(
+        {
+          error: `Limite du plan ${planId} atteinte (${planConfig.auditLimit} audit(s)/mois). Passez au plan supérieur.`,
+        },
+        { status: 402 },
+      )
+    }
+  }
+
+  // Mode full uniquement pour studio et agency
   const requestedMode = parsed.data.mode
   const resolvedMode =
-    plan === 'pro' || plan === 'agency' ? requestedMode : 'standard'
+    planId === 'studio' || planId === 'agency' ? requestedMode : 'standard'
 
   const userBurst = rateLimit(BURST_LIMIT, `u:${ctx.user.id}`)
   if (!userBurst.allowed) {
