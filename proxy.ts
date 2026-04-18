@@ -8,29 +8,24 @@ import type { NextRequest } from 'next/server'
  * 2. Gate protected routes behind a Stack Auth cookie
  * 3. Redirect authenticated users away from /login and marketing home
  *
- * CSP — état Vague 2.2 :
- *  - `'unsafe-eval'` retiré de script-src (low-risk, aucun code app ne
- *    l'utilise ; les lib modernes n'en ont plus besoin).
- *  - `'unsafe-inline'` maintenu pour style-src (Tailwind v4 + React
- *    inline styles) et script-src (Stack Auth inline snippets). Migration
- *    vers strict-dynamic + nonces planifiée V2 (nonce est déjà exposé via
- *    `x-nonce` header, prêt à l'emploi côté Next.js runtime).
- *  - Bypass d'urgence : `CSP_RELAXED=1` en env pour réactiver le CSP
- *    historique sans redéploiement (rollback sans rebuild).
+ * CSP — état actuel :
+ *  - `'unsafe-eval'` retiré de script-src (aucun code app ne l'utilise).
+ *  - `'unsafe-inline'` maintenu pour style-src (Tailwind v4 + React inline
+ *    styles) et script-src (Next.js hydration + Stack Auth inline snippets).
+ *  - Nonce exposé via `x-nonce` header, prêt pour la migration V2
+ *    (strict-dynamic + nonces dans layout). NOTE : sans `'strict-dynamic'`,
+ *    `'unsafe-inline'` prime — le nonce est inerte mais sans risque.
+ *  - Bypass d'urgence : `CSP_RELAXED=1` en env ajoute `'unsafe-eval'`
+ *    (rollback sans rebuild).
  */
 export default async function proxy(request: NextRequest) {
-  // Nonce cryptographique par requête — consommé via `headers().get('x-nonce')`
-  // dans les Server Components pour marquer les <script nonce={nonce}>.
-  // Avec `'strict-dynamic'` dans la CSP, les browsers CSP3 (Chrome/FF/Safari
-  // récents) ignorent `'unsafe-inline'` en présence du nonce. On garde donc
-  // `'unsafe-inline'` pour la compat navigateurs anciens (qui, eux, ignorent
-  // `'strict-dynamic'`). Résultat : safe sur browsers modernes, fonctionnel
-  // sur legacy — pas de régression.
+  // Nonce par requête — prêt pour la migration V2 vers strict-dynamic.
+  // Consommé via `headers().get('x-nonce')` dans les Server Components.
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
 
   const strictCsp = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https:;
+    script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https:;
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https:;
     font-src 'self' data: https:;
