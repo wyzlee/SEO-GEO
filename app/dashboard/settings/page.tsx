@@ -18,16 +18,16 @@ export default function SettingsPage() {
 
   const [companyName, setCompanyName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
-  const [primaryColor, setPrimaryColor] = useState('#4F46E5')
-  const [accentColor, setAccentColor] = useState('#7C3AED')
+  const [primaryColor, setPrimaryColor] = useState('#FF6B35')
+  const [accentColor, setAccentColor] = useState('#E55A22')
   const [touched, setTouched] = useState(false)
 
   useEffect(() => {
     if (!org?.branding) return
     setCompanyName(org.branding.companyName ?? '')
     setLogoUrl(org.branding.logoUrl ?? '')
-    setPrimaryColor(org.branding.primaryColor ?? '#4F46E5')
-    setAccentColor(org.branding.accentColor ?? '#7C3AED')
+    setPrimaryColor(org.branding.primaryColor ?? '#FF6B35')
+    setAccentColor(org.branding.accentColor ?? '#E55A22')
   }, [org?.branding])
 
   const canEdit = org?.role === 'owner' || org?.role === 'admin'
@@ -254,7 +254,7 @@ function ColorField({
     <Field
       label={label}
       hint={hint}
-      error={invalid ? 'Couleur hex attendue (ex: #4F46E5)' : null}
+      error={invalid ? 'Couleur hex attendue (ex: #FF6B35)' : null}
     >
       <div className="flex items-center gap-2">
         <input
@@ -271,7 +271,7 @@ function ColorField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          placeholder="#4F46E5"
+          placeholder="#FF6B35"
           className="flex-1 px-3 py-2 rounded-md text-sm font-mono"
           style={{
             background: 'var(--color-bg)',

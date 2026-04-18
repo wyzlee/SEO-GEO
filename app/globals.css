@@ -14,8 +14,8 @@
   --font-family-display: 'Cabinet Grotesk', 'Inter', sans-serif;
 
   /* Accents (constant across light/dark) */
-  --color-accent-indigo: #4f46e5;
-  --color-accent-violet: #7c3aed;
+  --color-accent-indigo: #ff6b35;
+  --color-accent-violet: #e55a22;
 
   /* Status colors */
   --color-green: #10b981;
@@ -37,6 +37,11 @@
 
   --color-accent: var(--color-accent-indigo);
   --color-accent2: var(--color-accent-violet);
+
+  /* Button primary — orange électrique 2026 */
+  --color-btn-primary: #ff6b35;
+  --color-btn-primary-fg: #ffffff;
+  --color-btn-primary-shadow: rgba(255, 107, 53, 0.35);
 
   --radius: 0.75rem;
 
@@ -71,8 +76,13 @@ html.dark {
   --color-text: #e2eaf4;
   --color-muted: #8aa0b8;
 
-  --color-accent: #6366f1;
-  --color-accent2: #8b5cf6;
+  --color-accent: #ff6b35;
+  --color-accent2: #e55a22;
+
+  /* Button primary dark — orange légèrement atténué sur fond sombre */
+  --color-btn-primary: #ff6b35;
+  --color-btn-primary-fg: #ffffff;
+  --color-btn-primary-shadow: rgba(255, 107, 53, 0.25);
 
   --background: var(--color-bg);
   --foreground: var(--color-text);
@@ -146,8 +156,8 @@ html.dark {
     padding: 0.625rem 1rem;
     min-height: 44px;
     border-radius: var(--radius);
-    background: var(--color-accent);
-    color: #fff;
+    background: var(--color-btn-primary);
+    color: var(--color-btn-primary-fg);
     font-family: var(--font-family-display);
     font-weight: 600;
     font-size: 0.95rem;
@@ -155,10 +165,10 @@ html.dark {
   }
   .btn-primary:hover {
     transform: scale(1.02);
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 4px 14px var(--color-btn-primary-shadow);
   }
   .btn-primary:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
