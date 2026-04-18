@@ -58,6 +58,11 @@ export default async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
 
+  const orgCookie = request.cookies.get('seo-geo-org')?.value
+  if (orgCookie && request.nextUrl.pathname.startsWith('/api/')) {
+    requestHeaders.set('x-org-id', orgCookie)
+  }
+
   const response = NextResponse.next({ request: { headers: requestHeaders } })
   response.headers.set('Content-Security-Policy', csp)
 
@@ -79,6 +84,7 @@ export default async function proxy(request: NextRequest) {
     '/auth/logout',
     '/r',
     '/legal',
+    '/blog',
     '/api/health',
     '/api/webhooks',
   ]

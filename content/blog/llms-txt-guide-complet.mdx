@@ -1,0 +1,116 @@
+---
+title: "llms.txt : le guide complet 2026"
+description: "Tout ce que les équipes SEO doivent savoir sur le fichier llms.txt et comment l'utiliser pour améliorer votre visibilité dans les réponses IA."
+date: "2026-04-18"
+---
+
+## C'est quoi le fichier llms.txt ?
+
+Le fichier `llms.txt` est un fichier texte placé à la racine de votre site (accessible via `https://votre-domaine.com/llms.txt`). Son rôle : indiquer aux grands modèles de langage (LLMs) quelles pages de votre site peuvent être utilisées comme sources dans leurs réponses.
+
+Pensez-y comme un `robots.txt`, mais conçu spécifiquement pour les intelligences artificielles génératives. Là où `robots.txt` s'adresse aux crawlers des moteurs de recherche, `llms.txt` s'adresse aux systèmes comme ChatGPT Browse, Perplexity, Claude Web ou Gemini lorsqu'ils cherchent des sources fiables pour répondre à une question.
+
+La spécification a été proposée par Jeremy Howard (fast.ai) en 2024 et s'est rapidement imposée comme une convention adoptée par des milliers de sites en 2025-2026.
+
+## Pourquoi ça compte vraiment
+
+Les moteurs IA ne fonctionnent pas comme Google. Ils ne classent pas des pages — ils **sélectionnent des sources** pour construire leurs réponses. Cette sélection dépend de plusieurs facteurs : accessibilité du site, cohérence du contenu, signaux de fiabilité… et désormais, la présence ou l'absence d'un `llms.txt` bien configuré.
+
+En pratique, voici ce qui se passe quand un utilisateur pose une question sur ChatGPT Browse :
+
+1. Le système recherche des sources pertinentes sur le web ;
+2. Il consulte le `llms.txt` du site pour savoir quelles pages sont autorisées et recommandées ;
+3. Il utilise ces pages pour construire sa réponse et **cite le site en source**.
+
+Sans `llms.txt`, les IA doivent deviner elles-mêmes quelles pages de votre site sont les plus représentatives. Résultat : elles citent souvent la mauvaise page, ou ne vous citent pas du tout.
+
+## Différences avec `robots.txt`
+
+| Aspect | `robots.txt` | `llms.txt` |
+|--------|-------------|------------|
+| Destinataires | Crawlers SEO (Googlebot, Bingbot…) | LLMs (ChatGPT, Perplexity, Claude…) |
+| Format | Directives `User-agent` / `Disallow` | Markdown structuré avec sections |
+| Objectif | Contrôler l'indexation | Guider la sélection de sources IA |
+| Obligatoire | Fortement recommandé | De plus en plus attendu |
+| Impact sur la visibilité | Rankings Google | Taux de citation IA |
+
+Important : un `robots.txt` qui bloque les bots IA (via `User-agent: GPTBot` ou `User-agent: PerplexityBot`) annule complètement l'effet de votre `llms.txt`. Les deux fichiers doivent être cohérents.
+
+## Comment créer un bon llms.txt
+
+### Structure recommandée
+
+Un `llms.txt` efficace comprend plusieurs sections :
+
+```
+# Nom de votre site
+
+> Description courte de votre site et de sa thématique principale.
+
+## Pages essentielles
+
+- [Accueil](https://votre-domaine.com/): Description de la page d'accueil
+- [À propos](https://votre-domaine.com/about): Qui vous êtes, votre expertise
+- [Services](https://votre-domaine.com/services): Ce que vous proposez
+
+## Contenu de référence
+
+- [Guide complet sur le sujet X](https://votre-domaine.com/guide-x): Guide détaillé...
+- [Article de fond sur Y](https://votre-domaine.com/article-y): Analyse approfondie...
+
+## À exclure
+
+Ces pages ne sont pas pertinentes comme sources IA :
+- Pages de compte utilisateur
+- Pages de paiement
+- Pages d'administration
+```
+
+### Les sections indispensables
+
+**En-tête avec description.** La première ligne est le nom du site, suivi d'un blockquote (`>`) décrivant en une ou deux phrases votre positionnement. C'est ce texte que les LLMs lisent en premier pour comprendre qui vous êtes.
+
+**Pages essentielles.** Listez les 5 à 10 pages les plus représentatives de votre expertise. Pas forcément vos pages les plus visitées — vos pages les plus *informatives*.
+
+**Contenu de référence.** Vos articles de fond, guides complets, études de cas. Ce sont ces pages que vous voulez voir citées dans les réponses IA.
+
+**Exclusions explicites.** Indiquez les pages qui ne doivent pas être utilisées comme sources : comptes, paiements, CGU, pages en construction.
+
+### Exemples concrets
+
+Une agence SEO bien configurée pourrait avoir :
+
+```
+# Agence Exemple — SEO & Stratégie Digitale
+
+> Agence spécialisée en référencement naturel et stratégie de contenu B2B.
+> Nous aidons les PME et ETI françaises à améliorer leur visibilité organique.
+
+## Pages clés
+
+- [Notre approche SEO](https://exemple.fr/approche): Méthodologie et process
+- [Études de cas clients](https://exemple.fr/cas-clients): Résultats concrets
+- [Blog SEO](https://exemple.fr/blog): Ressources et guides pratiques
+```
+
+## Les erreurs courantes à éviter
+
+**Lister toutes les pages du site.** Un `llms.txt` qui liste 500 URLs est contre-productif. Les LLMs ont du mal à hiérarchiser — sélectionnez vos 10 à 20 meilleures pages.
+
+**Oublier les descriptions.** Chaque URL doit être accompagnée d'une courte description. C'est elle qui aide le LLM à choisir quelle page utiliser pour répondre à une question précise.
+
+**Être incohérent avec `robots.txt`.** Si votre `robots.txt` bloque `GPTBot`, votre `llms.txt` est inutile. Vérifiez toujours la cohérence entre les deux fichiers.
+
+**Ne pas le mettre à jour.** Un `llms.txt` avec des liens morts ou des pages obsolètes dégrade votre crédibilité. Prévoyez une révision trimestrielle.
+
+**Confondre autorisation et recommandation.** Le `llms.txt` ne donne pas accès à des pages privées — il guide la sélection parmi les pages publiques de votre site.
+
+## Conclusion
+
+Le fichier `llms.txt` est l'un des signaux GEO les plus simples à mettre en place et parmi les plus efficaces pour améliorer votre taux de citation dans les réponses IA. En 2026, son absence est un signal négatif que les LLMs interprètent comme un manque de préparation ou de fiabilité.
+
+La bonne nouvelle : le créer prend moins d'une heure. La moins bonne : encore 80 % des sites n'en ont pas — ce qui signifie une opportunité de différenciation immédiate pour ceux qui agissent maintenant.
+
+Notre audit SEO-GEO vérifie automatiquement la présence, la structure et la cohérence de votre `llms.txt` dans le cadre de la **Phase 3 — Visibilité IA (GEO)**, qui représente 18 points sur 100 dans notre scoring.
+
+**[Vérifier votre llms.txt avec notre audit →](/onboarding)**

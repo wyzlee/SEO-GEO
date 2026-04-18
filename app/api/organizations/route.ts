@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { organizations, users, memberships } from '@/lib/db/schema'
-import { authenticateRequest, AuthError } from '@/lib/auth/server'
+import { authenticateRequest, getUserOrgsSummary, AuthError } from '@/lib/auth/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -10,6 +10,18 @@ export const dynamic = 'force-dynamic'
 const CreateOrgSchema = z.object({
   name: z.string().min(2).max(100),
 })
+
+export async function GET(request: Request) {
+  try {
+    const summary = await getUserOrgsSummary(request)
+    return NextResponse.json({ memberships: summary.memberships })
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
+    }
+    throw error
+  }
+}
 
 export async function POST(request: Request) {
   let user

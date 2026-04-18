@@ -13,6 +13,10 @@
     {
       "path": "/api/cron/requeue-stuck",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/run-scheduled",
+      "schedule": "0 * * * *"
     }
   ]
 }

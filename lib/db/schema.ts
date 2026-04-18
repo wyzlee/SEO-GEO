@@ -8,6 +8,7 @@ import {
   timestamp,
   jsonb,
   date,
+  boolean,
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core'
@@ -235,6 +236,31 @@ export const sourcesTable = pgTable('sources', {
   consultedAt: date('consulted_at').notNull(),
 })
 
+export const scheduledAudits = pgTable(
+  'scheduled_audits',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id),
+    targetUrl: text('target_url').notNull(),
+    mode: text('mode').notNull().default('standard'),
+    frequency: text('frequency').notNull(),
+    nextRunAt: timestamp('next_run_at').notNull(),
+    lastRunAt: timestamp('last_run_at'),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    orgIdx: index('scheduled_audits_org_idx').on(t.organizationId),
+    nextRunIdx: index('scheduled_audits_next_run_idx').on(t.nextRunAt, t.isActive),
+  }),
+)
+
 export type Organization = typeof organizations.$inferSelect
 export type NewOrganization = typeof organizations.$inferInsert
 export type User = typeof users.$inferSelect
@@ -248,3 +274,5 @@ export type NewFinding = typeof findings.$inferInsert
 export type Report = typeof reports.$inferSelect
 export type Webhook = typeof webhooks.$inferSelect
 export type NewWebhook = typeof webhooks.$inferInsert
+export type ScheduledAudit = typeof scheduledAudits.$inferSelect
+export type NewScheduledAudit = typeof scheduledAudits.$inferInsert

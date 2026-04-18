@@ -100,6 +100,9 @@ export default function LandingPage() {
             <a href="#offres" style={{ color: 'var(--color-muted)' }}>
               Offres
             </a>
+            <Link href="/blog" style={{ color: 'var(--color-muted)' }}>
+              Blog
+            </Link>
             <Link href="/login" className="btn-secondary">
               Connexion
             </Link>

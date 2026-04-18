@@ -1,5 +1,5 @@
 # Status — SEO-GEO
-> Mise à jour : 2026-04-18 — Sprint 1 terminé à 80% — commit 4c552ae en prod
+> Mise à jour : 2026-04-18 — Sprint 2 terminé ✅ — commit 490b142 en prod
 
 ---
 
@@ -28,8 +28,8 @@
 | Palier | État | Bloquant |
 |--------|------|----------|
 | A — Agency Ready | 🟢 95% | S1.2 smoke test |
-| B — Quality Gate ($1500+) | 🟢 85% | S1.7 PDF charts |
-| C — Self-serve (scale) | 🔴 10% | Sprint 2 complet |
+| B — Quality Gate (1500€+) | 🟢 85% | S1.7 PDF charts |
+| C — Self-serve (scale) | 🟡 70% | Config Stripe (Price IDs + Webhook) + smoke test S1.2 |
 
 ---
 
@@ -51,6 +51,62 @@
 
 **Groupe 1 Sprint 2 (parallélisable) : S2.1, S2.4, S2.5**
 **Groupe 2 Sprint 2 (dépend Groupe 1) : S2.2, S2.3**
+
+---
+
+## Actions manuelles restantes avant premier client payant
+
+| Action | Quoi | Où |
+|--------|------|----|
+| 🔴 S1.2 | Smoke test prod end-to-end | `seo-geo-orcin.vercel.app` |
+| 🔴 S1.7 | Fix PDF charts timing (attend S1.2) | `app/r/[slug]/pdf/route.ts` |
+| 🟠 Stripe | Créer produits Studio 490€ + Agency 990€ | dashboard.stripe.com/products |
+| 🟠 Stripe | Ajouter `STRIPE_PRICE_STUDIO_MONTHLY` + `STRIPE_PRICE_AGENCY_MONTHLY` | Vercel env vars |
+| 🟠 Stripe | Configurer webhook → `seo-geo-orcin.vercel.app/api/stripe/webhook` | dashboard.stripe.com/webhooks |
+| 🟠 Stripe | Ajouter `STRIPE_WEBHOOK_SECRET` | Vercel env vars |
+| 🟢 Stack Auth | Vérifier que le signup email/password public est activé | dashboard Stack Auth |
+
+---
+
+## Prochain audit sécurité
+→ Lancer `/security-check` avant le premier client payant (non effectué)
+
+---
+
+## Sprint 3 — En cours
+
+| Item | Description | Effort | Impact | État |
+|------|-------------|--------|--------|------|
+| S3.1 | White-label Silver (custom domain + email) | 5j | 🔵 AGENCE | ⬜ TODO |
+| S3.2 | Programme affilié 30% récurrent | 3j | 🔵 ACQUISITION | ⬜ TODO |
+| S3.3 | Audit scheduling (cron mensuel) | 2j | 🔵 RÉTENTION | ✅ DONE — 2026-04-18 |
+| S3.4 | Multi-org switcher | 1j | 🔵 AGENCE | ✅ DONE — 2026-04-18 |
+| S3.5 | Blog + docs SEO (MDX) | continu | 🔵 ACQUISITION | ✅ DONE (scaffold) — 2026-04-18 |
+
+**S3.3 — Détails :**
+- Table `scheduled_audits` migrée sur Neon prod (migration `0006_watery_jack_murdock.sql`)
+- API : GET/POST `/api/scheduled-audits`, DELETE `/api/scheduled-audits/[id]`
+- Cron Vercel : `/api/cron/run-scheduled` (toutes les heures)
+- UI : `/dashboard/audits/schedule` (liste) + `/dashboard/audits/schedule/new` (form)
+- Nav sidebar "Planifiés" ajouté
+
+**S3.4 — Détails :**
+- `proxy.ts` mis à jour : cookie `seo-geo-org` → header `x-org-id` sur `/api/*`
+- GET `/api/organizations` — liste les orgs de l'utilisateur
+- Hook `use-organizations.ts` — switcher client-side
+- Sidebar : org switcher avec dropdown multi-org + nav "Planifiés"
+- `/blog` ajouté aux publicRoutes (accès sans auth)
+
+**S3.5 — Détails :**
+- `next-mdx-remote` + `gray-matter` installés
+- `content/blog/` : 2 articles FR (GEO vs SEO 2026, llms.txt guide complet)
+- `app/blog/` : layout + liste + page article avec MDXRemote/rsc
+- Lien "Blog" ajouté dans la landing page nav
+
+**Reste Sprint 3 :**
+- S3.1 : White-label Silver — custom domain CNAME + email @agence via Resend domain
+- S3.2 : Programme affilié — nécessite choix plateforme (Rewardful vs Lemon Squeezy)
+- Note build : erreur Stripe checkout pré-existante Sprint 2 (STRIPE_SECRET_KEY manquant en local uniquement)
 
 ---
 

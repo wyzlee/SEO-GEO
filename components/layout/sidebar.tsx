@@ -8,15 +8,18 @@ import {
   LayoutDashboard,
   FileSearch,
   PlusCircle,
+  CalendarClock,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Moon,
   Sun,
   Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useOrganizations } from '@/lib/hooks/use-organizations'
 
 interface NavItem {
   href: string
@@ -36,6 +39,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/dashboard', label: 'Vue d\'ensemble', icon: LayoutDashboard },
       { href: '/dashboard/audits', label: 'Audits', icon: FileSearch },
       { href: '/dashboard/audits/new', label: 'Nouvel audit', icon: PlusCircle },
+      { href: '/dashboard/audits/schedule', label: 'Planifiés', icon: CalendarClock },
     ],
   },
   {
@@ -53,6 +57,8 @@ export function Sidebar() {
   const { resolvedTheme, setTheme } = useTheme()
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [orgOpen, setOrgOpen] = useState(false)
+  const { orgs, isLoading: orgsLoading, activeOrg, switchOrg } = useOrganizations()
 
   useEffect(() => {
     setMounted(true)
@@ -128,6 +134,147 @@ export function Sidebar() {
             </>
           )}
         </Link>
+
+        {/* Org switcher */}
+        {!collapsed && (
+          <div className="mt-3 relative">
+            {orgsLoading ? (
+              <div
+                className="h-[28px] rounded"
+                style={{ background: 'var(--color-bgAlt)' }}
+              />
+            ) : orgs.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setOrgOpen((v) => !v)}
+                  aria-haspopup="listbox"
+                  aria-expanded={orgOpen}
+                  aria-label="Changer d'organisation"
+                  className="flex items-center gap-1.5 w-full rounded px-2 py-1 transition-colors"
+                  style={{
+                    background: orgOpen
+                      ? 'color-mix(in srgb, var(--color-accent) 8%, transparent)'
+                      : 'var(--color-bgAlt)',
+                    border: '1px solid var(--color-border)',
+                  }}
+                >
+                  <span
+                    style={{
+                      color: 'var(--color-text)',
+                      fontSize: '12px',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 600,
+                      flex: 1,
+                      textAlign: 'left',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {activeOrg?.organizationName ?? '—'}
+                  </span>
+                  <ChevronDown
+                    className="h-3 w-3 shrink-0 transition-transform duration-150"
+                    style={{
+                      color: 'var(--color-muted)',
+                      transform: orgOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    }}
+                    aria-hidden="true"
+                  />
+                </button>
+                {orgOpen && (
+                  <div
+                    role="listbox"
+                    aria-label="Organisations"
+                    className="absolute top-full left-0 right-0 mt-1 z-50 rounded py-1"
+                    style={{
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '6px',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                    }}
+                  >
+                    {orgs.map((org) => (
+                      <button
+                        key={org.organizationId}
+                        type="button"
+                        role="option"
+                        aria-selected={org.organizationId === activeOrg?.organizationId}
+                        onClick={() => { setOrgOpen(false); switchOrg(org.organizationId) }}
+                        className="flex items-center w-full px-3 py-1.5 gap-2 transition-colors text-left"
+                        style={{
+                          background:
+                            org.organizationId === activeOrg?.organizationId
+                              ? 'color-mix(in srgb, var(--color-accent) 8%, transparent)'
+                              : 'transparent',
+                          color:
+                            org.organizationId === activeOrg?.organizationId
+                              ? 'var(--color-accent)'
+                              : 'var(--color-text)',
+                          fontSize: '12px',
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: org.organizationId === activeOrg?.organizationId ? 600 : 400,
+                        }}
+                      >
+                        <span
+                          className="shrink-0 flex items-center justify-center rounded text-[10px] font-black"
+                          style={{
+                            width: 18,
+                            height: 18,
+                            background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
+                            color: 'var(--color-accent)',
+                            fontFamily: 'var(--font-display)',
+                          }}
+                        >
+                          {org.organizationName.charAt(0).toUpperCase()}
+                        </span>
+                        <span
+                          style={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {org.organizationName}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : activeOrg ? (
+              <div
+                className="px-2 py-1"
+                style={{
+                  color: 'var(--color-text)',
+                  fontSize: '12px',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                }}
+              >
+                {activeOrg.organizationName}
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {collapsed && activeOrg && (
+          <div
+            className="flex items-center justify-center mt-2 rounded font-black text-[10px]"
+            style={{
+              width: 28,
+              height: 28,
+              background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
+              color: 'var(--color-accent)',
+              fontFamily: 'var(--font-display)',
+              margin: '8px auto 0',
+            }}
+            title={activeOrg.organizationName}
+          >
+            {activeOrg.organizationName.charAt(0).toUpperCase()}
+          </div>
+        )}
 
         <button
           type="button"
