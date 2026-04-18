@@ -43,17 +43,17 @@ export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
 
   const timeoutMs = input.timeoutMs ?? 30_000
 
-  // En local : utiliser CHROMIUM_PATH (Chrome installé).
-  // Sur Vercel/Lambda : @sparticuz/chromium fournit le bon binaire.
-  const executablePath =
-    process.env.CHROMIUM_PATH || (await chromium.default.executablePath())
-
   let browser: import('puppeteer-core').Browser | null = null
   try {
+    // En local : utiliser CHROMIUM_PATH (Chrome installé).
+    // Sur Vercel/Lambda : @sparticuz/chromium fournit le bon binaire.
+    const executablePath =
+      process.env.CHROMIUM_PATH || (await chromium.default.executablePath())
+
     browser = await puppeteer.default.launch({
       args: chromium.default.args,
       executablePath,
-      headless: true,
+      headless: 'shell',
     })
 
     const page = await browser.newPage()

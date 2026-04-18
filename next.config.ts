@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['jose'],
+  serverExternalPackages: ['jose', '@sparticuz/chromium', 'puppeteer-core'],
   typescript: {
     ignoreBuildErrors: false,
   },
