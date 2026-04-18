@@ -20,6 +20,7 @@ import {
   useAuditReports,
   useGenerateReport,
 } from '@/lib/hooks/use-audits'
+import { authFetch } from '@/lib/api/fetch'
 
 const STATUS_LABEL: Record<string, string> = {
   queued: 'En file d\'attente',
@@ -39,6 +40,30 @@ export default function AuditDetailPage({
   const generateReport = useGenerateReport(id)
   const lastReport = reportsQuery.data?.reports?.[0]
   const [auditView, setAuditView] = useState<AuditView>('marketing')
+  const [isPdfDownloading, setIsPdfDownloading] = useState(false)
+
+  const onDownloadPdf = async () => {
+    setIsPdfDownloading(true)
+    try {
+      const res = await authFetch(`/api/audits/${id}/report/pdf`)
+      if (!res.ok) {
+        const body = await res.text()
+        toast.error(`PDF indisponible : ${body.slice(0, 120)}`)
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `audit-seo-geo-${id.slice(0, 8)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur téléchargement PDF')
+    } finally {
+      setIsPdfDownloading(false)
+    }
+  }
 
   const onGenerate = async () => {
     try {
@@ -133,14 +158,14 @@ export default function AuditDetailPage({
                     >
                       Voir le rapport
                     </a>
-                    <a
-                      href={`/api/audits/${id}/report/pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
                       className="btn-secondary"
+                      onClick={onDownloadPdf}
+                      disabled={isPdfDownloading}
                     >
-                      Télécharger PDF
-                    </a>
+                      {isPdfDownloading ? 'Génération…' : 'Télécharger PDF'}
+                    </button>
                   </>
                 ) : (
                   <button
