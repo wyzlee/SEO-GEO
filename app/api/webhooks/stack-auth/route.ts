@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
+import { constantTimeEqual } from '@/lib/security/constant-time'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -14,14 +15,7 @@ function verifySignature(payload: string, signature: string | null) {
     .createHmac('sha256', secret)
     .update(payload)
     .digest('hex')
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expected),
-    )
-  } catch {
-    return false
-  }
+  return constantTimeEqual(signature, expected)
 }
 
 interface WebhookEvent {

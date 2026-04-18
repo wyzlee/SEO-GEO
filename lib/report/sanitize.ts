@@ -76,6 +76,11 @@ export function sanitizeReportHtml(html: string): string {
       'form', 'input', 'button', 'textarea', 'select', 'option',
       'base', 'meta',
     ],
+    // TODO(security/L2): DOMPurify ne sanitise pas le contenu CSS des balises
+    // <style>. Un `url()` dans un bloc <style> peut exfiltrer des données via
+    // une requête HTTP sortante. Surface limitée aux admins/consultants pouvant
+    // injecter du contenu dans les templates. Fix complet : post-traitement
+    // des blocs <style> avec un sanitiseur CSS (ex. strip url() non-data:).
     FORBID_ATTR: [
       'onerror', 'onload', 'onclick', 'onmouseover', 'onmouseenter',
       'onmouseleave', 'onfocus', 'onblur', 'onsubmit', 'onchange',

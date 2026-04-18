@@ -2,6 +2,8 @@
  * Full audit pipeline : resolveInput (crawl URL / extract zip / clone github)
  * → 11 phases → persist at each step.
  */
+import path from 'node:path'
+import { tmpdir } from 'node:os'
 import { and, eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { audits, auditPhases, findings } from '@/lib/db/schema'
@@ -78,8 +80,13 @@ async function resolveInput(
   }
 
   if (audit.inputType === 'zip' && audit.uploadPath) {
-    ctx.code = await readCodeSnapshot(audit.uploadPath)
-    ctx.cleanupPaths.push(audit.uploadPath)
+    const allowedPrefix = path.resolve(path.join(tmpdir(), 'seo-geo-audits')) + path.sep
+    const resolved = path.resolve(audit.uploadPath)
+    if (!resolved.startsWith(allowedPrefix)) {
+      throw new Error(`Chemin d'upload invalide : accès refusé`)
+    }
+    ctx.code = await readCodeSnapshot(resolved)
+    ctx.cleanupPaths.push(resolved)
     return ctx
   }
 

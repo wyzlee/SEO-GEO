@@ -62,6 +62,10 @@ export async function cloneGithubRepo(spec: string): Promise<CloneResult> {
   const body = atIndex >= 0 ? spec.slice(0, atIndex) : spec
   branch = atIndex >= 0 ? spec.slice(atIndex + 1) : null
 
+  if (branch !== null && branch.startsWith('-')) {
+    throw new UploadError('Nom de branche invalide')
+  }
+
   if (/^https?:\/\/github\.com\//i.test(body)) {
     repoUrl = body.replace(/\.git$/, '') + '.git'
   } else if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(body)) {

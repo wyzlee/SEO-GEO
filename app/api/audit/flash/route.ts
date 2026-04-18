@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { runFlashAudit } from '@/lib/audit/flash'
 import { assertSafeUrl, UnsafeUrlError } from '@/lib/security/url-guard'
 import { rateLimit } from '@/lib/security/rate-limit'
+import { getClientIp } from '@/lib/security/ip'
 
 const FLASH_RATE_LIMIT = { name: 'audit.flash.ip', max: 5, windowMs: 3_600_000 }
 const FLASH_TIMEOUT_MS = 15_000
@@ -11,16 +12,8 @@ const BodySchema = z.object({
   url: z.string().min(1),
 })
 
-function getClientIp(req: Request): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown'
-  )
-}
-
 export async function POST(req: Request) {
-  const ip = getClientIp(req)
+  const ip = getClientIp(req.headers)
   const rl = await rateLimit(FLASH_RATE_LIMIT, ip)
   if (!rl.allowed) {
     return NextResponse.json(

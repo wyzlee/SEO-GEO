@@ -1,5 +1,7 @@
 import { NextResponse, after } from 'next/server'
-import { and, count, desc, eq, gte, ne } from 'drizzle-orm'
+import path from 'node:path'
+import { tmpdir } from 'node:os'
+import { and, count, desc, eq, gte, ne, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { audits, organizations } from '@/lib/db/schema'
@@ -52,7 +54,7 @@ const createAuditBody = z
       .string()
       .max(400)
       .regex(
-        /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:@[\w./-]+)?|https?:\/\/github\.com\/[^\s]+)$/,
+        /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:@[^\-][\w./-]*)?|https?:\/\/github\.com\/[^\s]+)$/,
       )
       .optional(),
     clientName: z.string().max(200).optional(),
@@ -103,6 +105,14 @@ export async function POST(request: Request) {
     }
   }
 
+  if (parsed.data.uploadPath) {
+    const allowedPrefix = path.resolve(path.join(tmpdir(), 'seo-geo-audits')) + path.sep
+    const resolved = path.resolve(parsed.data.uploadPath)
+    if (!resolved.startsWith(allowedPrefix)) {
+      return NextResponse.json({ error: 'Chemin d\'upload invalide' }, { status: 400 })
+    }
+  }
+
   // Plan gating : récupérer l'org pour quota + mode
   const orgRow = await db
     .select({ plan: organizations.plan, id: organizations.id })
@@ -112,35 +122,6 @@ export async function POST(request: Request) {
   const org = orgRow[0]
   const planId = (org?.plan ?? 'discovery') as keyof typeof PLANS
   const planConfig = PLANS[planId] ?? PLANS.discovery
-
-  // Vérification du quota mensuel
-  if (planConfig.auditLimit !== -1) {
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
-    startOfMonth.setHours(0, 0, 0, 0)
-
-    // On exclut les audits failed : un audit crashé ne consomme pas de quota.
-    const [usageRow] = await db
-      .select({ total: count() })
-      .from(audits)
-      .where(
-        and(
-          eq(audits.organizationId, ctx.organizationId),
-          gte(audits.createdAt, startOfMonth),
-          ne(audits.status, 'failed'),
-        ),
-      )
-
-    const usedThisMonth = usageRow?.total ?? 0
-    if (usedThisMonth >= planConfig.auditLimit) {
-      return NextResponse.json(
-        {
-          error: `Limite du plan ${planId} atteinte (${planConfig.auditLimit} audit(s)/mois). Passez au plan supérieur.`,
-        },
-        { status: 402 },
-      )
-    }
-  }
 
   // Mode full uniquement pour studio et agency
   const requestedMode = parsed.data.mode
@@ -191,24 +172,69 @@ export async function POST(request: Request) {
     parsed.data.githubRepo ?? null,
   )
 
-  const inserted = await db
-    .insert(audits)
-    .values({
-      organizationId: ctx.organizationId,
-      createdBy: ctx.user.id,
-      inputType,
-      targetUrl: parsed.data.targetUrl ?? null,
-      githubRepo: parsed.data.githubRepo ?? null,
-      uploadPath: parsed.data.uploadPath ?? null,
-      mode: resolvedMode,
-      clientName: parsed.data.clientName ?? null,
-      consultantName: parsed.data.consultantName ?? null,
-      status: 'queued',
-      previousAuditId,
-    })
-    .returning({ id: audits.id })
+  const startOfMonth = new Date()
+  startOfMonth.setDate(1)
+  startOfMonth.setHours(0, 0, 0, 0)
 
-  const auditId = inserted[0].id
+  // Quota check + insert dans une transaction avec advisory lock pour
+  // prévenir le bypass concurrent (TOCTOU entre COUNT et INSERT).
+  let quotaExceeded = false
+  let auditId: string
+
+  try {
+    auditId = await db.transaction(async (tx) => {
+      // Verrou exclusif par org pour la durée de la transaction.
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtext(${`quota:${ctx.organizationId}`}))`,
+      )
+
+      // On exclut les audits failed : un audit crashé ne consomme pas de quota.
+      if (planConfig.auditLimit !== -1) {
+        const [usageRow] = await tx
+          .select({ total: count() })
+          .from(audits)
+          .where(
+            and(
+              eq(audits.organizationId, ctx.organizationId),
+              gte(audits.createdAt, startOfMonth),
+              ne(audits.status, 'failed'),
+            ),
+          )
+        if ((usageRow?.total ?? 0) >= planConfig.auditLimit) {
+          quotaExceeded = true
+          throw new Error('quota_exceeded')
+        }
+      }
+
+      const inserted = await tx
+        .insert(audits)
+        .values({
+          organizationId: ctx.organizationId,
+          createdBy: ctx.user.id,
+          inputType,
+          targetUrl: parsed.data.targetUrl ?? null,
+          githubRepo: parsed.data.githubRepo ?? null,
+          uploadPath: parsed.data.uploadPath ?? null,
+          mode: resolvedMode,
+          clientName: parsed.data.clientName ?? null,
+          consultantName: parsed.data.consultantName ?? null,
+          status: 'queued',
+          previousAuditId,
+        })
+        .returning({ id: audits.id })
+      return inserted[0].id
+    })
+  } catch (error) {
+    if (quotaExceeded) {
+      return NextResponse.json(
+        {
+          error: `Limite du plan ${planId} atteinte (${planConfig.auditLimit} audit(s)/mois). Passez au plan supérieur.`,
+        },
+        { status: 402 },
+      )
+    }
+    throw error
+  }
 
   after(async () => {
     try {

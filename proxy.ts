@@ -29,7 +29,7 @@ export default async function proxy(request: NextRequest) {
   // Le nonce reste généré + exposé via x-nonce pour la migration V2.
   const strictCsp = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' https:;
+    script-src 'self' 'unsafe-inline';
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https:;
     font-src 'self' data: https:;
@@ -45,7 +45,7 @@ export default async function proxy(request: NextRequest) {
 
   const relaxedCsp = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https:;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline';
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https:;
     font-src 'self' data: https:;
