@@ -1,6 +1,5 @@
 'use client'
 
-import { Suspense } from 'react'
 import { useOrganization } from '@/lib/hooks/use-organization'
 import { BillingClient } from '@/components/billing/billing-client'
 
@@ -39,9 +38,5 @@ function BillingPageInner() {
 }
 
 export default function BillingPage() {
-  return (
-    <Suspense>
-      <BillingPageInner />
-    </Suspense>
-  )
+  return <BillingPageInner />
 }

@@ -8,10 +8,10 @@ import { verifyBearerSecret } from '@/lib/security/constant-time'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Audits bloqués en `running` depuis plus de 12 min sont requeués.
-// La route audit a maxDuration=800s (~13 min) ; 12 min garantit qu'on
-// ne requeue pas un audit encore en cours.
-const STUCK_THRESHOLD_MS = 12 * 60 * 1000
+// Audits bloqués en `running` depuis plus de 6 min sont requeués.
+// La route audit a maxDuration=300s (plan Hobby Vercel) ; 6 min = 300s + 60s
+// de buffer garantit qu'on ne requeue pas un audit encore en cours.
+const STUCK_THRESHOLD_MS = 6 * 60 * 1000
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')

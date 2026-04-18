@@ -2,7 +2,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['jose', '@sparticuz/chromium', 'puppeteer-core'],
+  serverExternalPackages: ['jose', '@sparticuz/chromium', 'puppeteer-core', '@anthropic-ai/sdk'],
   typescript: {
     ignoreBuildErrors: false,
   },

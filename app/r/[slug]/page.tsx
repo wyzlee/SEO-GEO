@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
+import { unstable_cache } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { reports } from '@/lib/db/schema'
@@ -10,6 +11,8 @@ import { sanitizeReportDocument } from '@/lib/report/sanitize'
 import type { Metadata } from 'next'
 
 export const runtime = 'nodejs'
+// force-dynamic requis : headers() pour rate-limit IP (non compatible ISR).
+// La DB query est cachée via unstable_cache pour réduire la charge.
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
@@ -21,6 +24,19 @@ const PUBLIC_REPORT_LIMIT = {
   max: 20,
   windowMs: 60_000,
 }
+
+const getReport = unstable_cache(
+  async (slug: string) => {
+    const rows = await db
+      .select()
+      .from(reports)
+      .where(eq(reports.shareSlug, slug))
+      .limit(1)
+    return rows[0] ?? null
+  },
+  ['public-report'],
+  { revalidate: 3600, tags: ['public-report'] },
+)
 
 export default async function PublicReportPage({
   params,
@@ -58,14 +74,8 @@ export default async function PublicReportPage({
     )
   }
 
-  const rows = await db
-    .select()
-    .from(reports)
-    .where(eq(reports.shareSlug, slug))
-    .limit(1)
-
-  if (!rows.length) notFound()
-  const report = rows[0]
+  const report = await getReport(slug)
+  if (!report) notFound()
 
   if (report.shareExpiresAt && new Date(report.shareExpiresAt) < new Date()) {
     return (
