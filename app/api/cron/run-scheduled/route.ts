@@ -33,14 +33,8 @@ async function findPreviousAuditId(
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
-  const xVercelCron = request.headers.get('x-vercel-cron')
 
-  const isAuthorized =
-    (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
-    xVercelCron !== null ||
-    !cronSecret
-
-  if (!isAuthorized) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

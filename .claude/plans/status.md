@@ -68,8 +68,15 @@
 
 ---
 
-## Prochain audit sécurité
-→ Lancer `/security-check` avant le premier client payant (non effectué)
+## Dernier audit sécurité
+Date : 2026-04-18
+Résultat : 2 critiques corrigés, 1 important corrigé, 2 importants V2, 2 mineurs documentés
+Rapport : `.claude/plans/security-report-2026-04-18.md`
+
+**Actions manuelles URGENTES :**
+- 🔴 Pivoter mot de passe Neon → dashboard.neon.tech
+- 🔴 Pivoter clé `STACK_SECRET_SERVER_KEY` → app.stack-auth.com
+- 🟠 Confirmer `CRON_SECRET` défini dans Vercel env vars prod
 
 ---
 

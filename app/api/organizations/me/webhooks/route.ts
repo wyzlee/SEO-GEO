@@ -5,6 +5,7 @@ import crypto from 'node:crypto'
 import { db } from '@/lib/db'
 import { webhooks } from '@/lib/db/schema'
 import { authenticateAuto, AuthError } from '@/lib/auth/server'
+import { assertSafeDnsUrl } from '@/lib/security/url-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -91,6 +92,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Validation failed', issues: parsed.error.issues },
       { status: 400 },
+    )
+  }
+
+  try {
+    await assertSafeDnsUrl(parsed.data.url)
+  } catch {
+    return NextResponse.json(
+      { error: 'URL invalide ou non autorisée (adresse privée/interne refusée)' },
+      { status: 422 },
     )
   }
 
