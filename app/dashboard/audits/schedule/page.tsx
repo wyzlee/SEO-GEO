@@ -66,7 +66,7 @@ export default function ScheduledAuditsPage() {
         }
       />
 
-      <section className="p-6">
+      <section className="p-4 md:p-6">
         <div className="card-premium">
           {isLoading ? (
             <p
@@ -103,7 +103,8 @@ export default function ScheduledAuditsPage() {
               </Link>
             </div>
           ) : (
-            <table className="w-full text-sm font-[family-name:var(--font-sans)]">
+            <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+            <table className="w-full min-w-[640px] text-sm font-[family-name:var(--font-sans)]">
               <thead>
                 <tr
                   className="text-left border-b"
@@ -217,6 +218,7 @@ export default function ScheduledAuditsPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </section>

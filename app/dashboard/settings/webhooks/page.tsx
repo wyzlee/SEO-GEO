@@ -73,7 +73,7 @@ export default function WebhooksPage() {
         description="Branche un endpoint HTTPS qui recevra `audit.completed` à chaque audit terminé. Signature HMAC-SHA256 via en-tête X-SEOGEO-Signature."
       />
 
-      <section className="p-6 space-y-6 max-w-3xl">
+      <section className="p-4 md:p-6 space-y-6 max-w-3xl">
         {freshSecret ? (
           <div
             className="card-premium"

@@ -98,7 +98,7 @@ export default function AuditsListPage() {
         }
       />
 
-      <section className="p-6 space-y-4">
+      <section className="p-4 md:p-6 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-md flex-1 min-w-[200px]"
@@ -172,7 +172,8 @@ export default function AuditsListPage() {
               Aucun audit ne correspond à votre recherche.
             </p>
           ) : (
-            <table className="w-full text-sm font-[family-name:var(--font-sans)]">
+            <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+            <table className="w-full min-w-[640px] text-sm font-[family-name:var(--font-sans)]">
               <thead>
                 <tr
                   className="text-left border-b"
@@ -277,6 +278,7 @@ export default function AuditsListPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </section>

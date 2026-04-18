@@ -81,7 +81,7 @@ export default function AuditDetailPage({
     return (
       <div>
         <PageHeader title="Chargement de l'audit" />
-        <section className="p-6">
+        <section className="p-4 md:p-6">
           <div
             className="h-10 w-10 rounded-full border-[3px] animate-spin"
             style={{
@@ -98,7 +98,7 @@ export default function AuditDetailPage({
     return (
       <div>
         <PageHeader title="Audit introuvable" />
-        <section className="p-6">
+        <section className="p-4 md:p-6">
           <div className="card-premium">
             <p
               className="text-sm font-[family-name:var(--font-sans)]"
@@ -196,7 +196,7 @@ export default function AuditDetailPage({
         }
       />
 
-      <section className="p-6 space-y-6">
+      <section className="p-4 md:p-6 space-y-6">
         {/* Score header */}
         <div className="card-premium flex flex-col md:flex-row items-start md:items-center gap-6">
           <ScoreBadge score={score} size="lg" />
