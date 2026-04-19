@@ -11,6 +11,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
+      // Efface les cookies Stack Auth pour éviter que le middleware ne renvoie sur /dashboard
+      const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
+      if (projectId) {
+        document.cookie = `stack-access-${projectId}=; path=/; max-age=0; SameSite=Lax`
+        document.cookie = `stack-refresh-${projectId}=; path=/; max-age=0; SameSite=Lax`
+      }
+      document.cookie = `stack-access=; path=/; max-age=0; SameSite=Lax`
       const target = `/login?redirect=${encodeURIComponent(pathname || '/dashboard')}`
       router.replace(target)
     }

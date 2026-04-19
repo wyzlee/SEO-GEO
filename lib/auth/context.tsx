@@ -50,13 +50,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const currentUser = await stackAuth.getUser()
+      const currentUser = await Promise.race([
+        stackAuth.getUser(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 5_000)),
+      ])
       if (!currentUser) {
         setUser(null)
         setToken(null)
         return
       }
-      const accessToken = await stackAuth.getAccessToken()
+      const accessToken = await Promise.race([
+        stackAuth.getAccessToken(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3_000)),
+      ])
+      if (!accessToken) {
+        setUser(null)
+        setToken(null)
+        return
+      }
       setToken(accessToken)
       setUser({
         id: currentUser.id,
