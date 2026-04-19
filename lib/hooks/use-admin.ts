@@ -3,10 +3,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiJson } from '@/lib/api/fetch'
 
+export interface AdminMeResponse {
+  isSuperAdmin: boolean
+  userId?: string
+  email?: string
+  orgId?: string | null
+  orgRole?: string | null
+  orgName?: string | null
+}
+
 export function useAdminMe(enabled = true) {
   return useQuery({
     queryKey: ['admin', 'me'],
-    queryFn: () => apiJson<{ isSuperAdmin: boolean }>('/api/admin/me'),
+    queryFn: () => apiJson<AdminMeResponse>('/api/admin/me'),
     staleTime: 60_000,
     retry: false,
     enabled,
@@ -304,5 +313,105 @@ export function useAdminPlans() {
     queryKey: ['admin', 'plans'],
     queryFn: () => apiJson<{ plans: AdminPlanConfig[] }>('/api/admin/plans'),
     staleTime: 60_000,
+  })
+}
+
+// ─── Org-scoped member hooks (org-admin + super-admin) ────────────────────────
+// Uses /api/admin/org/members which accepts both org-admins (auto-resolved)
+// and super-admins (resolved via x-org-id header).
+
+export interface OrgMember {
+  userId: string
+  email: string
+  displayName: string | null
+  avatarUrl: string | null
+  role: string
+  joinedAt: string
+}
+
+/**
+ * Fetches members of the current admin org.
+ * Super-admins pass orgId via x-org-id header; org-admins are auto-scoped.
+ * orgId = null → query disabled (super-admin hasn't selected an org yet).
+ */
+export function useOrgMembers(orgId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'org', orgId, 'members'],
+    queryFn: () =>
+      apiJson<{ members: OrgMember[] }>('/api/admin/org/members', {
+        orgId: orgId ?? undefined,
+      }).then((d) => d.members),
+    enabled: !!orgId,
+    staleTime: 30_000,
+  })
+}
+
+export function useOrgAddMember(orgId: string | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { userId: string; role: string }) => {
+      if (!orgId) return Promise.reject(new Error('No org selected'))
+      return apiJson<{ member: OrgMember }>('/api/admin/org/members', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        orgId,
+      })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'org', orgId, 'members'] })
+    },
+  })
+}
+
+export function useOrgUpdateMember(orgId: string | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) => {
+      if (!orgId) return Promise.reject(new Error('No org selected'))
+      return apiJson<{ member: OrgMember }>(
+        `/api/admin/org/members/${userId}`,
+        { method: 'PATCH', body: JSON.stringify({ role }), orgId },
+      )
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'org', orgId, 'members'] })
+    },
+  })
+}
+
+export function useOrgRemoveMember(orgId: string | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => {
+      if (!orgId) return Promise.reject(new Error('No org selected'))
+      return apiJson<{ removed: boolean }>(
+        `/api/admin/org/members/${userId}`,
+        { method: 'DELETE', orgId },
+      )
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'org', orgId, 'members'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'organizations'] })
+    },
+  })
+}
+
+/**
+ * Audits for the current org.
+ *
+ * Calls GET /api/admin/audits which is super-admin gated.
+ * For org-admins, this will 403 until a scoped org audit endpoint is
+ * implemented. The org-audits page handles this gracefully with an error state.
+ *
+ * TODO (backend-builder): add GET /api/admin/org/audits using requireAdmin +
+ * resolveOrgId to make this accessible to org-admins.
+ */
+export function useOrgAudits(orgId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'org-audits', orgId],
+    queryFn: () =>
+      apiJson<{ audits: AdminAuditRow[] }>('/api/admin/audits'),
+    staleTime: 30_000,
+    retry: false,
   })
 }

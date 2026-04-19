@@ -16,11 +16,24 @@ interface StackAuthUser {
 }
 
 interface StackAuthResponse {
+  is_paginated?: boolean
   items: StackAuthUser[]
   // Stack Auth peut retourner le curseur sous différentes formes selon la version
   cursor?: string
   next_cursor?: string
   pagination?: { next_cursor?: string }
+}
+
+/** Erreur enrichie avec le body réel de Stack Auth pour diagnostiquer en prod. */
+class StackAuthFetchError extends Error {
+  status: number
+  body: string
+  constructor(status: number, body: string) {
+    super(`Stack Auth API error: ${status}`)
+    this.name = 'StackAuthFetchError'
+    this.status = status
+    this.body = body
+  }
 }
 
 const STACK_API_BASE = 'https://api.stack-auth.com/api/v1'
@@ -38,6 +51,7 @@ async function fetchStackAuthUsers(): Promise<StackAuthUser[]> {
     'x-stack-project-id': projectId,
     'x-stack-secret-server-key': secretKey,
     'x-stack-access-type': 'server',
+    'Content-Type': 'application/json',
   }
 
   const allUsers: StackAuthUser[] = []
@@ -51,16 +65,21 @@ async function fetchStackAuthUsers(): Promise<StackAuthUser[]> {
     }
 
     const url = new URL(`${STACK_API_BASE}/users`)
-    url.searchParams.set('per_page', '100')
+    url.searchParams.set('limit', '100')
     if (cursor) url.searchParams.set('cursor', cursor)
 
     const response = await fetch(url.toString(), { headers: baseHeaders })
 
     if (!response.ok) {
-      throw new Error(`Stack Auth API error: ${response.status}`)
+      const errorBody = await response.text().catch(() => 'no body')
+      throw new StackAuthFetchError(response.status, errorBody)
     }
 
     const data: StackAuthResponse = await response.json()
+
+    // Stack Auth peut retourner items vide sans erreur (liste vide ou fin de pagination)
+    if (!data.items || data.items.length === 0) break
+
     allUsers.push(...data.items)
     page++
 
@@ -92,6 +111,17 @@ export async function POST(request: Request) {
   try {
     stackUsers = await fetchStackAuthUsers()
   } catch (error) {
+    if (error instanceof StackAuthFetchError) {
+      logger.error('admin.sync_users_fetch_failed', {
+        by: ctx.email,
+        status: error.status,
+        body: error.body,
+      })
+      return NextResponse.json(
+        { error: `Stack Auth ${error.status}`, detail: error.body },
+        { status: 502 },
+      )
+    }
     logger.error('admin.sync_users_fetch_failed', {
       by: ctx.email,
       error: error instanceof Error ? error : new Error(String(error)),
