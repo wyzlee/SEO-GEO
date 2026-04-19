@@ -38,8 +38,11 @@ export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
 
   let browser: import('puppeteer-core').Browser | null = null
   try {
+    // CHROMIUM_PATH : chemin local (dev). CHROMIUM_DOWNLOAD_URL : URL GitHub
+    // releases pour Vercel Hobby (le binaire 61MB dépasse la limite 50MB).
     const executablePath =
-      process.env.CHROMIUM_PATH ?? (await chromium.default.executablePath())
+      process.env.CHROMIUM_PATH ??
+      (await chromium.default.executablePath(process.env.CHROMIUM_DOWNLOAD_URL))
 
     browser = await puppeteer.default.launch({
       args: chromium.default.args,
