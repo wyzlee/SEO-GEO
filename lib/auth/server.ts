@@ -58,6 +58,19 @@ function extractBearer(request: Request): string | null {
   return authHeader.slice(7)
 }
 
+// Stack Auth stores the access cookie as a JSON array: [refreshToken, accessToken]
+// or as a raw JWT string depending on the SDK version. Extract accordingly.
+function extractJwtFromCookieValue(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed) && typeof parsed[1] === 'string') return parsed[1]
+    if (typeof parsed === 'string') return parsed
+  } catch {
+    // raw JWT
+  }
+  return raw
+}
+
 function extractCookieToken(request: Request): string | null {
   const cookieHeader = request.headers.get('cookie')
   if (!cookieHeader) return null
@@ -65,7 +78,7 @@ function extractCookieToken(request: Request): string | null {
   const candidates = [`stack-access-${projectId}`, 'stack-access']
   for (const name of candidates) {
     const match = cookieHeader.match(new RegExp(`${name}=([^;]+)`))
-    if (match) return decodeURIComponent(match[1])
+    if (match) return extractJwtFromCookieValue(decodeURIComponent(match[1]))
   }
   return null
 }

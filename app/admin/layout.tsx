@@ -13,9 +13,18 @@ export default async function AdminLayout({
   const reqHeaders = await headers()
 
   const projectId = process.env.NEXT_PUBLIC_STACK_PROJECT_ID
-  const cookieToken =
+  const rawCookieValue =
     cookieStore.get(`stack-access-${projectId}`)?.value ||
     cookieStore.get('stack-access')?.value
+
+  // Stack Auth stores the cookie as JSON array [refreshToken, accessToken]
+  let cookieToken = rawCookieValue
+  if (rawCookieValue) {
+    try {
+      const parsed = JSON.parse(rawCookieValue)
+      if (Array.isArray(parsed) && typeof parsed[1] === 'string') cookieToken = parsed[1]
+    } catch { /* raw JWT */ }
+  }
 
   const syntheticHeaders: Record<string, string> = {}
   if (cookieToken) {
