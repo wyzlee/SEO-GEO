@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { and, eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { audits, auditPhases, findings } from '@/lib/db/schema'
-import { crawlUrl } from './crawl'
+import { crawlUrl, crawlMultiPage } from './crawl'
 import { runTechnicalPhase } from './phases/technical'
 import { runStructuredDataPhase } from './phases/structured-data'
 import { runGeoPhase } from './phases/geo'
@@ -67,7 +67,7 @@ async function resolveInput(
     uploadPath: string | null
     githubRepo: string | null
   },
-  opts?: { maxSubPages?: number; timeoutMs?: number },
+  opts?: { maxSubPages?: number; bfsMaxPages?: number; timeoutMs?: number },
 ): Promise<PipelineContext> {
   const ctx: PipelineContext = { cleanupPaths: [] }
 
@@ -76,6 +76,26 @@ async function resolveInput(
       maxSubPages: opts?.maxSubPages,
       timeoutMs: opts?.timeoutMs,
     })
+
+    // Mode full : enrichir subPages via BFS (remplace sitemap-only)
+    if (opts?.bfsMaxPages && opts.bfsMaxPages > 0 && ctx.crawl) {
+      logger.info('audit.bfs.start', {
+        url: audit.targetUrl,
+        maxPages: opts.bfsMaxPages,
+      })
+      const bfsPages = await crawlMultiPage(
+        ctx.crawl.finalUrl,
+        ctx.crawl.robotsTxt,
+        opts.bfsMaxPages,
+        120_000,
+      )
+      ctx.crawl = { ...ctx.crawl, subPages: bfsPages }
+      logger.info('audit.bfs.done', {
+        url: audit.targetUrl,
+        pagesCrawled: bfsPages.length,
+      })
+    }
+
     return ctx
   }
 
@@ -259,7 +279,7 @@ async function runProcessAudit(auditId: string): Promise<void> {
         uploadPath: audit.uploadPath,
         githubRepo: audit.githubRepo,
       },
-      { maxSubPages: cfg.maxSubPages },
+      { maxSubPages: cfg.maxSubPages, bfsMaxPages: cfg.bfsMaxPages },
     )
     cleanupPaths = ctx.cleanupPaths
 

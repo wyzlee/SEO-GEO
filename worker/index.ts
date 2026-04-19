@@ -24,8 +24,14 @@ loadEnv({ path: resolve(process.cwd(), '.env.local') })
 
 import { eq, sql, asc } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { audits } from '@/lib/db/schema'
+import { audits, benchmarks } from '@/lib/db/schema'
 import { processAudit } from '@/lib/audit/process'
+import {
+  markBenchmarkRunning,
+  fanOutBenchmarkAudits,
+  tryCompleteBenchmark,
+  failBenchmark,
+} from '@/lib/audit/benchmark'
 import { createLogger } from '@/lib/observability/logger'
 import { assertEnvOrThrow } from '@/lib/env'
 
@@ -40,6 +46,7 @@ const log = createLogger({ component: 'worker', pid: process.pid })
 
 let shuttingDown = false
 let currentAuditId: string | null = null
+let currentBenchmarkId: string | null = null
 
 async function ping(): Promise<void> {
   await db.execute(sql`select 1`)
@@ -47,6 +54,12 @@ async function ping(): Promise<void> {
 
 interface PendingAudit {
   id: string
+}
+
+interface PendingBenchmark {
+  id: string
+  organizationId: string
+  createdBy: string
 }
 
 /**
@@ -64,6 +77,85 @@ async function findNextQueuedAudit(): Promise<PendingAudit | null> {
   return rows[0] ?? null
 }
 
+/**
+ * Trouve le prochain benchmark `queued` à traiter (fan-out des audits).
+ */
+async function findNextQueuedBenchmark(): Promise<PendingBenchmark | null> {
+  const rows = await db
+    .select({
+      id: benchmarks.id,
+      organizationId: benchmarks.organizationId,
+      createdBy: benchmarks.createdBy,
+    })
+    .from(benchmarks)
+    .where(eq(benchmarks.status, 'queued'))
+    .orderBy(asc(benchmarks.createdAt))
+    .limit(1)
+  return rows[0] ?? null
+}
+
+/**
+ * Trouve les benchmarks `running` pour vérifier s'ils sont terminés.
+ */
+async function findRunningBenchmarks(): Promise<Array<{ id: string }>> {
+  return db
+    .select({ id: benchmarks.id })
+    .from(benchmarks)
+    .where(eq(benchmarks.status, 'running'))
+    .limit(20)
+}
+
+/**
+ * Traite un benchmark queued : claim atomique → fan-out des audits.
+ * Les audits créés rejoignent la queue normale et seront traités au prochain
+ * cycle de poll. La transition completed se fait dans tickRunningBenchmarks.
+ */
+async function processBenchmark(pending: PendingBenchmark): Promise<void> {
+  const claimed = await markBenchmarkRunning(pending.id)
+  if (!claimed) {
+    log.info('worker.benchmark.already_claimed', { benchmark_id: pending.id })
+    return
+  }
+
+  log.info('worker.benchmark.fan_out.start', { benchmark_id: pending.id })
+  try {
+    const auditIds = await fanOutBenchmarkAudits(
+      pending.id,
+      pending.organizationId,
+      pending.createdBy,
+    )
+    log.info('worker.benchmark.fan_out.done', {
+      benchmark_id: pending.id,
+      audit_count: auditIds.length,
+    })
+  } catch (error) {
+    log.error('worker.benchmark.fan_out.failed', {
+      benchmark_id: pending.id,
+      error,
+    })
+    const reason = error instanceof Error ? error.message : String(error)
+    await failBenchmark(pending.id, reason)
+  }
+}
+
+/**
+ * Vérifie chaque benchmark `running` et le marque completed/failed si tous
+ * ses audits sont terminaux. Appelé à chaque tour de boucle.
+ */
+async function tickRunningBenchmarks(): Promise<void> {
+  const running = await findRunningBenchmarks()
+  for (const b of running) {
+    try {
+      const done = await tryCompleteBenchmark(b.id)
+      if (done) {
+        log.info('worker.benchmark.completed', { benchmark_id: b.id })
+      }
+    } catch (error) {
+      log.error('worker.benchmark.tick.error', { benchmark_id: b.id, error })
+    }
+  }
+}
+
 async function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
@@ -72,8 +164,31 @@ async function loop(): Promise<void> {
   let idleMs = POLL_MS
   while (!shuttingDown) {
     try {
+      // --- Benchmarks queued : fan-out des audits ---
+      const pendingBenchmark = await findNextQueuedBenchmark()
+      if (pendingBenchmark) {
+        idleMs = POLL_MS
+        currentBenchmarkId = pendingBenchmark.id
+        log.info('worker.benchmark.picked', { benchmark_id: pendingBenchmark.id })
+        try {
+          await processBenchmark(pendingBenchmark)
+        } catch (error) {
+          log.error('worker.benchmark.unexpected_error', {
+            benchmark_id: pendingBenchmark.id,
+            error,
+          })
+        } finally {
+          currentBenchmarkId = null
+        }
+        // On ne skip pas le poll des audits dans ce même tour
+      }
+
+      // --- Audits queued ---
       const pending = await findNextQueuedAudit()
       if (!pending) {
+        // --- Benchmarks running : vérification de complétion ---
+        await tickRunningBenchmarks()
+
         await sleep(idleMs)
         idleMs = Math.min(IDLE_BACKOFF_MAX_MS, Math.floor(idleMs * 1.5))
         continue
@@ -101,6 +216,9 @@ async function loop(): Promise<void> {
       } finally {
         currentAuditId = null
       }
+
+      // Tick de complétion des benchmarks après chaque audit traité
+      await tickRunningBenchmarks()
     } catch (error) {
       log.error('worker.loop.error', { error })
       await sleep(POLL_MS)
@@ -114,8 +232,11 @@ function installSignalHandlers(): void {
     shuttingDown = true
     // Allow 30 s for the current audit to finish before forcing exit.
     setTimeout(() => {
-      if (currentAuditId) {
-        log.warn('worker.shutdown.forced', { audit_id: currentAuditId })
+      if (currentAuditId || currentBenchmarkId) {
+        log.warn('worker.shutdown.forced', {
+          audit_id: currentAuditId,
+          benchmark_id: currentBenchmarkId,
+        })
       }
       process.exit(0)
     }, 30_000).unref()

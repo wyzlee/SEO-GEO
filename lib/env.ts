@@ -30,6 +30,9 @@ const recommendedSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
   RESEND_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  // GEO Citation Monitoring
+  PERPLEXITY_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
 })
 
 export interface EnvValidationResult {

@@ -47,6 +47,11 @@ export interface SubPageSnapshot {
   html: string
   lastModified: string | null
   contentHash: string
+  // Champs enrichis par crawlMultiPage (BFS) — absents sur pages issues du sitemap
+  title?: string
+  h1?: string
+  wordCount?: number
+  internalLinks?: string[]
 }
 
 export interface CrawlSnapshot {

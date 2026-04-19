@@ -463,6 +463,23 @@
     flex-shrink: 0;
     width: 20px;
   }
+
+  /* ===== NOUVELLES FONCTIONNALITES 2026 ===== */
+  .badge-new {
+    background: rgba(255,107,44,0.12);
+    border: 1px solid rgba(255,107,44,0.35);
+    color: #ff6b2c;
+    display: inline-block;
+    font-size: 0.55rem;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Cabinet Grotesk', sans-serif;
+    font-weight: 700;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
 </style>
 </head>
 <body>
@@ -487,6 +504,7 @@
     <a href="#dimensions" class="nav-item"><span class="nav-dot"></span>11 Dimensions</a>
     <a href="#score" class="nav-item"><span class="nav-dot"></span>Score & Rapport</a>
     <a href="#workflow" class="nav-item"><span class="nav-dot"></span>Comment ça marche</a>
+    <a href="#nouvelles-fonctionnalites" class="nav-item" style="color:var(--accent2)"><span class="nav-dot" style="background:var(--accent2)"></span>Nouveautés 2026</a>
   </div>
 
   <div class="nav-section">
@@ -923,9 +941,56 @@
   </div>
 </section>
 
+<!-- NOUVELLES FONCTIONNALITES 2026 -->
+<section id="nouvelles-fonctionnalites">
+  <div class="section-eyebrow">06 — Nouveautés 2026</div>
+  <h2>6 nouvelles<br>fonctionnalités.</h2>
+  <p class="subtitle">Le moteur d'audit SEO-GEO a été enrichi de six modules supplémentaires qui approfondissent l'analyse, automatisent la veille et génèrent des livrables actionnables directement depuis les résultats d'audit.</p>
+
+  <div class="cards-grid reveal">
+
+    <div class="card" style="--c-color:#4F46E5">
+      <div class="card-icon">&#127758;</div>
+      <div class="card-title">Crawl multi-pages <span class="badge-new">Nouveau</span></div>
+      <div class="card-desc">Le moteur crawle désormais jusqu'à 50 pages par site en BFS (parcours en largeur). La phase Couverture thématique utilise ces données réelles pour détecter pillar pages, clusters de contenus, pages orphelines et ratio de maillage interne — au lieu d'une estimation sur page unique.</div>
+    </div>
+
+    <div class="card" style="--c-color:#0ea5e9">
+      <div class="card-icon">&#9889;</div>
+      <div class="card-title">Données terrain CrUX <span class="badge-new">Nouveau</span></div>
+      <div class="card-desc">La phase Performance interroge maintenant l'API Chrome UX Report (CrUX) pour obtenir les métriques terrain réelles de vos utilisateurs (LCP, INP, CLS). Si la clé API Google est configurée, les données de terrain remplacent les estimations heuristiques — le score reflète l'expérience réelle.</div>
+    </div>
+
+    <div class="card" style="--c-color:#fbbf24">
+      <div class="card-icon">&#128276;</div>
+      <div class="card-title">Alertes de dérive du score <span class="badge-new">Nouveau</span></div>
+      <div class="card-desc">Les audits planifiés envoient automatiquement une alerte email lorsque le score global chute de plus de N points entre deux passages (seuil configurable, défaut : 5 points). L'email précise les phases impactées pour un diagnostic immédiat.</div>
+    </div>
+
+    <div class="card" style="--c-color:#10b981">
+      <div class="card-icon">&#128202;</div>
+      <div class="card-title">Benchmark concurrent <span class="badge-new">Nouveau</span></div>
+      <div class="card-desc">Comparez le score SEO-GEO d'un site client face à ses concurrents directs — jusqu'à 5 URLs en parallèle. Un tableau récapitulatif par phase met en évidence les écarts et les dimensions où l'avantage est à portée. Accessible depuis le dashboard.</div>
+    </div>
+
+    <div class="card" style="--c-color:#c084fc">
+      <div class="card-icon">&#129302;</div>
+      <div class="card-title">AI Citation Monitoring <span class="badge-new">Nouveau</span></div>
+      <div class="card-desc">Surveillez si votre domaine est cité dans les réponses de Perplexity et OpenAI sur les requêtes cibles que vous définissez. Une alerte est déclenchée dès qu'un concurrent est cité sans que le client ne le soit — pour réagir avant que l'écart ne se creuse.</div>
+    </div>
+
+    <div class="card" style="--c-color:#ff6b35">
+      <div class="card-icon">&#9997;&#65039;</div>
+      <div class="card-title">Briefs de contenu (IA) <span class="badge-new">Nouveau</span></div>
+      <div class="card-desc">Post-audit, Claude génère des briefs de contenu actionnables sur les lacunes détectées dans les phases Couverture thématique et Fraîcheur. Chaque brief inclut titre, intention de recherche, plan H2/H3, mots-clés sémantiques et angle E-E-A-T — prêt à confier à un rédacteur.</div>
+    </div>
+
+  </div>
+</section>
+
 <!-- INPUT MODES -->
 <section id="input">
-  <div class="section-eyebrow">06 — Modes d'entrée</div>
+  <div class="section-eyebrow">07 — Modes d'entrée</div>
   <h2>URL ou code source.<br>Votre choix.</h2>
   <p class="subtitle">SEO-GEO accepte deux types d'entrée — pour les sites en ligne et pour les projets pre-launch.</p>
 
@@ -974,7 +1039,7 @@
 
 <!-- PERSONAS -->
 <section id="personas">
-  <div class="section-eyebrow">07 — Pour qui ?</div>
+  <div class="section-eyebrow">08 — Pour qui ?</div>
   <h2>3 personas.<br>Un même outil.</h2>
 
   <div class="persona-cards reveal">
@@ -1016,7 +1081,7 @@
 
 <!-- PACKAGES -->
 <section id="packages">
-  <div class="section-eyebrow">08 — Les offres</div>
+  <div class="section-eyebrow">09 — Les offres</div>
   <h2>Tripwire, Retainer,<br>ou White-label.</h2>
   <p class="subtitle">Modèle hybride : prestation one-shot pour démarrer, retainer pour fidéliser, white-label pour les agences partenaires.</p>
 
@@ -1074,7 +1139,7 @@
 
 <!-- ROADMAP -->
 <section id="roadmap">
-  <div class="section-eyebrow">09 — Roadmap</div>
+  <div class="section-eyebrow">10 — Roadmap</div>
   <h2>Agency tool V1.<br>SaaS public V2.</h2>
   <p class="subtitle">Le produit se déploie en deux phases : d'abord en mode agence (Olivier pilote les audits manuellement), puis en self-serve public avec Stripe.</p>
 

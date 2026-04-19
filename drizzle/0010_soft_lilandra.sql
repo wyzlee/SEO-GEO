@@ -1,0 +1,1 @@
+ALTER TABLE "benchmarks" ADD COLUMN "mode" text DEFAULT 'flash' NOT NULL;

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/layout/header'
 import { useAudits } from '@/lib/hooks/use-audits'
 import { useMe } from '@/lib/hooks/use-me'
+import { NouveautesBanner } from '@/components/dashboard/nouveautes-banner'
 
 export default function DashboardPage() {
   const { data, isLoading } = useAudits()
@@ -25,6 +26,8 @@ export default function DashboardPage() {
           </Link>
         }
       />
+
+      <NouveautesBanner />
 
       <section className="p-4 md:p-6">
         {isLoading ? (

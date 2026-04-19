@@ -233,8 +233,54 @@ export async function runCommonMistakesPhase(
     }
   }
 
-  // --- Broken internal links (primary → subPages) ------------------------
+  // Charger les subPages une fois pour les vérifications multi-page
   const subPages = snapshot.subPages ?? []
+
+  // --- Redirections en chaîne (via statuts 3xx dans subPages BFS) ----------
+  // Quand BFS crawle les pages, fetchWithTimeout suit les redirects et retourne
+  // l'URL finale. Si un lien interne depuis la home (ou des subPages) pointe
+  // vers une URL intermédiaire de redirection, on le détecte via les statuts 3xx.
+  if (subPages.length > 0) {
+    const origin = new URL(finalUrl).origin
+    // Pages qui ont retourné un 3xx (= URL intermédiaire de redirect visible)
+    const redirectPages = subPages.filter((sp) => sp.status >= 300 && sp.status < 400)
+    if (redirectPages.length > 0) {
+      // Compter combien de liens internes (home + subPages) pointent vers ces redirects
+      const redirectSet = new Set(redirectPages.map((sp) => {
+        try { return new URL(sp.url).pathname.replace(/\/+$/, '') || '/' } catch { return sp.url }
+      }))
+      let redirectLinksCount = 0
+      const sampledRedirects: string[] = []
+      $('a[href]').each((_, el) => {
+        const href = $(el).attr('href') ?? ''
+        if (!href || href.startsWith('#')) return
+        try {
+          const u = new URL(href, finalUrl)
+          if (u.origin !== origin) return
+          const path = u.pathname.replace(/\/+$/, '') || '/'
+          if (redirectSet.has(path)) {
+            redirectLinksCount++
+            if (sampledRedirects.length < 3) sampledRedirects.push(u.pathname)
+          }
+        } catch { /* ignore */ }
+      })
+      if (redirectLinksCount >= 2) {
+        pushCheck({
+          severity: 'medium',
+          category: 'common-redirect-chain',
+          title: `Liens internes vers des redirections (${redirectLinksCount})`,
+          description: `${redirectLinksCount} lien(s) interne(s) pointent vers des URLs qui redirigent (3xx). Chaque redirection inutile dilue le PageRank et ralentit le crawl. Exemples : ${sampledRedirects.join(', ')}.`,
+          recommendation:
+            'Mettre à jour les liens internes pour qu\'ils pointent directement vers l\'URL de destination finale (2xx). Évite les chaînes et préserve le passage de jus.',
+          pointsLost: 0.5,
+          effort: 'medium',
+          metricValue: `${redirectLinksCount} lien(s) → redirect`,
+        })
+      }
+    }
+  }
+
+  // --- Broken internal links (primary → subPages) ------------------------
   if (subPages.length > 0) {
     const origin = new URL(finalUrl).origin
     const pathByStatus = new Map<string, number>()

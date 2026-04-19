@@ -3,7 +3,7 @@ import { and, asc, desc, eq, inArray, lte } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { audits, organizations, scheduledAudits } from '@/lib/db/schema'
 import { processAudit } from '@/lib/audit/process'
-import { computeNextRunAt } from '@/lib/audit/schedule'
+import { computeNextRunAt, checkScheduledAuditDrift } from '@/lib/audit/schedule'
 import { logger } from '@/lib/observability/logger'
 import { verifyBearerSecret } from '@/lib/security/constant-time'
 
@@ -117,7 +117,18 @@ export async function GET(request: Request) {
             scheduled_id: scheduled.id,
             error,
           })
+          // Ne pas continuer vers le drift check si l'audit a échoué
+          return
         }
+
+        // Drift check : alerte si le score a chuté de plus du seuil configuré.
+        // Indépendant du résultat de l'email d'audit-completed — un échec ici
+        // ne remonte jamais (checkScheduledAuditDrift gère ses propres erreurs).
+        await checkScheduledAuditDrift({
+          auditId,
+          scheduledId: scheduled.id,
+          organizationId: scheduled.organizationId,
+        })
       })
     } catch (error) {
       logger.error('cron.run_scheduled.item_error', {

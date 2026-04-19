@@ -6,6 +6,8 @@ export type AuditMode = 'flash' | 'standard' | 'full'
 export interface ModeConfig {
   phases: PhaseKey[]
   maxSubPages: number
+  /** En mode URL full : nombre max de pages crawlées par BFS (0 = BFS désactivé) */
+  bfsMaxPages: number
   timeoutMs: number
 }
 
@@ -13,6 +15,7 @@ export const AUDIT_MODE_CONFIGS: Record<AuditMode, ModeConfig> = {
   flash: {
     phases: ['technical', 'structured_data', 'geo', 'common_mistakes'],
     maxSubPages: 0,
+    bfsMaxPages: 0,
     timeoutMs: 15_000,
   },
   standard: {
@@ -27,11 +30,15 @@ export const AUDIT_MODE_CONFIGS: Record<AuditMode, ModeConfig> = {
       'synthesis',
     ],
     maxSubPages: 3,
+    bfsMaxPages: 0,
     timeoutMs: 120_000,
   },
   full: {
     phases: PHASE_ORDER,
-    maxSubPages: 20,
+    // BFS remplace le crawl sitemap en mode full — on désactive maxSubPages
+    // pour éviter le double-crawl
+    maxSubPages: 0,
+    bfsMaxPages: 50,
     timeoutMs: 600_000,
   },
 }

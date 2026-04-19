@@ -254,6 +254,8 @@ export const scheduledAudits = pgTable(
     nextRunAt: timestamp('next_run_at').notNull(),
     lastRunAt: timestamp('last_run_at'),
     isActive: boolean('is_active').notNull().default(true),
+    alertThreshold: integer('alert_threshold').notNull().default(5), // Points de chute pour déclencher une alerte
+    lastAlertSentAt: timestamp('last_alert_sent_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -287,6 +289,81 @@ export const invitations = pgTable(
   }),
 )
 
+// ---------------------------------------------------------------------------
+// Benchmarks — comparaison multi-URL au sein d'une organisation
+// ---------------------------------------------------------------------------
+
+export const benchmarks = pgTable('benchmarks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  name: text('name').notNull(),
+  mode: text('mode', { enum: ['flash', 'full'] }).notNull().default('flash'),
+  status: text('status', { enum: ['queued', 'running', 'completed', 'failed'] }).notNull().default('queued'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  finishedAt: timestamp('finished_at'),
+}, (t) => [
+  index('benchmarks_org_idx').on(t.organizationId),
+  index('benchmarks_status_idx').on(t.status),
+])
+
+export const benchmarkUrls = pgTable('benchmark_urls', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  benchmarkId: uuid('benchmark_id').notNull().references(() => benchmarks.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  label: text('label').notNull(), // "Mon site" / "Concurrent A"
+  isReference: boolean('is_reference').notNull().default(false), // true = site client
+  auditId: uuid('audit_id').references(() => audits.id),
+}, (t) => [
+  index('benchmark_urls_benchmark_idx').on(t.benchmarkId),
+])
+
+// ---------------------------------------------------------------------------
+// Citation checks — suivi des mentions dans les LLMs (Perplexity, OpenAI)
+// ---------------------------------------------------------------------------
+
+export const citationChecks = pgTable('citation_checks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  domain: text('domain').notNull(),
+  query: text('query').notNull(),
+  tool: text('tool', { enum: ['perplexity', 'openai'] }).notNull(),
+  isCited: boolean('is_cited').notNull().default(false),
+  competitorDomainsCited: text('competitor_domains_cited').array().notNull().default([]),
+  rawResponse: text('raw_response'),
+  checkedAt: timestamp('checked_at').notNull().defaultNow(),
+}, (t) => [
+  index('citation_checks_org_idx').on(t.organizationId),
+  index('citation_checks_domain_idx').on(t.domain),
+])
+
+// ---------------------------------------------------------------------------
+// Content briefs — génération de briefs éditoriaux depuis un audit
+// ---------------------------------------------------------------------------
+
+export const contentBriefs = pgTable('content_briefs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  auditId: uuid('audit_id').notNull().references(() => audits.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  targetKeyword: text('target_keyword').notNull(),
+  searchIntent: text('search_intent', { enum: ['informational', 'commercial', 'navigational'] }).notNull(),
+  contentType: text('content_type', { enum: ['pillar', 'cluster', 'update'] }).notNull(),
+  wordCountTarget: integer('word_count_target').notNull(),
+  outline: jsonb('outline').notNull(), // { h2: string[], h3_per_h2: string[][] }
+  eeatAngle: text('eeat_angle'),
+  semanticKeywords: text('semantic_keywords').array().notNull().default([]),
+  briefMd: text('brief_md').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('content_briefs_audit_idx').on(t.auditId),
+  index('content_briefs_org_idx').on(t.organizationId),
+])
+
+// ---------------------------------------------------------------------------
+// Type exports
+// ---------------------------------------------------------------------------
+
 export type Invitation = typeof invitations.$inferSelect
 export type NewInvitation = typeof invitations.$inferInsert
 
@@ -305,3 +382,11 @@ export type Webhook = typeof webhooks.$inferSelect
 export type NewWebhook = typeof webhooks.$inferInsert
 export type ScheduledAudit = typeof scheduledAudits.$inferSelect
 export type NewScheduledAudit = typeof scheduledAudits.$inferInsert
+export type Benchmark = typeof benchmarks.$inferSelect
+export type NewBenchmark = typeof benchmarks.$inferInsert
+export type BenchmarkUrl = typeof benchmarkUrls.$inferSelect
+export type NewBenchmarkUrl = typeof benchmarkUrls.$inferInsert
+export type CitationCheck = typeof citationChecks.$inferSelect
+export type NewCitationCheck = typeof citationChecks.$inferInsert
+export type ContentBrief = typeof contentBriefs.$inferSelect
+export type NewContentBrief = typeof contentBriefs.$inferInsert

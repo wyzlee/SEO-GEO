@@ -3,7 +3,7 @@
 import { use, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Globe, Github, FileArchive } from 'lucide-react'
+import { Globe, Github, FileArchive, BookMarked } from 'lucide-react'
 import { PageHeader } from '@/components/layout/header'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { ScoreBadge } from '@/components/audit/score-badge'
@@ -152,6 +152,15 @@ export default function AuditDetailPage({
         description={`${audit.inputType.toUpperCase()} · ${STATUS_LABEL[audit.status] ?? audit.status}${isLocked ? ' · Plan Standard' : ''}`}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {isCompleted && (
+              <Link
+                href={`/dashboard/audits/${id}/briefs`}
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                <BookMarked size={14} aria-hidden="true" />
+                Briefs de contenu
+              </Link>
+            )}
             {isCompleted && (
               <TierGate locked={isLocked} featureLabel="Rapport PDF complet">
                 {lastReport?.shareSlug ? (

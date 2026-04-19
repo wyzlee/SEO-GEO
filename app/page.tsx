@@ -237,6 +237,53 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ---- Nouvelles capacités 2026 ---- */}
+        <section
+          className="max-w-5xl mx-auto px-6 py-20 border-t"
+          style={{ borderColor: 'var(--color-border)' }}
+        >
+          <div className="text-center mb-10">
+            <div
+              className="inline-block text-xs uppercase tracking-wider px-3 py-1 rounded-full mb-4 font-[family-name:var(--font-display)] font-semibold"
+              style={{
+                background: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+                color: 'var(--color-accent)',
+              }}
+            >
+              Nouveautés 2026
+            </div>
+            <h2 className="text-3xl font-[family-name:var(--font-display)] font-bold">
+              Au-delà des 11 phases
+            </h2>
+            <p
+              className="mt-3 text-sm font-[family-name:var(--font-sans)] max-w-2xl mx-auto"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              Trois nouvelles capacités disponibles en 2026 — benchmark, surveillance des citations IA et génération de briefs de contenu.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <NewCapabilityCard
+              tag="Benchmark"
+              title="Comparatif concurrent"
+              body="Comparez jusqu'à 5 sites simultanément — tableau de scores par phase, détection des écarts. Sachez exactement où vous en êtes face à vos concurrents."
+              href="/onboarding"
+            />
+            <NewCapabilityCard
+              tag="Citations IA"
+              title="AI Citation Monitoring"
+              body="Vérifiez si votre domaine est cité par Perplexity et ChatGPT sur vos requêtes cibles. Suivi de la mention rate IA en continu, phase GEO enrichie."
+              href="/onboarding"
+            />
+            <NewCapabilityCard
+              tag="Briefs de contenu"
+              title="Content Briefs IA"
+              body="Génération automatique de briefs post-audit — structure, angle, mots-clés, signaux E-E-A-T à inclure. Propulsé par Claude, livrable immédiatement."
+              href="/onboarding"
+            />
+          </div>
+        </section>
+
         {/* ---- Offres ---- */}
         <section
           id="offres"
@@ -352,6 +399,51 @@ export default function LandingPage() {
           </nav>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function NewCapabilityCard({
+  tag,
+  title,
+  body,
+  href,
+}: {
+  tag: string
+  title: string
+  body: string
+  href: string
+}) {
+  return (
+    <div
+      className="p-5 rounded-lg flex flex-col gap-3"
+      style={{
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+      }}
+    >
+      <span
+        className="text-xs uppercase tracking-wider font-[family-name:var(--font-display)] font-semibold self-start px-2 py-0.5 rounded"
+        style={{
+          background: 'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+          color: 'var(--color-accent)',
+        }}
+      >
+        {tag}
+      </span>
+      <h3 className="font-[family-name:var(--font-display)] font-bold">{title}</h3>
+      <p
+        className="text-sm font-[family-name:var(--font-sans)] flex-1"
+        style={{ color: 'var(--color-muted)' }}
+      >
+        {body}
+      </p>
+      <Link
+        href={href}
+        className="btn-secondary text-sm self-start"
+      >
+        En savoir plus →
+      </Link>
     </div>
   )
 }

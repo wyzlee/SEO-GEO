@@ -213,3 +213,211 @@ export async function crawlUrl(
     subPages,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Multi-page BFS crawl (V1.5 — mode full URL)
+// ---------------------------------------------------------------------------
+
+/** Extensions d'assets à ignorer pendant le BFS */
+const ASSET_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|mp4|mp3|pdf|zip|gz|css|js|json|xml|rss|atom|txt|doc|docx|xls|xlsx|ppt|pptx)(\?|$)/i
+
+/** Normalise une URL pour le BFS : retire fragment, trailing slash (sauf root) */
+function normalizeUrlForBfs(href: string, base: string): string | null {
+  try {
+    const u = new URL(href, base)
+    // Supprimer le fragment
+    u.hash = ''
+    // Normaliser le pathname (trailing slash sauf root)
+    if (u.pathname.length > 1 && u.pathname.endsWith('/')) {
+      u.pathname = u.pathname.slice(0, -1)
+    }
+    return u.toString()
+  } catch {
+    return null
+  }
+}
+
+/** Parser minimal robots.txt — extrait les Disallow pour User-agent: * */
+function parseRobotsDisallowed(robotsTxt: string | null): string[] {
+  if (!robotsTxt) return []
+  const lines = robotsTxt.split('\n').map((l) => l.trim())
+  const disallowed: string[] = []
+  let inStar = false
+  for (const line of lines) {
+    if (/^user-agent:\s*\*/i.test(line)) {
+      inStar = true
+      continue
+    }
+    if (/^user-agent:/i.test(line)) {
+      inStar = false
+      continue
+    }
+    if (inStar && /^disallow:/i.test(line)) {
+      const path = line.replace(/^disallow:\s*/i, '').trim()
+      if (path) disallowed.push(path)
+    }
+  }
+  return disallowed
+}
+
+function isDisallowed(url: string, disallowed: string[]): boolean {
+  try {
+    const pathname = new URL(url).pathname
+    return disallowed.some((d) => pathname.startsWith(d))
+  } catch {
+    return false
+  }
+}
+
+/** Fetch BFS d'une page — retourne null si non-HTML ou erreur */
+async function fetchBfsPage(
+  url: string,
+  globalSignal: AbortSignal,
+): Promise<SubPageSnapshot | null> {
+  // Vérifier le signal global AVANT le fetch (fetchWithTimeout crée son propre controller)
+  if (globalSignal.aborted) return null
+  try {
+    const { response, finalUrl } = await fetchWithTimeout(url, {
+      timeoutMs: 10_000,
+    })
+    // On capture même les erreurs HTTP (4xx/5xx) pour détecter les liens cassés
+    const html = await response.text()
+
+    // Skip si ce n'est pas du HTML
+    const ct = response.headers.get('content-type') ?? ''
+    if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {
+      return null
+    }
+
+    const $p = cheerio.load(html)
+    const bodyText = $p('body').text().replace(/\s+/g, ' ').trim()
+    const wordCount = bodyText ? bodyText.split(' ').filter(Boolean).length : 0
+    const title = $p('head > title').first().text().trim() || undefined
+    const h1 = $p('h1').first().text().trim() || undefined
+
+    // Liens internes (mêmes origine + pathname, pas d'asset)
+    const origin = new URL(finalUrl).origin
+    const internalLinks: string[] = []
+    $p('a[href]').each((_, el) => {
+      const href = $p(el).attr('href') ?? ''
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return
+      const norm = normalizeUrlForBfs(href, finalUrl)
+      if (!norm) return
+      try {
+        const u = new URL(norm)
+        if (u.origin !== origin) return
+        if (ASSET_EXTENSIONS.test(u.pathname)) return
+        internalLinks.push(norm)
+      } catch {
+        // ignore
+      }
+    })
+
+    return {
+      url: finalUrl,
+      status: response.status,
+      html,
+      lastModified: response.headers.get('last-modified'),
+      contentHash: hashContent(bodyText),
+      title,
+      h1,
+      wordCount,
+      internalLinks,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Crawl multi-pages BFS jusqu'à `maxPages` (défaut 50).
+ *
+ * - Réutilise `fetchWithTimeout` avec validation SSRF à chaque hop.
+ * - Concurrence limitée à 3 fetches simultanés (semaphore).
+ * - Timeout global `timeoutMs` via AbortController.
+ * - Filtre les assets + URLs bloquées par robots.txt.
+ */
+export async function crawlMultiPage(
+  startUrl: string,
+  robotsTxt: string | null,
+  maxPages = 50,
+  timeoutMs = 120_000,
+): Promise<SubPageSnapshot[]> {
+  const disallowed = parseRobotsDisallowed(robotsTxt)
+  const origin = (() => {
+    try { return new URL(startUrl).origin } catch { return '' }
+  })()
+
+  const globalController = new AbortController()
+  const globalTimer = setTimeout(() => globalController.abort(), timeoutMs)
+
+  const visited = new Set<string>()
+  const queue: string[] = []
+  const results: SubPageSnapshot[] = []
+
+  // Normaliser et enqueue le startUrl
+  const normalizedStart = normalizeUrlForBfs(startUrl, startUrl)
+  if (normalizedStart) {
+    queue.push(normalizedStart)
+    visited.add(normalizedStart)
+  }
+
+  const CONCURRENCY = 3
+
+  try {
+    while (queue.length > 0 && results.length < maxPages) {
+      if (globalController.signal.aborted) break
+
+      // Prendre un batch de CONCURRENCY URLs
+      const batch = queue.splice(0, CONCURRENCY)
+
+      const batchResults = await Promise.all(
+        batch.map((url) => fetchBfsPage(url, globalController.signal)),
+      )
+
+      for (let i = 0; i < batch.length; i++) {
+        if (results.length >= maxPages) break
+        const snap = batchResults[i]
+        const url = batch[i]
+
+        if (snap) {
+          results.push(snap)
+          console.log(JSON.stringify({
+            event: 'bfs.page.crawled',
+            url: snap.url,
+            status: snap.status,
+            wordCount: snap.wordCount ?? 0,
+            index: results.length,
+            total: maxPages,
+          }))
+
+          // Enqueue les liens internes découverts
+          for (const link of snap.internalLinks ?? []) {
+            if (visited.has(link)) continue
+            if (ASSET_EXTENSIONS.test(link)) continue
+            try {
+              const u = new URL(link)
+              if (u.origin !== origin) continue
+              if (isDisallowed(link, disallowed)) continue
+            } catch {
+              continue
+            }
+            visited.add(link)
+            queue.push(link)
+          }
+        } else {
+          // Page inaccessible — log mais ne pas crasher
+          console.log(JSON.stringify({
+            event: 'bfs.page.failed',
+            url,
+            index: results.length,
+          }))
+        }
+      }
+    }
+  } finally {
+    clearTimeout(globalTimer)
+  }
+
+  return results
+}

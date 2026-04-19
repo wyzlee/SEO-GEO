@@ -353,7 +353,8 @@ export async function runTopicalPhase(
     }
 
     // --- Thin content site ----------------------------------------------
-    const wordCounts = subPages.map((sp) => bodyWordCount(sp.html))
+    // Utiliser wordCount pré-calculé par BFS si disponible (évite re-parse HTML)
+    const wordCounts = subPages.map((sp) => sp.wordCount ?? bodyWordCount(sp.html))
     const thinCount = wordCounts.filter((w) => w > 0 && w < 300).length
     const coverable = wordCounts.filter((w) => w > 0).length
     if (coverable >= 5) {
@@ -372,6 +373,55 @@ export async function runTopicalPhase(
           metricTarget: '< 30 %',
         })
       }
+    }
+
+    // --- Pages longues candidates pillar (BFS réel) -----------------------
+    // Avec le BFS, on a les vrais wordCount — on peut identifier des pages
+    // suffisamment longues pour être des pillar pages (≥ 3000 mots)
+    const pillarCandidates = subPages.filter((sp) => {
+      const wc = sp.wordCount ?? bodyWordCount(sp.html)
+      return wc >= 3000
+    })
+    const pillarPaths = new Set(
+      pillarCandidates.map((sp) => normalizePath(sp.url, origin)).filter((p): p is string => p !== null),
+    )
+    // Vérifier que les pillar candidates reçoivent au moins un lien interne
+    const pillarWithoutLinks = pillarCandidates.filter((sp) => {
+      const path = normalizePath(sp.url, origin)
+      return path && (inbound.get(path) ?? 0) === 0
+    })
+    if (pillarCandidates.length > 0 && pillarWithoutLinks.length === pillarCandidates.length) {
+      pushCheck({
+        severity: 'medium',
+        category: 'topical-pillar-isolated',
+        title: 'Pages longues sans lien entrant (pillar potentiel isolé)',
+        description: `${pillarCandidates.length} page(s) font ≥ 3 000 mots mais ne reçoivent aucun lien interne dans le crawl. Un pillar non référencé n'accumule pas d'autorité thématique.`,
+        recommendation: 'Lier ces pages depuis la home, le menu ou les articles de cluster. Exemples : ' +
+          pillarWithoutLinks.slice(0, 3).map((sp) => normalizePath(sp.url, origin)).join(', '),
+        pointsLost: 0.5,
+        effort: 'medium',
+        metricValue: `${pillarCandidates.length} pillar(s) candidat(s) isolé(s)`,
+      })
+    }
+
+    // --- Pages orphelines avec h1/title manquant (via BFS) -----------------
+    // Si une page n'a ni h1 ni title, elle ne peut pas ancrer un cluster
+    const noHeadingOrphans = subPages.filter((sp) => {
+      const path = normalizePath(sp.url, origin)
+      const isOrphan = path && (inbound.get(path) ?? 0) === 0
+      return isOrphan && sp.h1 === undefined && sp.title === undefined
+    })
+    if (noHeadingOrphans.length >= 3) {
+      pushCheck({
+        severity: 'low',
+        category: 'topical-orphan-no-heading',
+        title: 'Pages orphelines sans titre ni H1',
+        description: `${noHeadingOrphans.length} pages n'ont pas de lien entrant ET sont sans <h1> ni <title> exploitable. Double problème : invisibles pour le crawl et sémantiquement neutres pour les moteurs IA.`,
+        recommendation: 'Corriger les templates qui n\'injectent pas de <h1> ou <title>. Ces pages ne peuvent pas contribuer à l\'autorité topical du site.',
+        pointsLost: 0,
+        effort: 'medium',
+        metricValue: `${noHeadingOrphans.length} page(s)`,
+      })
     }
 
     // --- Pillar intra-cluster -------------------------------------------

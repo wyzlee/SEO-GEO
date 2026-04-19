@@ -6,10 +6,11 @@ import {
   Building2, Briefcase, Monitor,
   Search, Bot, FileText, LinkIcon, Clock,
   Globe, Package, Target, Trophy, Rocket,
+  BarChart3, Zap, BookOpen, Layers, Activity, Brain,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth/context'
 
-const TOTAL = 12
+const TOTAL = 13
 
 // Palette — accents principaux alignés sur le design system Wyzlee (orange)
 const IND = 'var(--color-accent)'   // orange #ff6b2c
@@ -464,8 +465,103 @@ function Slide11() {
   )
 }
 
-// ─── SLIDE 12 : CTA ───────────────────────────────────────────────────────────
-function Slide12({ isAuthenticated }: { isAuthenticated: boolean }) {
+// ─── SLIDE 12 : NOUVELLES FONCTIONNALITÉS 2026 ────────────────────────────────
+function Slide12() {
+  const features: {
+    Icon: React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>
+    color: string
+    label: string
+    title: string
+    desc: string
+    tag: string
+  }[] = [
+    {
+      Icon: Layers,
+      color: IND,
+      label: 'Phase 01 · 09 · 10',
+      title: 'Crawl multi-pages (50 pages)',
+      desc: 'Le moteur analyse jusqu\'à 50 pages via BFS — pillar pages, clusters thématiques, pages orphelines. Détection de cannibalisation cross-pages.',
+      tag: 'Disponible',
+    },
+    {
+      Icon: Activity,
+      color: SKY,
+      label: 'Phase 08 — Performance',
+      title: 'CrUX API réelle',
+      desc: 'Métriques LCP, INP, CLS terrain via Google Chrome UX Report. Données réelles utilisateurs, pas des simulations Lighthouse.',
+      tag: 'Disponible',
+    },
+    {
+      Icon: Zap,
+      color: AMB,
+      label: 'Monitoring continu',
+      title: 'Score Drift Alerts',
+      desc: 'Alerte email automatique si le score chute de plus de 5 points entre deux re-audits planifiés. Réagissez avant que le client ne s\'en rende compte.',
+      tag: 'Disponible',
+    },
+    {
+      Icon: BarChart3,
+      color: CYN,
+      label: 'Nouveau',
+      title: 'Benchmark concurrent',
+      desc: 'Comparatif multi-URL jusqu\'à 5 sites simultanés. Tableau de scores par phase — visualisez votre position face à la concurrence.',
+      tag: 'Disponible',
+    },
+    {
+      Icon: Brain,
+      color: VIO,
+      label: 'Phase 03 — GEO',
+      title: 'AI Citation Monitoring',
+      desc: 'Vérifie si votre domaine est cité par Perplexity et ChatGPT sur vos requêtes cibles. Suivi de la mention rate IA en continu.',
+      tag: 'Disponible',
+    },
+    {
+      Icon: BookOpen,
+      color: GRN,
+      label: 'Post-audit',
+      title: 'Content Briefs IA',
+      desc: 'Génération automatique de briefs de contenu après l\'audit — structure, angle, mots-clés cibles, signaux E-E-A-T à inclure. Propulsé par Claude.',
+      tag: 'Disponible',
+    },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '36px clamp(20px, 6vw, 80px) 24px', overflowY: 'auto', paddingBottom: 100 }}>
+      <Eyebrow>11 — Nouvelles fonctionnalités</Eyebrow>
+      <Heading style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', marginBottom: 8 }}>
+        Ce qui est arrivé<br />en <span style={{ color: IND }}>2026</span>.
+      </Heading>
+      <p style={{ fontSize: '0.72rem', color: 'var(--color-muted)', marginBottom: 20, lineHeight: 1.6 }}>
+        3 améliorations des phases existantes · 3 nouvelles capacités
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 10 }}>
+        {features.map(({ Icon, color, label, title, desc, tag }) => (
+          <div key={title} style={{
+            background: 'var(--color-card)', border: '1px solid var(--color-border)',
+            borderRadius: 8, padding: '18px 20px', position: 'relative', overflow: 'hidden',
+            display: 'flex', flexDirection: 'column', gap: 6,
+          }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <Icon size={16} strokeWidth={2} color={color} aria-hidden />
+              <span style={{
+                fontSize: '0.56rem', color: GRN, border: '1px solid rgba(57,211,83,0.3)',
+                background: 'rgba(57,211,83,0.08)', padding: '1px 7px', borderRadius: 3,
+                textTransform: 'uppercase' as const, letterSpacing: '0.1em', flexShrink: 0,
+              }}>{tag}</span>
+            </div>
+            <div style={{ fontSize: '0.6rem', color, textTransform: 'uppercase' as const, letterSpacing: '0.15em' }}>{label}</div>
+            <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.82rem', color: 'var(--color-text)' }}>{title}</div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--color-muted)', lineHeight: 1.65 }}>{desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── SLIDE 13 : CTA ───────────────────────────────────────────────────────────
+function Slide13({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
       <Eyebrow>Prochaine étape</Eyebrow>
@@ -615,7 +711,8 @@ export function GuideDeck() {
     <Slide9 key={9} />,
     <Slide10 key={10} isMobile={isMobile} />,
     <Slide11 key={11} />,
-    <Slide12 key={12} isAuthenticated={isAuthenticated} />,
+    <Slide12 key={12} />,
+    <Slide13 key={13} isAuthenticated={isAuthenticated} />,
   ]
 
   return (
