@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react'
 import type { PhaseWithFindings, FindingRow } from '@/lib/hooks/use-audits'
 
 const TECH_PHASES = new Set([
@@ -195,7 +196,10 @@ export function TechView({ phases }: TechViewProps) {
                               {f.locationLine != null ? `:${f.locationLine}` : ''}
                             </code>
                           ) : (
-                            <span>📍 {f.locationUrl}</span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3 shrink-0" strokeWidth={2} />
+                              {f.locationUrl}
+                            </span>
                           )}
                         </div>
                       )}

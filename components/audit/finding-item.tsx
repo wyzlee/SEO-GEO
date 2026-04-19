@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react'
 import type { FindingRow } from '@/lib/hooks/use-audits'
 
 const SEVERITY_STYLES: Record<
@@ -71,7 +72,10 @@ export function FindingItem({ finding }: { finding: FindingRow }) {
           style={{ color: 'var(--color-muted)' }}
         >
           {finding.locationUrl && (
-            <span>📍 {finding.locationUrl}</span>
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3 w-3 shrink-0" strokeWidth={2} />
+              {finding.locationUrl}
+            </span>
           )}
           {finding.metricValue && (
             <span>

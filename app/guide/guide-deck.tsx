@@ -2,18 +2,22 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import {
+  Building2, Briefcase, Monitor,
+  Search, Bot, FileText, LinkIcon, Clock,
+  Globe, Package, Target, Trophy, Rocket,
+} from 'lucide-react'
 import { useAuth } from '@/lib/auth/context'
 
 const TOTAL = 12
 
 // Palette — accents principaux alignés sur le design system Wyzlee (orange)
-const IND = 'var(--color-accent)'   // orange #FF6B35
+const IND = 'var(--color-accent)'   // orange #ff6b2c
 const VIO = 'var(--color-accent2)'  // orange foncé #E55A22
 const GRN = '#39d353'
-const PUR = '#c084fc'
 const AMB = '#fbbf24'
 const CYN = '#00c2ff'
-const ORG = '#ff6b35'
+const ORG = '#ff6b2c'
 const PNK = '#f43f5e'
 const SKY = '#0ea5e9'
 const EME = '#10b981'
@@ -103,14 +107,14 @@ function PhaseItem({ n, name, pts, sub, color }: { n: string; name: string; pts:
   )
 }
 
-function PersonaCard({ color, emoji, name, desc, need }: { color: string; emoji: string; name: string; desc: string; need: string }) {
+function PersonaCard({ color, Icon, name, desc, need }: { color: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number; color?: string }>; name: string; desc: string; need: string }) {
   return (
     <div style={{
       background: 'var(--color-card)', border: '1px solid var(--color-border)',
       borderRadius: 10, padding: 24, position: 'relative', overflow: 'hidden',
     }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: color }} />
-      <div style={{ fontSize: '1.8rem', marginBottom: 12 }}>{emoji}</div>
+      <div style={{ marginBottom: 12 }}><Icon size={28} strokeWidth={2} color={color} /></div>
       <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.85rem', color, marginBottom: 8 }}>{name}</div>
       <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.65 }}>{desc}</div>
       <div style={{ fontSize: '0.68rem', color: 'var(--color-text)', borderLeft: `2px solid ${color}`, paddingLeft: 10, lineHeight: 1.6, marginTop: 10, fontStyle: 'italic' }}>
@@ -124,7 +128,6 @@ function PersonaCard({ color, emoji, name, desc, need }: { color: string; emoji:
 function Slide1() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
-      <div style={{ position: 'absolute', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(255,107,53,0.12) 0%, transparent 70%)', top: '50%', left: '30%', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }} />
       <Eyebrow>◆ Wyzlee — Produit SEO-GEO</Eyebrow>
       <h1 style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', fontSize: 'clamp(2.8rem, 8vw, 7rem)', marginBottom: 20 }}>
         <span style={{ color: IND }}>SEO</span><span style={{ color: VIO }}>-GEO</span><br />
@@ -163,7 +166,7 @@ function Slide2() {
       <Lead>Le marché a basculé. Les outils SEO classiques n&apos;ont pas suivi.</Lead>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' as const, marginTop: 32 }}>
         <StatBlock color={ORG} value="40 %" label="des requêtes d'information démarrent sur une IA, pas sur Google" />
-        <StatBlock color={PUR} value="3,6×" label="plus de crawls GPTBot vs Googlebot sur les sites analysés" />
+        <StatBlock color={CYN} value="3,6×" label="plus de crawls GPTBot vs Googlebot sur les sites analysés" />
         <StatBlock color={AMB} value="76 %" label="des citations IA portent sur des contenus de moins de 30 jours" />
         <StatBlock color={PNK} value="3–6m" label="demi-vie d'une citation IA — plus courte qu'en SEO classique" />
       </div>
@@ -196,14 +199,14 @@ function Slide4() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10, marginTop: 24, maxWidth: 720 }}>
         <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 28, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: IND }} />
-          <div style={{ fontSize: '1.6rem', marginBottom: 14 }}>🔍</div>
+          <div style={{ marginBottom: 14 }}><Search size={26} strokeWidth={2} color={IND} /></div>
           <div style={{ fontSize: '0.62rem', color: IND, textTransform: 'uppercase' as const, letterSpacing: '0.15em', marginBottom: 6 }}>SEO — Visibilité Moteurs</div>
           <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text)', marginBottom: 7 }}>Google, Bing, DuckDuckGo</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.65 }}>Fondations, données structurées, performance, contenus, autorité de domaine.</div>
         </div>
         <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 28, position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: VIO }} />
-          <div style={{ fontSize: '1.6rem', marginBottom: 14 }}>🤖</div>
+          <div style={{ marginBottom: 14 }}><Bot size={26} strokeWidth={2} color={VIO} /></div>
           <div style={{ fontSize: '0.62rem', color: VIO, textTransform: 'uppercase' as const, letterSpacing: '0.15em', marginBottom: 6 }}>GEO — Visibilité IA</div>
           <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text)', marginBottom: 7 }}>ChatGPT, Perplexity, Claude…</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.65 }}>Signaux de citation, balisage IA, entités reconnues, fraîcheur des contenus. La nouvelle frontière.</div>
@@ -218,7 +221,7 @@ function Slide5() {
   const phases = [
     { n: '01', name: 'Fondations techniques', pts: '12 pts', sub: 'URLs, HTTPS, robots.txt, sitemap, redirections', color: IND },
     { n: '02', name: 'Données structurées', pts: '15 pts', sub: 'Schema.org, JSON-LD, FAQ, Articles, Produits', color: VIO },
-    { n: '03', name: 'Visibilité IA (GEO) ★', pts: '18 pts', sub: 'Tests prompts ChatGPT/Perplexity, llms.txt, citations IA', color: PUR },
+    { n: '03', name: 'Visibilité IA (GEO) ★', pts: '18 pts', sub: 'Tests prompts ChatGPT/Perplexity, llms.txt, citations IA', color: CYN },
     { n: '04', name: 'Entités & notoriété', pts: '10 pts', sub: 'Knowledge Graph, Wikidata, mentions tierces', color: CYN },
     { n: '05', name: 'E-E-A-T', pts: '10 pts', sub: 'Expertise, Autorité, Confiance — +132 % visibilité IA si présent', color: GRN },
     { n: '06', name: 'Fraîcheur', pts: '8 pts', sub: '76 % des citations IA = contenus < 30 jours', color: AMB },
@@ -226,7 +229,7 @@ function Slide5() {
     { n: '08', name: 'Performance web', pts: '8 pts', sub: 'Core Web Vitals, INP, LCP, CLS', color: SKY },
     { n: '09', name: 'Couverture thématique', pts: '6 pts', sub: 'Pillar pages, clusters de sujets, maillage interne', color: EME },
     { n: '10', name: 'Erreurs communes', pts: '5 pts', sub: 'Cannibalisation, contenu dupliqué, thin content', color: PNK },
-    { n: '11', name: 'Synthèse', pts: 'Plan d\'action', sub: '5 recommandations priorisées bénéfice / effort', color: '#8b5cf6' },
+    { n: '11', name: 'Synthèse', pts: 'Plan d\'action', sub: '5 recommandations priorisées bénéfice / effort', color: AMB },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '36px clamp(20px, 6vw, 80px) 24px', overflowY: 'auto', paddingBottom: 100 }}>
@@ -241,11 +244,11 @@ function Slide5() {
 
 // ─── SLIDE 6 : GEO EN DÉTAIL ──────────────────────────────────────────────────
 function Slide6({ isMobile }: { isMobile: boolean }) {
-  const items = [
-    { icon: '🤖', title: 'Tests de prompts réels', desc: 'On demande à ChatGPT, Perplexity, Claude et Gemini de répondre aux requêtes de votre domaine. Apparaissez-vous dans les réponses ?' },
-    { icon: '📄', title: 'Fichier llms.txt', desc: "L'équivalent du robots.txt pour les IA. Présent ? Correctement configuré ? Les IA savent-elles quoi prendre de votre site ?" },
-    { icon: '🔗', title: 'Analyse des citations', desc: 'Votre marque est-elle citée par d\'autres sources que les IA utilisent pour construire leurs réponses ? Wikidata, Wikipedia, presse ?' },
-    { icon: '⏰', title: 'Fraîcheur des signaux', desc: 'Les IA privilégient les sources récentes. Vos dernières publications ont-elles moins de 30 jours ?' },
+  const items: { Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; title: string; desc: string }[] = [
+    { Icon: Bot, title: 'Tests de prompts réels', desc: 'On demande à ChatGPT, Perplexity, Claude et Gemini de répondre aux requêtes de votre domaine. Apparaissez-vous dans les réponses ?' },
+    { Icon: FileText, title: 'Fichier llms.txt', desc: "L'équivalent du robots.txt pour les IA. Présent ? Correctement configuré ? Les IA savent-elles quoi prendre de votre site ?" },
+    { Icon: LinkIcon, title: 'Analyse des citations', desc: 'Votre marque est-elle citée par d\'autres sources que les IA utilisent pour construire leurs réponses ? Wikidata, Wikipedia, presse ?' },
+    { Icon: Clock, title: 'Fraîcheur des signaux', desc: 'Les IA privilégient les sources récentes. Vos dernières publications ont-elles moins de 30 jours ?' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
@@ -258,9 +261,9 @@ function Slide6({ isMobile }: { isMobile: boolean }) {
         <div style={{ flex: 1, width: '100%' }}>
           <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, fontSize: isMobile ? '1.4rem' : '2rem', color: VIO, marginBottom: 16, lineHeight: 1.1 }}>Visibilité IA</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {items.map(({ icon, title, desc }) => (
-              <div key={title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 16px', background: 'rgba(229,90,34,0.05)', border: '1px solid rgba(229,90,34,0.15)', borderRadius: 6, fontSize: '0.72rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
-                <span style={{ fontSize: '1rem', flexShrink: 0 }}>{icon}</span>
+            {items.map(({ Icon, title, desc }) => (
+              <div key={title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 16px', background: 'color-mix(in srgb, var(--color-accent2) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--color-accent2) 15%, transparent)', borderRadius: 6, fontSize: '0.72rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
+                <span style={{ flexShrink: 0, marginTop: 1 }}><Icon size={15} strokeWidth={2} /></span>
                 <div><strong style={{ color: 'var(--color-text)' }}>{title}</strong> — {desc}</div>
               </div>
             ))}
@@ -273,19 +276,19 @@ function Slide6({ isMobile }: { isMobile: boolean }) {
 
 // ─── SLIDE 7 : LE RAPPORT ─────────────────────────────────────────────────────
 function Slide7() {
-  const features = [
-    { icon: '🌐', title: 'Lien partageable', desc: 'URL unique tokenisée. Le client clique, il voit.' },
-    { icon: '📄', title: 'Export PDF', desc: 'Qualité impression, idéal pour réunions client.' },
-    { icon: '🏭', title: 'White-label natif', desc: 'Votre logo. Zéro mention SEO-GEO.' },
-    { icon: '🇫🇷', title: 'Français, sans jargon', desc: 'Compris par un décideur non-technique.' },
-    { icon: '🎯', title: 'Plan d\'action priorisé', desc: 'Les 5 actions les plus impactantes. Bénéfice / effort.' },
+  const features: { Icon: React.ComponentType<{ size?: number; strokeWidth?: number }> | null; emoji?: string; title: string; desc: string }[] = [
+    { Icon: Globe, title: 'Lien partageable', desc: 'URL unique tokenisée. Le client clique, il voit.' },
+    { Icon: FileText, title: 'Export PDF', desc: 'Qualité impression, idéal pour réunions client.' },
+    { Icon: Building2, title: 'White-label natif', desc: 'Votre logo. Zéro mention SEO-GEO.' },
+    { Icon: null, emoji: '🇫🇷', title: 'Français, sans jargon', desc: 'Compris par un décideur non-technique.' },
+    { Icon: Target, title: 'Plan d\'action priorisé', desc: 'Les 5 actions les plus impactantes. Bénéfice / effort.' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
       <Eyebrow>06 — Le livrable</Eyebrow>
       <Heading>Un rapport client-ready.<br />En moins de 10 minutes.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 20, marginTop: 8 }}>
-        <div style={{ background: 'linear-gradient(135deg, rgba(255,107,53,0.12), rgba(229,90,34,0.05))', border: `1px solid rgba(255,107,53,0.3)`, borderRadius: 12, padding: 32, display: 'flex', flexDirection: 'column', gap: 16, justifyContent: 'center' }}>
+        <div style={{ background: 'color-mix(in srgb, var(--color-accent) 6%, var(--color-card))', border: `1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)`, borderRadius: 12, padding: 32, display: 'flex', flexDirection: 'column', gap: 16, justifyContent: 'center' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, fontSize: '5rem', color: IND, lineHeight: 1 }}>74</div>
             <div style={{ fontSize: '0.65rem', color: 'var(--color-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.15em' }}>Score SEO-GEO / 100</div>
@@ -294,7 +297,7 @@ function Slide7() {
             {[
               { label: '01 Fondations techniques', score: '10/12', color: GRN },
               { label: '03 Visibilité IA (GEO) ★', score: '6/18', color: PNK },
-              { label: '11 Synthèse', score: '5 actions', color: '#8b5cf6' },
+              { label: '11 Synthèse', score: '5 actions', color: AMB },
             ].map(({ label, score, color }) => (
               <div key={label} style={{ fontSize: '0.7rem', color: 'var(--color-muted)', display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--color-border)' }}>
                 <span>{label}</span><span style={{ color }}>{score}</span>
@@ -303,9 +306,11 @@ function Slide7() {
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {features.map(({ icon, title, desc }) => (
+          {features.map(({ Icon, emoji, title, desc }) => (
             <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.72rem', color: 'var(--color-muted)', padding: '10px 14px', background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 7 }}>
-              <span style={{ fontSize: '1.1rem', width: 28, textAlign: 'center' as const, flexShrink: 0 }}>{icon}</span>
+              <span style={{ width: 24, textAlign: 'center' as const, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {Icon ? <Icon size={16} strokeWidth={2} /> : <span style={{ fontSize: '1rem' }}>{emoji}</span>}
+              </span>
               <div><strong style={{ color: 'var(--color-text)' }}>{title}</strong><br /><span style={{ fontSize: '0.65rem' }}>{desc}</span></div>
             </div>
           ))}
@@ -324,17 +329,17 @@ function Slide8() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20, marginTop: 16 }}>
         {[
           {
-            color: IND, icon: '🌍', name: 'URL Live', tag: 'V1 — Disponible', tagStyle: { background: 'rgba(57,211,83,0.1)', border: '1px solid rgba(57,211,83,0.25)', color: GRN },
+            color: IND, Icon: Globe, name: 'URL Live', tag: 'V1 — Disponible', tagStyle: { background: 'rgba(57,211,83,0.1)', border: '1px solid rgba(57,211,83,0.25)', color: GRN },
             desc: "Entrez l'URL d'un site en production. L'audit crawle le site en temps réel, analyse les contenus visibles, les performances, les signaux IA.\n\nIdéal pour les audits clients existants et les suivis trimestriels.",
           },
           {
-            color: VIO, icon: '📦', name: 'Code source', tag: 'V2 — Prochainement', tagStyle: { background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)', color: AMB },
+            color: VIO, Icon: Package, name: 'Code source', tag: 'V2 — Prochainement', tagStyle: { background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)', color: AMB },
             desc: "Uploadez un ZIP ou connectez un repo GitHub. L'audit analyse le code avant que le site soit en ligne — audit pre-launch.\n\nIdéal pour les studios dev qui livrent un site optimisé dès le départ.",
           },
-        ].map(({ color, icon, name, tag, tagStyle, desc }) => (
+        ].map(({ color, Icon, name, tag, tagStyle, desc }) => (
           <div key={name} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 28, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: color }} />
-            <div style={{ fontSize: '2rem', marginBottom: 14 }}>{icon}</div>
+            <div style={{ marginBottom: 14 }}><Icon size={28} strokeWidth={2} color={color} /></div>
             <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 800, fontSize: '1.1rem', color, marginBottom: 10 }}>{name}</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--color-muted)', lineHeight: 1.7, marginBottom: 14, whiteSpace: 'pre-line' as const }}>{desc}</div>
             <span style={{ display: 'inline-block', fontSize: '0.62rem', padding: '2px 9px', borderRadius: 3, ...tagStyle }}>{tag}</span>
@@ -352,9 +357,9 @@ function Slide9() {
       <Eyebrow>08 — Pour qui ?</Eyebrow>
       <Heading>3 personas.<br />Un même outil.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 14, marginTop: 8 }}>
-        <PersonaCard color={IND} emoji="🏢" name="Agence SEO" desc="5–30 personnes. Veut ajouter une offre GEO à son retainer sans recruter un expert IA." need="«\u00a0Mes clients demandent pourquoi ils n'apparaissent pas dans ChatGPT.\u00a0»" />
-        <PersonaCard color={VIO} emoji="👔" name="Dir. marketing B2B" desc="Son trafic organique stagne. Veut comprendre pourquoi ses concurrents apparaissent dans les IA." need="«\u00a0Mon site est bien ranké sur Google mais invisible sur Perplexity.\u00a0»" />
-        <PersonaCard color={CYN} emoji="💻" name="Studio dev / Freelance" desc="Développe des sites clients. Veut livrer un produit optimisé dès le départ." need="«\u00a0Le rapport d'audit est devenu un argument de vente différenciant.\u00a0»" />
+        <PersonaCard color={IND} Icon={Building2} name="Agence SEO" desc="5–30 personnes. Veut ajouter une offre GEO à son retainer sans recruter un expert IA." need="«\u00a0Mes clients demandent pourquoi ils n'apparaissent pas dans ChatGPT.\u00a0»" />
+        <PersonaCard color={VIO} Icon={Briefcase} name="Dir. marketing B2B" desc="Son trafic organique stagne. Veut comprendre pourquoi ses concurrents apparaissent dans les IA." need="«\u00a0Mon site est bien ranké sur Google mais invisible sur Perplexity.\u00a0»" />
+        <PersonaCard color={CYN} Icon={Monitor} name="Studio dev / Freelance" desc="Développe des sites clients. Veut livrer un produit optimisé dès le départ." need="«\u00a0Le rapport d'audit est devenu un argument de vente différenciant.\u00a0»" />
       </div>
     </div>
   )
@@ -378,10 +383,10 @@ function Slide10({ isMobile }: { isMobile: boolean }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {rows.map(r => (
             <div key={r.name} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '16px 18px', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: PUR }} />
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: CYN }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, color: PUR, fontSize: '0.85rem' }}>{r.name}</div>
+                  <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, color: CYN, fontSize: '0.85rem' }}>{r.name}</div>
                   {r.sub && <div style={{ fontSize: '0.62rem', color: 'var(--color-muted)', marginTop: 2 }}>{r.sub}</div>}
                 </div>
                 <div style={{ textAlign: 'right' as const, flexShrink: 0, marginLeft: 12 }}>
@@ -390,7 +395,7 @@ function Slide10({ isMobile }: { isMobile: boolean }) {
                 </div>
               </div>
               <div style={{ fontSize: '0.68rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{r.livrable}</div>
-              <div style={{ fontSize: '0.62rem', color: IND, marginTop: 6 }}>⏱ {r.duree}</div>
+              <div style={{ fontSize: '0.62rem', color: IND, marginTop: 6 }}>{r.duree}</div>
             </div>
           ))}
         </div>
@@ -407,7 +412,7 @@ function Slide10({ isMobile }: { isMobile: boolean }) {
             {rows.map((r, i) => (
               <tr key={r.name}>
                 <td style={{ padding: '12px 14px', borderBottom: i < rows.length - 1 ? '1px solid var(--color-border)' : 'none', verticalAlign: 'top' as const }}>
-                  <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, color: PUR, fontSize: '0.8rem' }}>{r.name}</div>
+                  <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, color: CYN, fontSize: '0.8rem' }}>{r.name}</div>
                   {r.sub && <div style={{ fontSize: '0.62rem', color: 'var(--color-muted)' }}>{r.sub}</div>}
                 </td>
                 <td style={{ padding: '12px 14px', borderBottom: i < rows.length - 1 ? '1px solid var(--color-border)' : 'none', verticalAlign: 'top' as const }}>
@@ -463,7 +468,6 @@ function Slide11() {
 function Slide12({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
-      <div style={{ position: 'absolute', width: 700, height: 400, background: 'radial-gradient(ellipse, rgba(229,90,34,0.1) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }} />
       <Eyebrow>Prochaine étape</Eyebrow>
       <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, fontSize: 'clamp(2rem, 5vw, 4rem)', lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 20, color: 'var(--color-text)' }}>
         Prêt à lancer<br />
@@ -476,13 +480,13 @@ function Slide12({ isAuthenticated }: { isAuthenticated: boolean }) {
       </Lead>
       <div style={{ display: 'flex', gap: 16, marginTop: 28, flexWrap: 'wrap' as const, justifyContent: 'center' }}>
         {isAuthenticated ? (
-          <Link href="/dashboard/audits/new" style={{ background: `rgba(255,107,53,0.15)`, border: `1px solid rgba(255,107,53,0.4)`, borderRadius: 8, padding: '14px 28px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: IND, textDecoration: 'none' }}>
-            🏆 Lancer un audit URL
+          <Link href="/dashboard/audits/new" style={{ background: `color-mix(in srgb, var(--color-accent) 12%, transparent)`, border: `1px solid color-mix(in srgb, var(--color-accent) 35%, transparent)`, borderRadius: 8, padding: '14px 28px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: IND, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Trophy size={15} strokeWidth={2} /> Lancer un audit URL
           </Link>
         ) : (
           <>
-            <Link href="/login" style={{ background: `linear-gradient(135deg, ${IND}, ${VIO})`, borderRadius: 8, padding: '14px 28px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: '#fff', textDecoration: 'none', boxShadow: '0 4px 20px rgba(255,107,53,0.35)' }}>
-              🚀 Créer un compte gratuit
+            <Link href="/login" style={{ background: IND, borderRadius: 8, padding: '14px 28px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: '#fff', textDecoration: 'none', boxShadow: '0 4px 20px rgba(255,107,44,0.35)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Rocket size={15} strokeWidth={2} /> Créer un compte gratuit
             </Link>
             <Link href="/login" style={{ background: `rgba(229,90,34,0.1)`, border: `1px solid rgba(229,90,34,0.3)`, borderRadius: 8, padding: '14px 24px', fontFamily: 'var(--font-display), sans-serif', fontWeight: 700, fontSize: '0.88rem', color: VIO, textDecoration: 'none' }}>
               Se connecter →
@@ -627,17 +631,6 @@ export function GuideDeck() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Grille de fond subtile */}
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0,
-        backgroundImage: `
-          linear-gradient(color-mix(in srgb, ${IND} 2.5%, transparent) 1px, transparent 1px),
-          linear-gradient(90deg, color-mix(in srgb, ${IND} 2.5%, transparent) 1px, transparent 1px)
-        `,
-        backgroundSize: '48px 48px',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
 
       {/* Bandeau CTA (non-connectés) */}
       {showCTA && (
@@ -645,7 +638,7 @@ export function GuideDeck() {
           ref={ctaBannerRef}
           style={{
             position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
-            background: `linear-gradient(90deg, ${IND}, ${VIO})`,
+            background: IND,
             color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             gap: isMobile ? 10 : 16,

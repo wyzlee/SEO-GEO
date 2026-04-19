@@ -30,8 +30,8 @@ export interface GeneratedReport {
 
 const TEMPLATE_VERSION = 'v2.0'
 
-const DEFAULT_PRIMARY = '#4F46E5'
-const DEFAULT_SECONDARY = '#7C3AED'
+const DEFAULT_PRIMARY = '#ff6b2c'
+const DEFAULT_SECONDARY = '#e55a22'
 
 function safeColor(input: string | null | undefined, fallback: string): string {
   if (!input) return fallback
@@ -150,7 +150,7 @@ function buildStyles(branding: ReportBranding | null | undefined): string {
 
   /* ── Cover ── */
   .cover {
-    background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%);
+    background: #1a1d23;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     padding: 56px 60px 48px;

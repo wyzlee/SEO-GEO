@@ -64,7 +64,7 @@ export default function InviteAcceptPage() {
             height="24"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="var(--color-accent-primary, #4F46E5)"
+            stroke="var(--color-accent, #ff6b2c)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"

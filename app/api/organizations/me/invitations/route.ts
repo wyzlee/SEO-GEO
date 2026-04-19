@@ -163,11 +163,11 @@ export async function POST(request: Request) {
 <html lang="fr">
 <head><meta charset="UTF-8"></head>
 <body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-  <h2 style="color:#4F46E5">Invitation à rejoindre ${orgName}</h2>
+  <h2 style="color:#ff6b2c">Invitation à rejoindre ${orgName}</h2>
   <p>Bonjour,</p>
   <p><strong>${inviterName}</strong> vous invite à rejoindre <strong>${orgName}</strong> sur SEO-GEO en tant que <strong>${role}</strong>.</p>
   <p style="margin:32px 0">
-    <a href="${acceptUrl}" style="background:#4F46E5;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">
+    <a href="${acceptUrl}" style="background:#ff6b2c;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">
       Accepter l'invitation
     </a>
   </p>

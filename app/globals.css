@@ -13,9 +13,9 @@
   --font-family-mono: 'Fira Code', 'JetBrains Mono', monospace;
   --font-family-display: 'Cabinet Grotesk', 'Inter', sans-serif;
 
-  /* Accents (constant across light/dark) */
-  --color-accent-indigo: #ff6b35;
-  --color-accent-violet: #e55a22;
+  /* Accents SEO-GEO (orange signature #ff6b2c) */
+  --color-accent-primary: #ff6b2c;
+  --color-accent-secondary: #e55a22;
 
   /* Status colors */
   --color-green: #10b981;
@@ -27,23 +27,23 @@
 
 :root {
   /* Light semantic tokens — source of truth: .claude/docs/ui-conventions.md */
-  --color-bg: #f4f6f9;
-  --color-bgAlt: #eef1f5;
+  --color-bg: #fafaf8;
+  --color-bgAlt: #f3f2ef;
   --color-surface: #ffffff;
   --color-card: #ffffff;
   --color-border: #dfe4ea;
   --color-text: #1a1e2c;
   --color-muted: #5c6a7e;
 
-  --color-accent: var(--color-accent-indigo);
-  --color-accent2: var(--color-accent-violet);
+  --color-accent: var(--color-accent-primary);
+  --color-accent2: var(--color-accent-secondary);
 
-  /* Button primary — orange électrique 2026 */
-  --color-btn-primary: #ff6b35;
+  /* Button primary — orange signature SEO-GEO */
+  --color-btn-primary: #ff6b2c;
   --color-btn-primary-fg: #ffffff;
-  --color-btn-primary-shadow: rgba(255, 107, 53, 0.35);
+  --color-btn-primary-shadow: rgba(255, 107, 44, 0.35);
 
-  --radius: 0.75rem;
+  --radius: 1rem;
 
   /* shadcn/ui compat (cheap to carry, consumers may expect them) */
   --background: var(--color-bg);
@@ -68,21 +68,21 @@
 }
 
 html.dark {
-  --color-bg: #080c10;
-  --color-bgAlt: #0d1117;
-  --color-surface: #0d1117;
-  --color-card: #111820;
+  --color-bg: #0b0c0e;
+  --color-bgAlt: #111417;
+  --color-surface: #131417;
+  --color-card: #171a1e;
   --color-border: #1c2535;
   --color-text: #e2eaf4;
   --color-muted: #8aa0b8;
 
-  --color-accent: #ff6b35;
+  --color-accent: #ff6b2c;
   --color-accent2: #e55a22;
 
   /* Button primary dark — orange légèrement atténué sur fond sombre */
-  --color-btn-primary: #ff6b35;
+  --color-btn-primary: #ff6b2c;
   --color-btn-primary-fg: #ffffff;
-  --color-btn-primary-shadow: rgba(255, 107, 53, 0.25);
+  --color-btn-primary-shadow: rgba(255, 107, 44, 0.25);
 
   --background: var(--color-bg);
   --foreground: var(--color-text);
@@ -209,7 +209,7 @@ html.dark {
   .input-modern:focus {
     outline: none;
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 107, 44, 0.15);
   }
 
   .card-premium {

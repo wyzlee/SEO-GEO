@@ -50,7 +50,7 @@ function QuotaBar({ used, limit }: { used: number; limit: number | null }) {
       ? 'var(--color-red)'
       : pct > 70
         ? 'var(--color-amber)'
-        : '#4F46E5'
+        : 'var(--color-accent, #ff6b2c)'
 
   return (
     <div className="space-y-2">
@@ -119,7 +119,7 @@ function DayBars({ auditsByDay }: { auditsByDay: { date: string; count: number }
             style={{
               flex: 1,
               height: `${heightPct}%`,
-              background: '#4F46E5',
+              background: 'var(--color-accent, #ff6b2c)',
               borderRadius: '3px 3px 0 0',
               opacity: 0.8,
               minWidth: 4,

@@ -395,9 +395,9 @@ function PlanBadge({ plan }: { plan: PlanKey }) {
       border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
     },
     agency: {
-      background: 'color-mix(in srgb, #7C3AED 12%, transparent)',
-      color: '#7C3AED',
-      border: '1px solid color-mix(in srgb, #7C3AED 30%, transparent)',
+      background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
+      color: 'var(--color-accent)',
+      border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
     },
   }
 
@@ -442,7 +442,7 @@ function PlanCard({
           ? 'color-mix(in srgb, var(--color-accent) 6%, var(--color-surface))'
           : 'var(--color-surface)',
         border: isCurrent
-          ? `2px solid ${isAgency ? '#7C3AED' : 'var(--color-accent)'}`
+          ? `2px solid ${isAgency ? 'var(--color-accent)' : 'var(--color-accent)'}`
           : '1px solid var(--color-border)',
       }}
     >
@@ -460,9 +460,9 @@ function PlanCard({
               className="text-[10px] px-2 py-0.5 rounded-full font-[family-name:var(--font-display)] font-semibold uppercase tracking-wide"
               style={{
                 background: isAgency
-                  ? 'color-mix(in srgb, #7C3AED 15%, transparent)'
+                  ? 'color-mix(in srgb, var(--color-accent) 15%, transparent)'
                   : 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
-                color: isAgency ? '#7C3AED' : 'var(--color-accent)',
+                color: isAgency ? 'var(--color-accent)' : 'var(--color-accent)',
               }}
             >
               Plan actuel
@@ -472,9 +472,9 @@ function PlanCard({
             <span
               className="text-[10px] px-2 py-0.5 rounded-full font-[family-name:var(--font-display)] font-semibold uppercase tracking-wide"
               style={{
-                background: 'color-mix(in srgb, #7C3AED 15%, transparent)',
-                color: '#7C3AED',
-                border: '1px solid color-mix(in srgb, #7C3AED 30%, transparent)',
+                background: 'color-mix(in srgb, var(--color-accent) 15%, transparent)',
+                color: 'var(--color-accent)',
+                border: '1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)',
               }}
             >
               Ultra-Premium
@@ -527,7 +527,7 @@ function PlanCard({
             style={{
               minHeight: 44,
               opacity: isLoading ? 0.6 : 1,
-              ...(isAgency ? { background: '#7C3AED' } : {}),
+              ...(isAgency ? { background: 'var(--color-accent)' } : {}),
             }}
           >
             {isLoading ? (

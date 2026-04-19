@@ -40,7 +40,7 @@ function shell({
       <tr>
         <td style="padding:24px 0 8px 0;">
           <a href="${esc(primaryAction.url)}"
-             style="display:inline-block;background:#4F46E5;color:#ffffff;text-decoration:none;
+             style="display:inline-block;background:#ff6b2c;color:#ffffff;text-decoration:none;
                     padding:12px 24px;border-radius:8px;font-weight:600;font-size:15px;">
             ${esc(primaryAction.label)}
           </a>
@@ -65,7 +65,7 @@ function shell({
         <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="background:#ffffff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.04);">
           <tr>
             <td style="padding:28px 32px 8px 32px;">
-              <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#4F46E5;font-weight:600;">
+              <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#ff6b2c;font-weight:600;">
                 SEO-GEO
               </div>
               <h1 style="margin:6px 0 0 0;font-size:22px;line-height:1.3;color:#1a1e2c;">
@@ -132,7 +132,7 @@ export function auditCompletedEmail(input: AuditCompletedEmailInput): {
       input.shareUrl
         ? `<p style="margin:0 0 12px 0;">
              Un lien public de partage est également disponible pour votre
-             client : <a href="${esc(input.shareUrl)}" style="color:#4F46E5;">${esc(input.shareUrl)}</a>
+             client : <a href="${esc(input.shareUrl)}" style="color:#ff6b2c;">${esc(input.shareUrl)}</a>
            </p>`
         : ''
     }

@@ -50,8 +50,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4f6f9' },
-    { media: '(prefers-color-scheme: dark)', color: '#080c10' },
+    { media: '(prefers-color-scheme: light)', color: '#fafaf8' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b0c0e' },
   ],
 }
 
@@ -76,7 +76,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" data-app="seogeo" suppressHydrationWarning>
       <body
         className={`${firaCode.variable} ${cabinetGrotesk.variable} antialiased`}
         suppressHydrationWarning
