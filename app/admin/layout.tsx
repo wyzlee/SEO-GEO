@@ -25,7 +25,10 @@ import {
   Menu,
   X,
   LogOut,
+  Sun,
+  Moon,
 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { apiJson } from '@/lib/api/fetch'
 
@@ -389,6 +392,11 @@ function AdminSidebar({
   const pathname = usePathname() ?? ''
   const allHrefs = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href))
   const sidebarW = collapsed ? 56 : 220
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  const isDark = mounted && resolvedTheme === 'dark'
+  const themeLabel = isDark ? 'Mode clair' : 'Mode sombre'
 
   useEffect(() => { onMobileClose() }, [pathname, onMobileClose])
 
@@ -578,6 +586,18 @@ function AdminSidebar({
             >
               <ChevronLeft size={16} aria-hidden="true" />
             </Link>
+            <button
+              type="button"
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              title={themeLabel}
+              aria-label={themeLabel}
+              className="flex items-center justify-center rounded-md transition-colors"
+              style={{ width: 36, height: 36, color: 'var(--color-muted)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--color-text)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)' }}
+            >
+              {mounted ? (isDark ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />) : <Moon size={16} className="opacity-0" />}
+            </button>
             <Link
               href="/auth/logout"
               title="Déconnexion"
@@ -603,7 +623,25 @@ function AdminSidebar({
                 {roleLabel}
               </div>
             </div>
-            <div className="px-3 pb-3">
+            <div className="px-3 pb-3 flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                aria-label={themeLabel}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-[12px] transition-colors min-h-[44px] w-full text-left"
+                style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-sans)' }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.color = 'var(--color-text)'
+                  ;(e.currentTarget as HTMLElement).style.background = 'color-mix(in srgb, var(--color-accent) 4%, transparent)'
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'
+                  ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+                }}
+              >
+                {mounted ? (isDark ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />) : <Moon size={14} className="opacity-0" />}
+                <span>{themeLabel}</span>
+              </button>
               <Link
                 href="/auth/logout"
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-[12px] transition-colors min-h-[44px]"
