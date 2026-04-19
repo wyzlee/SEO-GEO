@@ -12,6 +12,7 @@ import {
   useAdminToggleActive,
   useAdminChangeEmail,
 } from '@/lib/hooks/use-admin'
+import { useAdminContext } from '@/app/admin/layout'
 import {
   ShieldCheck,
   ShieldOff,
@@ -395,6 +396,7 @@ function UserActionsDropdown({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminUsersPage() {
+  const adminCtx = useAdminContext()
   const { data, isLoading } = useAdminUsers()
   const syncUsers = useAdminSyncUsers()
   const toggleSuperAdmin = useAdminToggleSuperAdmin()
@@ -433,9 +435,8 @@ export default function AdminUsersPage() {
     }
   }
 
-  // Heuristique : désactiver les actions sur les super-admins sans membership
-  function isSelf(user: { isSuperAdmin: boolean; memberships: unknown[] }): boolean {
-    return user.isSuperAdmin && user.memberships.length === 0
+  function isSelf(user: { id: string }): boolean {
+    return user.id === adminCtx.userId
   }
 
   return (

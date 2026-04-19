@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
 import { requireSuperAdmin } from '@/lib/auth/super-admin'
 import { AuthError } from '@/lib/auth/server'
-import { sendMagicLink } from '@/lib/auth/stack-auth-admin'
+import { sendMagicLink, StackAuthError } from '@/lib/auth/stack-auth-admin'
 import { logger } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
@@ -42,15 +42,19 @@ export async function POST(
   try {
     await sendMagicLink(email, redirectUrl)
   } catch (err) {
+    const isStackError = err instanceof StackAuthError
     logger.error('admin.magic_link_failed', {
       target_user_id: id,
       by: ctx.email,
       error: err instanceof Error ? err.message : String(err),
+      stack_status: isStackError ? err.status : undefined,
+      stack_body: isStackError ? err.responseBody : undefined,
     })
-    return NextResponse.json(
-      { error: "Échec d'envoi du magic link. Vérifier les logs Stack Auth." },
-      { status: 502 },
-    )
+    const httpStatus = isStackError && err.status >= 400 && err.status < 500 ? 422 : 502
+    const message = isStackError
+      ? `Échec d'envoi du magic link : ${err.responseBody}`
+      : "Échec d'envoi du magic link. Vérifier les logs Stack Auth."
+    return NextResponse.json({ error: message }, { status: httpStatus })
   }
 
   logger.info('admin.magic_link_sent', {

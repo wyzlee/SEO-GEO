@@ -23,6 +23,7 @@ import {
   X,
   BookOpen,
   ShieldCheck,
+  UserCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useOrganizations } from '@/lib/hooks/use-organizations'
@@ -57,6 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Compte',
     items: [
+      { href: '/dashboard/profile', label: 'Mon profil', icon: UserCircle },
       { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
       { href: '/guide', label: 'Guide produit', icon: BookOpen },
     ],
