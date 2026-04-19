@@ -427,6 +427,39 @@ export async function runStructuredDataPhase(
     }
   }
 
+  // --- WebApplication / SoftwareApplication (SaaS) ----------------------
+  const webApp =
+    hasType(validObjects, 'WebApplication') ||
+    hasType(validObjects, 'SoftwareApplication')
+
+  const looksLikeSaaS = (() => {
+    const allLinks = $('a[href]')
+      .toArray()
+      .map((el) => $(el).attr('href') ?? '')
+    const saasPathPattern = /\/(pricing|tarif[fs]?|plans?|features?|fonctionnalit|dashboard|signup|register|trial|essai)\b/i
+    const hasNavLink = allLinks.some((href) => saasPathPattern.test(href))
+    const bodySnippet = ($('body').text() ?? '').slice(0, 3000)
+    const hasSaasKeywords =
+      /\b(free trial|essai gratuit|abonnement|subscription|sign up|créer un compte|pricing)\b/i.test(
+        bodySnippet,
+      )
+    return hasNavLink || hasSaasKeywords
+  })()
+
+  if (looksLikeSaaS && !webApp) {
+    pushCheck({
+      severity: 'medium',
+      category: 'schema-webapp',
+      title: 'Site SaaS/app sans schema WebApplication',
+      description:
+        'Cette page présente des signaux d\'application web (pricing, features, trial) mais aucun schema `WebApplication` ou `SoftwareApplication` n\'est déclaré. Ce schema enrichit les résultats Google et booste les citations IA pour les requêtes logicielles.',
+      recommendation:
+        'Ajouter un JSON-LD `WebApplication` (ou `SoftwareApplication`) avec `name`, `applicationCategory`, `featureList` (≥ 10 features), `offers` (pricing), `screenshot`, `aggregateRating` si pertinent.',
+      pointsLost: 1,
+      effort: 'medium',
+    })
+  }
+
   // --- Product sur URL /product|/produit ----------------------------------
   const looksLikeProduct = /\/(product|produit|item|article|shop)\//i.test(finalUrl)
   const hasProductSchema =

@@ -347,6 +347,55 @@ export async function runEeatPhase(
     }
   }
 
+  // --- Trust : accessibilité basique (WCAG 2.2) --------------------------
+  // Signal Trust E-E-A-T : un site inaccessible fragilise sa crédibilité
+  // perçue par Google (QRG) et les moteurs IA.
+  const allImgs = $('img').toArray()
+  if (allImgs.length >= 3) {
+    const missingAlt = allImgs.filter((el) => {
+      const alt = $(el).attr('alt')
+      return alt === undefined || alt === null
+    })
+    if (missingAlt.length >= 3 || missingAlt.length / allImgs.length > 0.2) {
+      pushCheck({
+        severity: 'medium',
+        category: 'eeat-a11y-alt',
+        title: `Images sans attribut alt (${missingAlt.length}/${allImgs.length})`,
+        description:
+          'Les images sans `alt` violent WCAG 2.2 critère 1.1.1 et sont ignorées par les screen readers et les moteurs IA. Signal Trust E-E-A-T dégradé.',
+        recommendation:
+          'Ajouter un `alt` descriptif sur chaque image informative. Pour les images purement décoratives, utiliser `alt=""`.',
+        pointsLost: 0.5,
+        effort: 'quick',
+        metricValue: `${missingAlt.length}/${allImgs.length}`,
+      })
+    }
+  }
+
+  const hasSkipLink =
+    $('a[href="#main"], a[href="#main-content"], a[href="#contenu-principal"]')
+      .length > 0 ||
+    $('a')
+      .toArray()
+      .some((el) => {
+        const href = $(el).attr('href') ?? ''
+        const text = $(el).text().toLowerCase()
+        return href.startsWith('#') && /\b(skip|aller|contenu|main)\b/i.test(text)
+      })
+  if (!hasSkipLink) {
+    pushCheck({
+      severity: 'low',
+      category: 'eeat-a11y-skiplink',
+      title: 'Lien d\'évitement (skip link) absent',
+      description:
+        'Aucun lien vers `#main-content` n\'est détecté. Requis par WCAG 2.2 (critère 2.4.1) pour la navigation clavier — signal Trust E-E-A-T indirect.',
+      recommendation:
+        'Ajouter `<a href="#main-content" class="sr-only focus:not-sr-only">Aller au contenu</a>` en tout début de `<body>`.',
+      pointsLost: 0.5,
+      effort: 'quick',
+    })
+  }
+
   // --- Experience : dates visibles ---------------------------------------
   const hasTimeElement = $('time[datetime]').length > 0
   const hasArticleDates = objects.some((o) => o.datePublished || o.dateModified)

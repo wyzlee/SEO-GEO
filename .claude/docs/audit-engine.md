@@ -120,6 +120,7 @@ findings:
 - `FAQPage` : **flag jaune uniquement** (pas de déduction), note info "utile IA, déprécié SERP"
 - **Schema stacking** : ≥ 3 schemas dans `@graph` sur pages stratégiques (-1 si stacking absent sur homepage)
 - Validation JSON-LD syntaxique : parser valide, pas d'erreur (-2 si erreur parsing)
+- **WebApplication / SoftwareApplication** : détecté si site présente des signaux SaaS (pricing, trial, features) — (-1 si schéma absent)
 
 **Input type** : URL (parse `<script type="application/ld+json">`) ou code (parse JSX/template + extraire).
 
@@ -181,6 +182,9 @@ findings:
   - Mentions légales, coordonnées vérifiables (-0.5)
   - `datePublished` + `dateModified` visibles lecteur (-1 si absent sur blog)
   - Trust badges (ISO, SOC2, RGPD) si applicable SaaS (info, pas de déduction)
+- **Accessibilité WCAG 2.2** (Trust) :
+  - Images sans `alt` (-0.5 si > 20 % des images ou ≥ 3 sans alt)
+  - Skip link `#main-content` absent (-0.5 low)
 
 **Input type** : URL (HTML rendu) ou code (grep dates, components).
 
@@ -246,6 +250,7 @@ Si single-language (pas de hreflang, pas de `lang` multiple détecté) :
 ## Phase 9 — Topical Authority (6 pts)
 
 **Checks** :
+- **Crawl scope** : limité à 50 pages (URL mode) — finding info si ≥ 50 pages crawlées, indique que l'analyse topical est partielle sur les grands sites
 - **Pillar pages** détectées (pages 3 000-5 000 mots, coverage large d'un thème) :
   - -2 si aucune pillar sur un site qui le justifie (ex: SaaS avec blog)
 - **Cluster pages** linkées vers pillar :

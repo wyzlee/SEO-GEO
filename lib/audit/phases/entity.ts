@@ -4,9 +4,8 @@
  * Vérifie la cohérence de marque et les signaux d'entité qui permettent à
  * Google et aux moteurs IA de désambiguïser la marque.
  *
- * V1 URL mode — checks déterministes (single page). Le Wikidata lookup
- * (WebFetch) est prévu V1.5, tout comme le crawl des pages internes pour
- * l'entity linking.
+ * URL mode : Wikidata lookup live (API MediaWiki publique, timeout 5s),
+ * brand coherence, sameAs qualité, entity linking interne.
  */
 import * as cheerio from 'cheerio'
 import type { Finding, PhaseResult, CrawlSnapshot } from '../types'
@@ -137,7 +136,7 @@ export async function runEntityPhase(
     return []
   })()
 
-  if (org && sameAs.length > 0) {
+  if (org) {
     const hasWikidata = sameAs.some((url) => /wikidata\.org/i.test(url))
     const hasWikipedia = sameAs.some((url) => /wikipedia\.org/i.test(url))
 
@@ -173,7 +172,7 @@ export async function runEntityPhase(
         })
       }
     }
-    if (!hasWikipedia) {
+    if (sameAs.length > 0 && !hasWikipedia) {
       pushCheck({
         severity: 'low',
         category: 'entity-wikipedia',

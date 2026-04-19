@@ -303,7 +303,26 @@ export async function runTopicalPhase(
   }
 
   // --- Multi-page signals (V1.5 via subPages) ---------------------------
+  // Le crawl multi-page est plafonné à 50 pages. Sur les grands sites,
+  // la détection de pillar/cluster et d'orphelines est donc partielle.
   const subPages = snapshot.subPages ?? []
+
+  if (subPages.length >= 50) {
+    findings.push({
+      phaseKey: PHASE_KEY,
+      severity: 'info',
+      category: 'topical-crawl-scope',
+      title: `Analyse topical limitée à ${subPages.length} pages`,
+      description:
+        'Le crawl multi-page est plafonné à 50 pages. Pour les sites plus grands, les pillar, clusters et pages orphelines ne peuvent être détectés que sur cet échantillon — les résultats sont indicatifs.',
+      recommendation:
+        'Pour un audit topical complet sur un site large (> 50 pages), utiliser un outil de crawl dédié (Screaming Frog, Sitebulb) pour couvrir l\'ensemble du site.',
+      pointsLost: 0,
+      effort: 'quick',
+      locationUrl: finalUrl,
+    })
+  }
+
   if (subPages.length >= 5) {
     const origin = new URL(finalUrl).origin
 
