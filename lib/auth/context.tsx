@@ -96,12 +96,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.history.replaceState({}, '', cleanUrl)
     }
 
+    // Timeout de sécurité : si Stack Auth API ne répond pas dans les 12s,
+    // on force loading=false pour ne pas bloquer indéfiniment le dashboard.
+    const timer = setTimeout(() => {
+      if (!cancelled) setLoading(false)
+    }, 12_000)
+
     refreshUser().finally(() => {
+      clearTimeout(timer)
       if (!cancelled) setLoading(false)
     })
 
     return () => {
       cancelled = true
+      clearTimeout(timer)
     }
   }, [refreshUser])
 

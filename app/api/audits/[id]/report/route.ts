@@ -133,31 +133,38 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
-  let ctx
   try {
-    ctx = await authenticateAuto(request)
+    let ctx
+    try {
+      ctx = await authenticateAuto(request)
+    } catch (error) {
+      if (error instanceof AuthError) {
+        return NextResponse.json({ error: error.message }, { status: error.status })
+      }
+      throw error
+    }
+
+    // Confirm audit ownership first
+    const auditRows = await db
+      .select({ id: audits.id })
+      .from(audits)
+      .where(and(eq(audits.id, id), eq(audits.organizationId, ctx.organizationId)))
+      .limit(1)
+    if (!auditRows.length) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const rows = await db
+      .select()
+      .from(reports)
+      .where(eq(reports.auditId, id))
+      .orderBy(desc(reports.generatedAt))
+
+    return NextResponse.json({ reports: rows })
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status })
     }
-    throw error
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
-
-  // Confirm audit ownership first
-  const auditRows = await db
-    .select({ id: audits.id })
-    .from(audits)
-    .where(and(eq(audits.id, id), eq(audits.organizationId, ctx.organizationId)))
-    .limit(1)
-  if (!auditRows.length) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  }
-
-  const rows = await db
-    .select()
-    .from(reports)
-    .where(eq(reports.auditId, id))
-    .orderBy(desc(reports.generatedAt))
-
-  return NextResponse.json({ reports: rows })
 }

@@ -8,7 +8,12 @@ const JWKS_URL = `https://api.stack-auth.com/api/v1/projects/${process.env.NEXT_
 let jwks: ReturnType<typeof createRemoteJWKSet> | null = null
 
 function getJwks() {
-  if (!jwks) jwks = createRemoteJWKSet(new URL(JWKS_URL))
+  if (!jwks) {
+    jwks = createRemoteJWKSet(new URL(JWKS_URL), {
+      timeoutDuration: 8_000,
+      cooldownDuration: 15_000,
+    })
+  }
   return jwks
 }
 
