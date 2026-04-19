@@ -1,9 +1,9 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useRef, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Globe, Github, FileArchive, BookMarked } from 'lucide-react'
+import { Globe, Github, FileArchive, BookMarked, Pencil, Check, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/header'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
 import { ScoreBadge } from '@/components/audit/score-badge'
@@ -19,8 +19,112 @@ import {
   useAudit,
   useAuditReports,
   useGenerateReport,
+  useUpdateAudit,
 } from '@/lib/hooks/use-audits'
 import { authFetch } from '@/lib/api/fetch'
+
+function InlineField({
+  label,
+  value,
+  onSave,
+  placeholder,
+}: {
+  label: string
+  value: string | null
+  onSave: (val: string | null) => Promise<void>
+  placeholder: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value ?? '')
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const startEdit = () => {
+    setDraft(value ?? '')
+    setEditing(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  const cancel = () => setEditing(false)
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await onSave(draft.trim() || null)
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') save()
+    if (e.key === 'Escape') cancel()
+  }
+
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <span
+        className="text-xs font-medium shrink-0 font-[family-name:var(--font-display)]"
+        style={{ color: 'var(--color-muted)', minWidth: '7rem' }}
+      >
+        {label}
+      </span>
+      {editing ? (
+        <div className="flex items-center gap-1 flex-1 min-w-0">
+          <input
+            ref={inputRef}
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder}
+            disabled={saving}
+            className="input-modern text-sm py-1 flex-1 min-w-0"
+          />
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="p-1 rounded transition-colors"
+            style={{ color: 'var(--color-accent)' }}
+            aria-label="Enregistrer"
+          >
+            <Check size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={cancel}
+            disabled={saving}
+            className="p-1 rounded transition-colors"
+            style={{ color: 'var(--color-muted)' }}
+            aria-label="Annuler"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className="text-sm font-[family-name:var(--font-sans)] truncate"
+            style={{ color: value ? 'var(--color-text)' : 'var(--color-muted)' }}
+          >
+            {value || placeholder}
+          </span>
+          <button
+            type="button"
+            onClick={startEdit}
+            className="p-1 rounded opacity-50 hover:opacity-100 transition-opacity shrink-0"
+            style={{ color: 'var(--color-muted)' }}
+            aria-label={`Modifier ${label}`}
+          >
+            <Pencil size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const STATUS_LABEL: Record<string, string> = {
   queued: 'En file d\'attente',
@@ -38,6 +142,7 @@ export default function AuditDetailPage({
   const { data, isLoading, error } = useAudit(id)
   const reportsQuery = useAuditReports(id)
   const generateReport = useGenerateReport(id)
+  const updateAudit = useUpdateAudit(id)
   const lastReport = reportsQuery.data?.reports?.[0]
   const [auditView, setAuditView] = useState<AuditView>('marketing')
   const [isPdfDownloading, setIsPdfDownloading] = useState(false)
@@ -234,6 +339,36 @@ export default function AuditDetailPage({
                   : `Lancé le ${new Date(audit.createdAt).toLocaleString('fr-FR')}`}
             </p>
           </div>
+        </div>
+
+        {/* Informations éditables */}
+        <div
+          className="card-premium space-y-3"
+        >
+          <h2
+            className="text-xs uppercase tracking-wider font-[family-name:var(--font-display)]"
+            style={{ color: 'var(--color-muted)' }}
+          >
+            Informations
+          </h2>
+          <InlineField
+            label="Nom du client"
+            value={audit.clientName}
+            placeholder="Non renseigné"
+            onSave={async (val) => {
+              await updateAudit.mutateAsync({ clientName: val })
+              toast.success(val ? 'Nom du client mis à jour' : 'Nom du client effacé')
+            }}
+          />
+          <InlineField
+            label="Consultant"
+            value={audit.consultantName}
+            placeholder="Non renseigné"
+            onSave={async (val) => {
+              await updateAudit.mutateAsync({ consultantName: val })
+              toast.success(val ? 'Consultant mis à jour' : 'Consultant effacé')
+            }}
+          />
         </div>
 
         {/* Failure */}

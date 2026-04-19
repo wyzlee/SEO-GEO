@@ -38,6 +38,7 @@ export const users = pgTable('users', {
   avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  isSuperAdmin: boolean('is_super_admin').notNull().default(false),
 })
 
 export const memberships = pgTable(

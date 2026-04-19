@@ -21,7 +21,8 @@ export default function NewScheduledAuditPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     try {
-      await createSchedule.mutateAsync({ targetUrl, frequency, mode })
+      const normalizedUrl = /^https?:\/\//i.test(targetUrl.trim()) ? targetUrl.trim() : `https://${targetUrl.trim()}`
+      await createSchedule.mutateAsync({ targetUrl: normalizedUrl, frequency, mode })
       toast.success('Planification créée')
       router.push('/dashboard/audits/schedule')
     } catch (err) {
@@ -59,9 +60,9 @@ export default function NewScheduledAuditPage() {
             </label>
             <input
               id="target-url"
-              type="url"
+              type="text"
               required
-              placeholder="https://"
+              placeholder="example.com"
               value={targetUrl}
               onChange={(e) => setTargetUrl(e.target.value)}
               className="input-modern"

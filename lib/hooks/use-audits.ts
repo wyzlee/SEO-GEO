@@ -106,6 +106,28 @@ export function useCreateAudit() {
   })
 }
 
+export interface UpdateAuditInput {
+  clientName?: string | null
+  consultantName?: string | null
+}
+
+export function useUpdateAudit(id: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: UpdateAuditInput) =>
+      apiJson<{ audit: AuditRow }>(`/api/audits/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: (data) => {
+      qc.setQueryData(['audit', id], (old: AuditDetail | undefined) =>
+        old ? { ...old, audit: data.audit } : old,
+      )
+      qc.invalidateQueries({ queryKey: ['audits'] })
+    },
+  })
+}
+
 export function useDeleteAudit() {
   const qc = useQueryClient()
   return useMutation({

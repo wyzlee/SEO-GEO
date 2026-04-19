@@ -81,10 +81,11 @@ export default function NewAuditPage() {
         )
       }
 
+      const normalizedUrl = /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`
       const base = { clientName: clientName || undefined, mode: effectiveMode }
       const payload =
         inputMode === 'url'
-          ? { targetUrl: url, ...base }
+          ? { targetUrl: normalizedUrl, ...base }
           : inputMode === 'github'
             ? { githubRepo, ...base }
             : { uploadPath, ...base }
@@ -155,9 +156,9 @@ export default function NewAuditPage() {
               </label>
               <input
                 id="target-url"
-                type="url"
+                type="text"
                 required
-                placeholder="https://"
+                placeholder="example.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="input-modern"

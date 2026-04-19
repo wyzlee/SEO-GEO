@@ -22,10 +22,12 @@ import {
   Mail,
   X,
   BookOpen,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useOrganizations } from '@/lib/hooks/use-organizations'
 import { useUIStore } from '@/lib/stores/ui-store'
+import { useAdminMe } from '@/lib/hooks/use-admin'
 
 interface NavItem {
   href: string
@@ -72,6 +74,8 @@ export function Sidebar() {
   const { orgs, isLoading: orgsLoading, activeOrg, switchOrg } = useOrganizations()
   const mobileSidebarOpen = useUIStore((s) => s.mobileSidebarOpen)
   const closeMobileSidebar = useUIStore((s) => s.closeMobileSidebar)
+  const { data: adminMe } = useAdminMe()
+  const isSuperAdmin = adminMe?.isSuperAdmin ?? false
 
   useEffect(() => {
     setMounted(true)
@@ -447,6 +451,65 @@ export function Sidebar() {
             })}
           </div>
         ))}
+
+        {isSuperAdmin && (
+          <div className="py-3">
+            {!effectiveCollapsed ? (
+              <div className="px-5 pb-1.5">
+                <span
+                  className="text-[10px] font-[family-name:var(--font-display)] tracking-[0.18em] uppercase"
+                  style={{ color: 'var(--color-red)' }}
+                >
+                  Administration
+                </span>
+              </div>
+            ) : (
+              <div className="px-2 pb-1.5">
+                <div className="h-px mx-1" style={{ background: 'var(--color-border)' }} />
+              </div>
+            )}
+            <Link
+              href="/admin"
+              title={effectiveCollapsed ? 'Admin' : undefined}
+              aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
+              className={cn(
+                'flex items-center transition-all duration-150 min-h-11 md:min-h-0',
+                effectiveCollapsed
+                  ? 'justify-center px-2 py-2 mx-1 rounded-md'
+                  : 'gap-2 px-5 py-2 md:py-[7px] text-[14px] md:text-[13px] border-l-2',
+              )}
+              style={
+                effectiveCollapsed
+                  ? {
+                      background: pathname.startsWith('/admin')
+                        ? 'color-mix(in srgb, var(--color-red) 8%, transparent)'
+                        : 'transparent',
+                      color: pathname.startsWith('/admin') ? 'var(--color-red)' : 'var(--color-muted)',
+                    }
+                  : {
+                      borderLeftColor: pathname.startsWith('/admin') ? 'var(--color-red)' : 'transparent',
+                      background: pathname.startsWith('/admin')
+                        ? 'color-mix(in srgb, var(--color-red) 8%, transparent)'
+                        : 'transparent',
+                      color: pathname.startsWith('/admin') ? 'var(--color-red)' : 'var(--color-muted)',
+                    }
+              }
+            >
+              <ShieldCheck
+                className={cn('h-4 w-4 shrink-0', pathname.startsWith('/admin') ? 'opacity-100' : 'opacity-60')}
+              />
+              {!effectiveCollapsed && (
+                <>
+                  <span
+                    className="w-[5px] h-[5px] rounded-full shrink-0"
+                    style={{ background: 'currentColor', opacity: pathname.startsWith('/admin') ? 1 : 0.4 }}
+                  />
+                  <span className="tracking-[0.02em]">Admin</span>
+                </>
+              )}
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Footer */}
