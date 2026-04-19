@@ -17,6 +17,8 @@ export const organizations = pgTable('organizations', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   slug: text('slug').unique().notNull(),
+  description: text('description'),
+  logoUrl: text('logo_url'),
   branding: jsonb('branding'),
   plan: text('plan').notNull().default('discovery'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -36,6 +38,7 @@ export const users = pgTable('users', {
   email: text('email').unique().notNull(),
   displayName: text('display_name'),
   avatarUrl: text('avatar_url'),
+  isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   isSuperAdmin: boolean('is_super_admin').notNull().default(false),
@@ -291,6 +294,32 @@ export const invitations = pgTable(
 )
 
 // ---------------------------------------------------------------------------
+// Org admin grants — cross-org admin access (user d'une org avec accès admin sur une autre)
+// ---------------------------------------------------------------------------
+
+export const orgAdminGrants = pgTable(
+  'org_admin_grants',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    orgId: uuid('org_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    grantedBy: uuid('granted_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    uniq: uniqueIndex('org_admin_grants_user_org_uniq').on(t.userId, t.orgId),
+    idxUser: index('org_admin_grants_user_idx').on(t.userId),
+    idxOrg: index('org_admin_grants_org_idx').on(t.orgId),
+  }),
+)
+
+// ---------------------------------------------------------------------------
 // Benchmarks — comparaison multi-URL au sein d'une organisation
 // ---------------------------------------------------------------------------
 
@@ -391,3 +420,5 @@ export type CitationCheck = typeof citationChecks.$inferSelect
 export type NewCitationCheck = typeof citationChecks.$inferInsert
 export type ContentBrief = typeof contentBriefs.$inferSelect
 export type NewContentBrief = typeof contentBriefs.$inferInsert
+export type OrgAdminGrant = typeof orgAdminGrants.$inferSelect
+export type NewOrgAdminGrant = typeof orgAdminGrants.$inferInsert

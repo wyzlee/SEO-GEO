@@ -14,6 +14,9 @@ const patchBody = z
   .object({
     plan: z.enum(['discovery', 'studio', 'agency']).optional(),
     name: z.string().min(2).max(80).optional(),
+    slug: z.string().min(2).max(80).regex(/^[a-z0-9-]+$/, 'Slug: lettres minuscules, chiffres et tirets uniquement').optional(),
+    description: z.string().max(500).nullable().optional(),
+    logoUrl: z.string().url('URL invalide').nullable().optional(),
     auditUsage: z.number().int().min(0).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
@@ -46,6 +49,8 @@ export async function GET(
       stripeCustomerId: organizations.stripeCustomerId,
       stripeSubscriptionId: organizations.stripeSubscriptionId,
       stripePriceId: organizations.stripePriceId,
+      description: organizations.description,
+      logoUrl: organizations.logoUrl,
       branding: organizations.branding,
       customDomain: organizations.customDomain,
       createdAt: organizations.createdAt,
@@ -149,6 +154,20 @@ export async function PATCH(
   }
   if (parsed.data.plan !== undefined) updates.plan = parsed.data.plan
   if (parsed.data.name !== undefined) updates.name = parsed.data.name
+  if (parsed.data.slug !== undefined) {
+    // Slug uniqueness check
+    const slugConflict = await db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, parsed.data.slug))
+      .limit(1)
+    if (slugConflict.length && slugConflict[0].id !== id) {
+      return NextResponse.json({ error: 'Ce slug est déjà utilisé.' }, { status: 409 })
+    }
+    updates.slug = parsed.data.slug
+  }
+  if (parsed.data.description !== undefined) updates.description = parsed.data.description
+  if (parsed.data.logoUrl !== undefined) updates.logoUrl = parsed.data.logoUrl
   if (parsed.data.auditUsage !== undefined) updates.auditUsage = parsed.data.auditUsage
 
   const updated = await db

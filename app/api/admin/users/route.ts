@@ -24,6 +24,7 @@ export async function GET(request: Request) {
       email: users.email,
       displayName: users.displayName,
       isSuperAdmin: users.isSuperAdmin,
+      isActive: users.isActive,
       createdAt: users.createdAt,
     })
     .from(users)

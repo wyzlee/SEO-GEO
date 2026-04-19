@@ -18,6 +18,7 @@ import {
   UsersRound,
   ClipboardList,
   CreditCard,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -105,6 +106,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/admin/users', label: 'Utilisateurs', icon: UsersRound },
       { href: '/admin/audits', label: 'Tous les audits', icon: ClipboardList },
       { href: '/admin/plans', label: 'Plans tarifaires', icon: CreditCard },
+      { href: '/admin/org-grants', label: 'Accès cross-org', icon: ShieldCheck },
     ],
   },
 ]

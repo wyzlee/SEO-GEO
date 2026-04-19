@@ -67,8 +67,21 @@ export interface AdminUserRow {
   email: string
   displayName: string | null
   isSuperAdmin: boolean
+  isActive: boolean
   createdAt: string
   memberships: Array<{ organizationId: string; organizationName: string; role: string }>
+}
+
+export interface AdminOrgGrant {
+  id: string
+  userId: string
+  userEmail: string
+  userDisplayName: string | null
+  orgId: string
+  orgName: string
+  grantedBy: string
+  grantedByEmail: string
+  createdAt: string
 }
 
 export function useAdminUsers() {
@@ -198,6 +211,9 @@ export interface AdminOrgDetail {
     id: string
     name: string
     slug: string
+    description: string | null
+    logoUrl: string | null
+    branding: { theme?: { primary?: string; accent?: string; background?: string } } | null
     plan: string
     auditUsage: number
     subscriptionStatus: string | null
@@ -248,7 +264,14 @@ export function useAdminOrgDetail(id: string) {
 export function useAdminUpdateOrg(id: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { plan?: string; name?: string; auditUsage?: number }) =>
+    mutationFn: (body: {
+      plan?: string
+      name?: string
+      slug?: string
+      description?: string | null
+      logoUrl?: string | null
+      auditUsage?: number
+    }) =>
       apiJson<{ organization: AdminOrgDetail['organization'] }>(`/api/admin/organizations/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
@@ -392,6 +415,100 @@ export function useOrgRemoveMember(orgId: string | null) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'org', orgId, 'members'] })
       qc.invalidateQueries({ queryKey: ['admin', 'organizations'] })
+    },
+  })
+}
+
+// ─── User action mutations ────────────────────────────────────────────────────
+
+export function useAdminSendMagicLink() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiJson<{ sent: boolean }>(`/api/admin/users/${id}/magic-link`, { method: 'POST' }),
+  })
+}
+
+export function useAdminResetPassword() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiJson<{ sent: boolean }>(`/api/admin/users/${id}/reset-password`, { method: 'POST' }),
+  })
+}
+
+export function useAdminToggleActive() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      apiJson<{ user: AdminUserRow }>(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+  })
+}
+
+export function useAdminChangeEmail() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, email }: { id: string; email: string }) =>
+      apiJson<{ user: AdminUserRow }>(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ email }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+  })
+}
+
+// ─── Org grants hooks ─────────────────────────────────────────────────────────
+
+export function useAdminOrgGrants() {
+  return useQuery({
+    queryKey: ['admin', 'org-grants'],
+    queryFn: () => apiJson<{ grants: AdminOrgGrant[] }>('/api/admin/org-grants'),
+  })
+}
+
+export function useAdminGrantOrgAccess() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, orgId }: { userId: string; orgId: string }) =>
+      apiJson<{ grant: AdminOrgGrant }>('/api/admin/org-grants', {
+        method: 'POST',
+        body: JSON.stringify({ userId, orgId }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'org-grants'] })
+    },
+  })
+}
+
+export function useAdminRevokeOrgAccess() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiJson<{ revoked: boolean }>(`/api/admin/org-grants/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'org-grants'] })
+    },
+  })
+}
+
+// ─── Org theme hook ───────────────────────────────────────────────────────────
+
+export function useAdminUpdateOrgTheme(orgId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (theme: { primary?: string; accent?: string; background?: string }) =>
+      apiJson<{ organization: AdminOrgDetail['organization'] }>(
+        `/api/admin/organizations/${orgId}/theme`,
+        { method: 'POST', body: JSON.stringify(theme) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'org', orgId] })
     },
   })
 }
