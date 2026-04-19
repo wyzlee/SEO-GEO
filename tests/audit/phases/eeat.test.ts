@@ -15,6 +15,7 @@ function snapshot(partial: Partial<CrawlSnapshot>): CrawlSnapshot {
 }
 
 const TRUST_HTML = `<html><body>
+<a href="#main-content">Skip to main content</a>
 <footer>
   <a href="/about">About</a>
   <a href="/contact">Contact</a>

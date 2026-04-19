@@ -169,19 +169,20 @@ describe('AUDIT_MODE_CONFIGS', () => {
     expect(cfg.maxSubPages).toBe(3)
   })
 
-  it('full has 11 phases and maxSubPages=20', () => {
+  it('full has 11 phases, maxSubPages=0 and bfsMaxPages=50', () => {
     const cfg = AUDIT_MODE_CONFIGS.full
     expect(cfg.phases).toHaveLength(11)
-    expect(cfg.maxSubPages).toBe(20)
+    expect(cfg.maxSubPages).toBe(0)
+    expect(cfg.bfsMaxPages).toBe(50)
   })
 })
 
 describe('resolveModeConfig', () => {
   it('resolves null/undefined to full', async () => {
     const { resolveModeConfig } = await import('@/lib/audit/modes')
-    expect(resolveModeConfig(null).maxSubPages).toBe(20)
-    expect(resolveModeConfig(undefined).maxSubPages).toBe(20)
-    expect(resolveModeConfig('unknown').maxSubPages).toBe(20)
+    expect(resolveModeConfig(null).maxSubPages).toBe(0)
+    expect(resolveModeConfig(undefined).maxSubPages).toBe(0)
+    expect(resolveModeConfig('unknown').maxSubPages).toBe(0)
   })
 
   it('resolves standard correctly', async () => {
@@ -259,7 +260,7 @@ describe('processAudit — mode-aware phase selection', () => {
     )
   })
 
-  it('full mode: passes maxSubPages=20 to crawlUrl', async () => {
+  it('full mode: passes maxSubPages=0 to crawlUrl (bfsMaxPages=50 via crawlMultiPage)', async () => {
     dbMock.limit
       .mockResolvedValueOnce([{ mode: 'full' }])
       .mockResolvedValueOnce([makeAuditRow('full')])
@@ -268,9 +269,10 @@ describe('processAudit — mode-aware phase selection', () => {
     const { processAudit } = await import('@/lib/audit/process')
     await processAudit('audit-1')
 
+    // bfsMaxPages est passé à crawlMultiPage (pas à crawlUrl) — seul maxSubPages=0 arrive ici
     expect(crawlMock).toHaveBeenCalledWith(
       'https://example.com',
-      expect.objectContaining({ maxSubPages: 20 }),
+      expect.objectContaining({ maxSubPages: 0 }),
     )
   })
 })

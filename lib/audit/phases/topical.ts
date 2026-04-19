@@ -382,7 +382,7 @@ export async function runTopicalPhase(
       const wc = sp.wordCount ?? bodyWordCount(sp.html)
       return wc >= 3000
     })
-    const pillarPaths = new Set(
+    const _pillarPaths = new Set(
       pillarCandidates.map((sp) => normalizePath(sp.url, origin)).filter((p): p is string => p !== null),
     )
     // Vérifier que les pillar candidates reçoivent au moins un lien interne
