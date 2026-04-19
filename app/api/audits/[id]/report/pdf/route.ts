@@ -80,7 +80,10 @@ export async function GET(
           error: error.message,
         })
         return NextResponse.json(
-          { error: 'PDF indisponible — utilisez le lien de partage HTML ou réessayez.' },
+          {
+            error: 'PDF indisponible — utilisez le lien de partage HTML ou réessayez.',
+            detail: error.message,
+          },
           { status: 503 },
         )
       }

@@ -1,13 +1,10 @@
 /**
  * PDF renderer via Puppeteer + @sparticuz/chromium (Vercel-native).
  *
- * Remplace l'ancienne dépendance Gotenberg (Docker sidecar incompatible Vercel).
- * Le binaire Chromium est fourni par @sparticuz/chromium et téléchargé au
- * build par Vercel. En local, définir CHROMIUM_PATH pour pointer vers un
- * Chrome/Chromium installé.
+ * Le binaire Chromium est téléchargé par @sparticuz/chromium au premier cold
+ * start (~50 MB). En local, définir CHROMIUM_PATH pour pointer vers Chrome.
  *
- * Contrainte Vercel : la fonction appelante doit déclarer maxDuration ≥ 30s
- * et memory ≥ 1024 MB (configurable dans vercel.json).
+ * Contrainte Vercel : maxDuration ≥ 60s, memory ≥ 2048 MB (vercel.json).
  */
 
 export class PdfUnavailableError extends Error {
@@ -20,16 +17,10 @@ export class PdfUnavailableError extends Error {
 export interface RenderPdfInput {
   html: string
   filename?: string
-  /** Timeout (ms) pour la génération. Défaut : 30s. */
+  /** Timeout (ms) pour la génération. Défaut : 45s. */
   timeoutMs?: number
 }
 
-/**
- * Convertit un HTML auto-contenu en PDF via Puppeteer.
- *
- * Contrat : le HTML doit embarquer ses styles (inline `<style>`). Les fonts
- * Google Fonts sont chargées via network pendant le rendu (waitUntil: networkidle0).
- */
 export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
   let chromium: typeof import('@sparticuz/chromium')
   let puppeteer: typeof import('puppeteer-core')
@@ -37,23 +28,24 @@ export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
   try {
     chromium = await import('@sparticuz/chromium')
     puppeteer = await import('puppeteer-core')
-  } catch {
-    throw new PdfUnavailableError('puppeteer-core or @sparticuz/chromium not available')
+  } catch (importErr) {
+    throw new PdfUnavailableError(
+      `puppeteer-core or @sparticuz/chromium not installed: ${importErr instanceof Error ? importErr.message : String(importErr)}`,
+    )
   }
 
-  const timeoutMs = input.timeoutMs ?? 30_000
+  const timeoutMs = input.timeoutMs ?? 45_000
 
   let browser: import('puppeteer-core').Browser | null = null
   try {
-    // En local : utiliser CHROMIUM_PATH (Chrome installé).
-    // Sur Vercel/Lambda : @sparticuz/chromium fournit le bon binaire.
     const executablePath =
-      process.env.CHROMIUM_PATH || (await chromium.default.executablePath())
+      process.env.CHROMIUM_PATH ?? (await chromium.default.executablePath())
 
     browser = await puppeteer.default.launch({
       args: chromium.default.args,
       executablePath,
-      headless: 'shell',
+      // headless: chromium.default.headless préféré à 'shell' (deprecated puppeteer v24)
+      headless: (chromium.default as { headless?: boolean | 'shell' }).headless ?? true,
     })
 
     const page = await browser.newPage()
@@ -61,8 +53,6 @@ export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
       waitUntil: 'networkidle0',
       timeout: timeoutMs,
     })
-    // Attendre que toutes les polices soient chargées (Inter via Google Fonts)
-    // avant de générer le PDF — évite les caractères manquants ou mal kerné.
     await page.evaluate(() => document.fonts.ready)
 
     const pdfBuffer = await page.pdf({
@@ -79,19 +69,13 @@ export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
     return Buffer.from(pdfBuffer)
   } catch (err) {
     if (err instanceof PdfUnavailableError) throw err
-    throw new PdfUnavailableError(
-      `PDF generation failed: ${err instanceof Error ? err.message : String(err)}`,
-    )
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new PdfUnavailableError(`PDF generation failed: ${detail}`)
   } finally {
     if (browser) await browser.close().catch(() => null)
   }
 }
 
-/**
- * Utilitaire : construit un nom de fichier PDF propre à partir de l'URL
- * cible (ou clientName). Remplace les caractères non alphanumériques par
- * `-` et tronque à 60 caractères.
- */
 export function buildPdfFilename(
   audit: { clientName?: string | null; targetUrl?: string | null; id: string },
   finishedAt?: Date | null,
