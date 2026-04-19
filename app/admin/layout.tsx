@@ -84,6 +84,8 @@ export default async function AdminLayout({
             { href: '/admin', label: 'Tableau de bord' },
             { href: '/admin/organizations', label: 'Organisations' },
             { href: '/admin/users', label: 'Utilisateurs' },
+            { href: '/admin/audits', label: 'Audits' },
+            { href: '/admin/plans', label: 'Plans' },
           ].map((item) => (
             <a
               key={item.href}
