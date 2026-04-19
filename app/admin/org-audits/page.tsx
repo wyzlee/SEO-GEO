@@ -187,7 +187,7 @@ export default function AdminOrgAuditsPage() {
           Aucun audit pour cette organisation.
         </div>
       ) : (
-        <div className="card-premium overflow-hidden p-0">
+        <div className="card-premium p-0">
           <div className="overflow-x-auto">
             <table
               className="w-full min-w-[640px]"

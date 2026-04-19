@@ -463,7 +463,7 @@ export default function AdminMembersPage() {
           Aucun membre dans cette organisation.
         </div>
       ) : (
-        <div className="card-premium overflow-hidden p-0">
+        <div className="card-premium p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px]" aria-label="Membres de l'organisation">
               <thead>

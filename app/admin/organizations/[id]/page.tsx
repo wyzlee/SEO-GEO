@@ -851,7 +851,7 @@ function MembersSection({
       )}
 
       <div
-        className="rounded-lg overflow-hidden"
+        className="rounded-lg"
         style={{ border: '1px solid var(--color-border)' }}
       >
         {filtered.length === 0 ? (
@@ -1040,7 +1040,7 @@ function OrgGrantsSection({
       </h2>
 
       <div
-        className="rounded-lg overflow-hidden"
+        className="rounded-lg"
         style={{ border: '1px solid var(--color-border)' }}
       >
         {orgGrants.length === 0 ? (
@@ -1190,7 +1190,7 @@ function RecentAuditsSection({
       </h2>
 
       <div
-        className="rounded-lg overflow-hidden"
+        className="rounded-lg"
         style={{ border: '1px solid var(--color-border)' }}
       >
         {audits.length === 0 ? (

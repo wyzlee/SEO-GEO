@@ -472,7 +472,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Table */}
-      <div className="card-premium overflow-hidden p-0">
+      <div className="card-premium p-0">
         {isLoading ? (
           <div className="p-6 text-sm" role="status" style={{ color: 'var(--color-muted)' }}>Chargement…</div>
         ) : !data?.users.length ? (
