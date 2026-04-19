@@ -676,9 +676,9 @@ h2.slide-heading {
 #s1 .hs-val span { color: var(--accent); }
 #s1 .hs-lbl { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
 
-/* S12: CTA */
-#s12 { text-align: center; align-items: center; }
-#s12 .cta-glow {
+/* S13: CTA */
+#s13 { text-align: center; align-items: center; }
+#s13 .cta-glow {
   position: absolute;
   width: 700px; height: 400px;
   background: radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%);
@@ -686,7 +686,7 @@ h2.slide-heading {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
-#s12 .cta-title {
+#s13 .cta-title {
   font-family: 'Cabinet Grotesk', sans-serif;
   font-weight: 900;
   font-size: clamp(2.5rem, 5vw, 4rem);
@@ -948,6 +948,14 @@ h2.slide-heading {
           <div class="rp-feature-icon">&#127919;</div>
           <div><strong style="color:var(--text)">Plan d'action priorisé</strong><br><span style="font-size:0.62rem">Les 5 actions les plus impactantes. Bénéfice / effort.</span></div>
         </div>
+        <div class="rp-feature">
+          <div class="rp-feature-icon">&#128197;</div>
+          <div><strong style="color:var(--text)">Audits planifiés</strong><br><span style="font-size:0.62rem">Re-audits auto hebdo / mensuel. Alerte email si le score chute de &gt;5 pts.</span></div>
+        </div>
+        <div class="rp-feature">
+          <div class="rp-feature-icon">&#128202;</div>
+          <div><strong style="color:var(--text)">Benchmark concurrent</strong><br><span style="font-size:0.62rem">Comparez jusqu'à 5 sites simultanément. Scores par phase, en un clic.</span></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1071,11 +1079,14 @@ h2.slide-heading {
         <div class="rm-label">Maintenant — V1</div>
         <div class="rm-title">Agency Mode</div>
         <div class="rm-items">
-          <div class="rm-item">Dashboard interne pour lancer les audits</div>
-          <div class="rm-item">Rapports white-label livrés au client</div>
-          <div class="rm-item">Audit sur URL live</div>
+          <div class="rm-item">Dashboard multi-org pour lancer les audits</div>
+          <div class="rm-item">Rapports white-label PDF + lien partageable</div>
+          <div class="rm-item">Audit URL live — crawl jusqu'à 50 pages</div>
           <div class="rm-item">Score 100 pts sur 11 dimensions</div>
-          <div class="rm-item">Pricing à la prestation</div>
+          <div class="rm-item">Benchmark concurrent (jusqu'à 5 sites)</div>
+          <div class="rm-item">Surveillance citations IA (Perplexity, OpenAI)</div>
+          <div class="rm-item">Audits planifiés + alertes de régression</div>
+          <div class="rm-item">Content briefs IA post-audit</div>
         </div>
       </div>
       <div class="roadmap-card" style="--rm-c:#7C3AED">
@@ -1083,10 +1094,9 @@ h2.slide-heading {
         <div class="rm-title">Self-serve SaaS</div>
         <div class="rm-items">
           <div class="rm-item">Signup public + onboarding automatisé</div>
-          <div class="rm-item">Dashboard client avec historique</div>
+          <div class="rm-item">Dashboard client self-serve</div>
           <div class="rm-item">Plans Free / Pro / Agence (Stripe)</div>
           <div class="rm-item">Audit sur code source (ZIP + GitHub)</div>
-          <div class="rm-item">Tracking continu + alertes régression</div>
         </div>
       </div>
     </div>
@@ -1106,8 +1116,53 @@ h2.slide-heading {
     </div>
   </div>
 
-  <!-- SLIDE 12: CTA -->
-  <div class="slide" id="s12">
+  <!-- SLIDE 12: NOUVELLES FONCTIONNALITÉS 2026 -->
+  <div class="slide" id="s12" style="align-items:flex-start; justify-content:flex-start; padding-top:40px; overflow-y:auto; padding-bottom:80px">
+    <div class="eyebrow">11 — Nouvelles fonctionnalités</div>
+    <h2 class="slide-heading" style="font-size:1.8rem; margin-bottom:8px">Ce qui est arrivé<br>en <span style="color:var(--accent)">2026</span>.</h2>
+    <p style="font-size:0.72rem; color:var(--muted2); margin-bottom:20px">3 améliorations des phases existantes · 3 nouvelles capacités</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap:10px">
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:6px; border-left:3px solid var(--accent)">
+        <div style="font-size:0.6rem; color:var(--accent); text-transform:uppercase; letter-spacing:0.12em">Phase 01 · 09 · 10</div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text)">Crawl multi-pages (50 pages)</div>
+        <div style="font-size:0.68rem; color:var(--muted2)">Le moteur analyse jusqu'à 50 pages via BFS — pillar pages, clusters thématiques, pages orphelines. Détection de cannibalisation cross-pages.</div>
+        <span style="font-size:0.6rem; background:rgba(57,211,83,0.1); border:1px solid rgba(57,211,83,0.25); color:#39d353; padding:2px 8px; border-radius:4px; align-self:flex-start">Disponible</span>
+      </div>
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:6px; border-left:3px solid #00c2ff">
+        <div style="font-size:0.6rem; color:#00c2ff; text-transform:uppercase; letter-spacing:0.12em">Phase 08 — Performance</div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text)">CrUX API réelle</div>
+        <div style="font-size:0.68rem; color:var(--muted2)">Métriques LCP, INP, CLS terrain via Google Chrome UX Report. Données réelles utilisateurs, pas des simulations Lighthouse.</div>
+        <span style="font-size:0.6rem; background:rgba(57,211,83,0.1); border:1px solid rgba(57,211,83,0.25); color:#39d353; padding:2px 8px; border-radius:4px; align-self:flex-start">Disponible</span>
+      </div>
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:6px; border-left:3px solid #f59e0b">
+        <div style="font-size:0.6rem; color:#f59e0b; text-transform:uppercase; letter-spacing:0.12em">Monitoring continu</div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text)">Score Drift Alerts</div>
+        <div style="font-size:0.68rem; color:var(--muted2)">Alerte email automatique si le score chute de plus de 5 points entre deux re-audits planifiés. Réagissez avant que le client ne s'en rende compte.</div>
+        <span style="font-size:0.6rem; background:rgba(57,211,83,0.1); border:1px solid rgba(57,211,83,0.25); color:#39d353; padding:2px 8px; border-radius:4px; align-self:flex-start">Disponible</span>
+      </div>
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:6px; border-left:3px solid #06b6d4">
+        <div style="font-size:0.6rem; color:#06b6d4; text-transform:uppercase; letter-spacing:0.12em">Nouveau</div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text)">Benchmark concurrent</div>
+        <div style="font-size:0.68rem; color:var(--muted2)">Comparatif multi-URL jusqu'à 5 sites simultanés. Tableau de scores par phase — visualisez votre position face à la concurrence.</div>
+        <span style="font-size:0.6rem; background:rgba(57,211,83,0.1); border:1px solid rgba(57,211,83,0.25); color:#39d353; padding:2px 8px; border-radius:4px; align-self:flex-start">Disponible</span>
+      </div>
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:6px; border-left:3px solid #7c3aed">
+        <div style="font-size:0.6rem; color:#7c3aed; text-transform:uppercase; letter-spacing:0.12em">Phase 03 — GEO</div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text)">AI Citation Monitoring</div>
+        <div style="font-size:0.68rem; color:var(--muted2)">Vérifie si votre domaine est cité par Perplexity et ChatGPT sur vos requêtes cibles. Suivi de la mention rate IA en continu.</div>
+        <span style="font-size:0.6rem; background:rgba(57,211,83,0.1); border:1px solid rgba(57,211,83,0.25); color:#39d353; padding:2px 8px; border-radius:4px; align-self:flex-start">Disponible</span>
+      </div>
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:6px; border-left:3px solid #10b981">
+        <div style="font-size:0.6rem; color:#10b981; text-transform:uppercase; letter-spacing:0.12em">Post-audit</div>
+        <div style="font-family:'Cabinet Grotesk',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text)">Content Briefs IA</div>
+        <div style="font-size:0.68rem; color:var(--muted2)">Génération automatique de briefs de contenu après l'audit — structure, angle, mots-clés cibles, signaux E-E-A-T à inclure. Propulsé par Claude.</div>
+        <span style="font-size:0.6rem; background:rgba(57,211,83,0.1); border:1px solid rgba(57,211,83,0.25); color:#39d353; padding:2px 8px; border-radius:4px; align-self:flex-start">Disponible</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: CTA -->
+  <div class="slide" id="s13">
     <div class="cta-glow"></div>
     <div class="eyebrow">Prochaine étape</div>
     <div class="cta-title">
@@ -1135,12 +1190,12 @@ h2.slide-heading {
 <div class="nav-bar">
   <button class="nav-btn" id="prev-btn" onclick="prevSlide()" disabled>&#8592;</button>
   <div class="nav-dots" id="nav-dots"></div>
-  <span class="slide-counter" id="counter">1 / 12</span>
+  <span class="slide-counter" id="counter">1 / 13</span>
   <button class="nav-btn" id="next-btn" onclick="nextSlide()">&#8594;</button>
 </div>
 
 <script>
-const totalSlides = 12;
+const totalSlides = 13;
 let current = 1;
 
 const dotsEl = document.getElementById('nav-dots');

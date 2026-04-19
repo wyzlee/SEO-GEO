@@ -6,7 +6,7 @@ import {
   Building2, Briefcase, Monitor,
   Search, Bot, FileText, LinkIcon, Clock,
   Globe, Package, Target, Trophy, Rocket,
-  BarChart3, Zap, BookOpen, Layers, Activity, Brain,
+  BarChart3, Zap, BookOpen, Layers, Activity, Brain, CalendarClock,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth/context'
 
@@ -283,6 +283,7 @@ function Slide7() {
     { Icon: Building2, title: 'White-label natif', desc: 'Votre logo. Zéro mention SEO-GEO.' },
     { Icon: null, emoji: '🇫🇷', title: 'Français, sans jargon', desc: 'Compris par un décideur non-technique.' },
     { Icon: Target, title: 'Plan d\'action priorisé', desc: 'Les 5 actions les plus impactantes. Bénéfice / effort.' },
+    { Icon: CalendarClock, title: 'Audits planifiés', desc: 'Re-audits automatiques hebdo / mensuel. Alerte email si le score régresse de plus de 5 pts.' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
@@ -439,8 +440,8 @@ function Slide11() {
       <Heading>Agency tool V1.<br />SaaS public V2.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20, marginTop: 8 }}>
         {[
-          { color: IND, label: 'Maintenant — V1', title: 'Agency Mode', items: ['Dashboard interne pour lancer les audits', 'Rapports white-label livrés au client', 'Audit sur URL live', 'Score 100 pts sur 11 dimensions', 'Pricing à la prestation'] },
-          { color: VIO, label: 'Prochainement — V2', title: 'Self-serve SaaS', items: ['Signup public + onboarding automatisé', 'Dashboard client avec historique', 'Plans Free / Pro / Agence (Stripe)', 'Audit sur code source (ZIP + GitHub)', 'Tracking continu + alertes régression'] },
+          { color: IND, label: 'Maintenant — V1', title: 'Agency Mode', items: ['Dashboard multi-org pour lancer les audits', 'Rapports white-label PDF + lien partageable', 'Audit URL live — crawl jusqu\'à 50 pages', 'Score 100 pts sur 11 dimensions', 'Benchmark concurrent (jusqu\'à 5 sites)', 'Surveillance citations IA (Perplexity, OpenAI)', 'Audits planifiés + alertes de régression', 'Content briefs IA post-audit'] },
+          { color: VIO, label: 'Prochainement — V2', title: 'Self-serve SaaS', items: ['Signup public + onboarding automatisé', 'Dashboard client self-serve', 'Plans Free / Pro / Agence (Stripe)', 'Audit sur code source (ZIP + GitHub)'] },
         ].map(({ color, label, title, items }) => (
           <div key={title} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 10, padding: 26 }}>
             <div style={{ fontSize: '0.62rem', color, textTransform: 'uppercase' as const, letterSpacing: '0.15em', marginBottom: 8 }}>{label}</div>
