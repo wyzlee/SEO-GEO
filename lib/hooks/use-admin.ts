@@ -3,11 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiJson } from '@/lib/api/fetch'
 
-export function useAdminMe() {
+export function useAdminMe(enabled = true) {
   return useQuery({
     queryKey: ['admin', 'me'],
     queryFn: () => apiJson<{ isSuperAdmin: boolean }>('/api/admin/me'),
     staleTime: 60_000,
+    retry: false,
+    enabled,
   })
 }
 

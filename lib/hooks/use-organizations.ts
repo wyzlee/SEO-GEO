@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth/context'
+import { authFetch } from '@/lib/api/fetch'
 
 export interface OrgSummary {
   organizationId: string
@@ -32,7 +33,7 @@ export function useOrganizations() {
       if (!authLoading) setIsLoading(false)
       return
     }
-    fetch('/api/organizations')
+    authFetch('/api/organizations')
       .then(r => r.ok ? r.json() : { memberships: [] })
       .then(data => { setOrgs(data.memberships ?? []); setIsLoading(false) })
       .catch(() => setIsLoading(false))

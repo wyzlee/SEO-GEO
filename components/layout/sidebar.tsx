@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { useOrganizations } from '@/lib/hooks/use-organizations'
 import { useUIStore } from '@/lib/stores/ui-store'
 import { useAdminMe } from '@/lib/hooks/use-admin'
+import { useAuth } from '@/lib/auth/context'
 
 interface NavItem {
   href: string
@@ -71,10 +72,11 @@ export function Sidebar() {
   const [mounted, setMounted] = useState(false)
   const [isDesktop, setIsDesktop] = useState(true)
   const [orgOpen, setOrgOpen] = useState(false)
+  const { user } = useAuth()
   const { orgs, isLoading: orgsLoading, activeOrg, switchOrg } = useOrganizations()
   const mobileSidebarOpen = useUIStore((s) => s.mobileSidebarOpen)
   const closeMobileSidebar = useUIStore((s) => s.closeMobileSidebar)
-  const { data: adminMe } = useAdminMe()
+  const { data: adminMe } = useAdminMe(!!user)
   const isSuperAdmin = adminMe?.isSuperAdmin ?? false
 
   useEffect(() => {
