@@ -39,10 +39,23 @@
 
 **Validation** : 347/347 tests passing, 0 erreur TypeScript.
 
+## Sprint 4 — Structurant (2026-04-20) ✅
+
+| Item | Description | État |
+|------|-------------|------|
+| S4.1 | CSP Content-Security-Policy-Report-Only | ✅ |
+| S4.2 | Partial results UI — stepper phases temps réel | ✅ |
+| S4.3 | Score ring animé SVG | ✅ |
+| S4.4 | Cache CrUX + Wikidata Upstash TTL 24h/7j | ✅ |
+| S4.5 | Rate limit 3 audits running/org → 429 | ✅ |
+| S4.6 | MSW handlers + tests intégration briefs | ✅ |
+
+**Validation** : 353/353 tests passing, 0 erreur TypeScript.
+
 ## Prochaines actions
 
-1. Sprint 08 completion (Stripe + landing) — priorité absolue
-2. Sprint 4 (CSP, partial results UI, score ring, cache CrUX/Wikidata)
+1. Sprint 08 completion (Stripe prod + landing publique) — **priorité absolue**
+2. Sprint 5 (alertes régression, Cmd+K, onboarding checklist)
 
 ## Fichiers d'analyse disponibles
 
