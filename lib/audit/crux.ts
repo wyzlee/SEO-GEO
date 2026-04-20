@@ -4,7 +4,17 @@
  * so audits keep working in dev without keys.
  *
  * API docs : https://developer.chrome.com/docs/crux/api
+ *
+ * Cache Upstash Redis TTL 24h : les données CrUX sont sur une fenêtre glissante
+ * de 28 jours — un refresh quotidien est largement suffisant.
+ * Note : les URLs sans données CrUX (sites peu connus) ne sont PAS mises en
+ * cache pour éviter de cacher un null qui pourrait changer ultérieurement.
  */
+
+import { getRedis } from '@/lib/redis'
+import { logger } from '@/lib/observability/logger'
+
+const CACHE_TTL_SECONDS = 86_400 // 24h
 
 export interface CruxMetrics {
   lcpP75Ms: number | null
@@ -39,6 +49,19 @@ export async function fetchCruxMetrics(
   const apiKey = process.env.GOOGLE_CRUX_API_KEY
   if (!apiKey) return null
 
+  const redis = getRedis()
+  const cacheKey = `crux:${url}`
+
+  // Tenter le cache
+  if (redis) {
+    const cached = await redis.get<CruxMetrics>(cacheKey).catch(() => null)
+    if (cached) {
+      logger.info('crux.cache.hit', { url })
+      return cached
+    }
+    logger.info('crux.cache.miss', { url })
+  }
+
   try {
     const res = await fetch(
       `https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=${apiKey}`,
@@ -68,7 +91,7 @@ export async function fetchCruxMetrics(
     const inpP75Ms = typeof inpRaw === 'number' ? inpRaw : inpRaw ? parseFloat(String(inpRaw)) : null
     const clsP75 = typeof clsRaw === 'number' ? clsRaw : clsRaw ? parseFloat(String(clsRaw)) : null
 
-    return {
+    const result: CruxMetrics = {
       lcpP75Ms,
       inpP75Ms,
       clsP75,
@@ -80,6 +103,13 @@ export async function fetchCruxMetrics(
           }
         : null,
     }
+
+    // Mettre en cache uniquement si on a des données réelles
+    if (redis) {
+      await redis.set(cacheKey, result, { ex: CACHE_TTL_SECONDS }).catch(() => null)
+    }
+
+    return result
   } catch {
     return null
   }

@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Globe, Github, FileArchive, BookMarked, Pencil, Check, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/header'
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
-import { ScoreBadge } from '@/components/audit/score-badge'
+import { ScoreRing } from '@/components/audit/score-ring'
 import { ScoreBreakdownChart } from '@/components/audit/score-breakdown-chart'
 import { CriticalFindings } from '@/components/audit/critical-findings'
 import { PhaseCard } from '@/components/audit/phase-card'
@@ -15,6 +15,7 @@ import { ViewToggle, type AuditView } from '@/components/audit/view-toggle'
 import { MarketingView } from '@/components/audit/marketing-view'
 import { TechView } from '@/components/audit/tech-view'
 import { TierGate } from '@/components/audit/tier-gate'
+import { PhaseProgress } from '@/components/audit/phase-progress'
 import {
   useAudit,
   useAuditReports,
@@ -316,7 +317,7 @@ export default function AuditDetailPage({
       <section className="p-4 md:p-6 space-y-6">
         {/* Score header */}
         <div className="card-premium flex flex-col md:flex-row items-start md:items-center gap-6">
-          <ScoreBadge score={score} size="lg" />
+          <ScoreRing score={score} size="lg" label="/100" />
           <div className="min-w-0 flex-1">
             <div
               className="flex items-center gap-2 text-xs uppercase tracking-wider font-[family-name:var(--font-display)]"
@@ -443,21 +444,25 @@ export default function AuditDetailPage({
           </div>
         )}
 
-        {/* All phases fallback (running / non-completed) */}
+        {/* Stepper de progression (queued / running / failed) */}
         {!isCompleted && (
+          <PhaseProgress phases={phases} auditStatus={audit.status} />
+        )}
+
+        {/* Phases terminées — findings visibles au fil de l'eau (running) ou après échec */}
+        {!isCompleted && phases.some((p) => p.status === 'completed' || p.status === 'skipped') && (
           <div className="space-y-3">
-            <h2 className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mt-2"
-              style={{ color: 'var(--color-muted)' }}>
-              Détail par phase
+            <h2
+              className="text-sm uppercase tracking-wider font-[family-name:var(--font-display)] mt-2"
+              style={{ color: 'var(--color-muted)' }}
+            >
+              Phases terminées
             </h2>
-            {phases.map((phase) => (
-              <PhaseCard key={phase.id} phase={phase} />
-            ))}
-            {phases.length === 0 && (
-              <div className="card-premium text-sm" style={{ color: 'var(--color-muted)' }}>
-                Aucune phase créée pour l&apos;instant — l&apos;audit démarre.
-              </div>
-            )}
+            {phases
+              .filter((p) => p.status === 'completed' || p.status === 'skipped')
+              .map((phase) => (
+                <PhaseCard key={phase.id} phase={phase} />
+              ))}
           </div>
         )}
       </section>

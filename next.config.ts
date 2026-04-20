@@ -15,6 +15,42 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // Content-Security-Policy en mode Report-Only (non-enforced).
+    // Objectif : observer les violations pendant 30j avant passage en enforced.
+    // Sources vérifiées dans le code :
+    //   - Sentry : tunnel local /monitoring + ingest.de.sentry.io (EU endpoint)
+    //   - Stack Auth : api.stack-auth.com (JWKS + auth côté client)
+    //   - Upstash : *.upstash.io (Redis REST rate-limiting)
+    //   - Vercel Analytics : vitals.vercel-insights.com
+    //   - Fonts : next/font/google auto-héberge Fira Code → 'self' suffit
+    //     Cabinet Grotesk est déjà local → 'self'
+    //   - Stripe : billing via redirect server-side (pas de js.stripe.com client)
+    //   - Perplexity / CrUX / Wikidata : server-side only → absent du connect-src
+    const cspValue = [
+      "default-src 'self'",
+      // Next.js génère des scripts inline (RSC, hydration chunks) → unsafe-inline requis.
+      // unsafe-eval requis par certains loaders en dev ; acceptable en Report-Only V1.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // Styles inline générés par Tailwind / next-themes → unsafe-inline requis.
+      "style-src 'self' 'unsafe-inline'",
+      // Fonts auto-hébergées via next/font → 'self' suffit.
+      "font-src 'self' data:",
+      // Images : logos utilisateurs, avatars, og-images, blob pour exports.
+      "img-src 'self' data: blob: https:",
+      // Requêtes XHR/fetch côté client :
+      //   - /monitoring = tunnel Sentry local (tunnelRoute next.config.ts)
+      //   - ingest.de.sentry.io = fallback direct Sentry EU
+      //   - api.stack-auth.com = JWKS validation + refresh token
+      //   - *.upstash.io = Redis REST (rate-limit check)
+      //   - vitals.vercel-insights.com = Web Vitals Vercel
+      "connect-src 'self' https://o4510861777698816.ingest.de.sentry.io https://api.stack-auth.com https://*.upstash.io https://vitals.vercel-insights.com",
+      // Pas d'iframes : Stack Auth utilise des popups (COOP: same-origin-allow-popups).
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; ')
+
     return [
       {
         source: '/(.*)',
@@ -60,6 +96,10 @@ const nextConfig: NextConfig = {
           {
             key: 'Cross-Origin-Resource-Policy',
             value: 'same-origin',
+          },
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: cspValue,
           },
         ],
       },

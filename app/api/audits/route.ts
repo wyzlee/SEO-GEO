@@ -1,7 +1,7 @@
 import { NextResponse, after } from 'next/server'
 import path from 'node:path'
 import { tmpdir } from 'node:os'
-import { and, count, desc, eq, gte, ne } from 'drizzle-orm'
+import { and, count, desc, eq, gte, inArray, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { audits, organizations } from '@/lib/db/schema'
@@ -41,6 +41,13 @@ async function findPreviousAudit(
 
 const BURST_LIMIT = { name: 'audits.post.burst', max: 3, windowMs: 60_000 }
 const DAILY_LIMIT = { name: 'audits.post.daily', max: 50, windowMs: 86_400_000 }
+
+// Guard concurrence : max 3 audits actifs simultanément par org.
+// "Actif" = queued (slot réservée, worker pas encore démarré) OU running.
+// On inclut queued pour éviter le TOCTOU : sans ça, 3 POST rapides depuis
+// plusieurs users de la même org pourraient passer le guard puis flipper
+// tous vers running, doublant la concurrence effective.
+const MAX_ACTIVE_AUDITS_PER_ORG = 3
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -157,6 +164,27 @@ export async function POST(request: Request) {
           'Retry-After': String(orgDaily.retryAfterSeconds),
         },
       },
+    )
+  }
+
+  // Guard concurrence org : on bloque avant l'INSERT si trop d'audits actifs.
+  // L'index audits_org_status_idx (organizationId, status) rend ce COUNT rapide.
+  const [concurrencyRow] = await db
+    .select({ activeCount: count() })
+    .from(audits)
+    .where(
+      and(
+        eq(audits.organizationId, ctx.organizationId),
+        inArray(audits.status, ['queued', 'running']),
+      ),
+    )
+  if ((concurrencyRow?.activeCount ?? 0) >= MAX_ACTIVE_AUDITS_PER_ORG) {
+    return NextResponse.json(
+      {
+        error: 'Limite de concurrence atteinte',
+        message: `Maximum ${MAX_ACTIVE_AUDITS_PER_ORG} audits en cours ou en attente simultanément par organisation. Attendez qu'un audit se termine avant d'en lancer un nouveau.`,
+      },
+      { status: 429 },
     )
   }
 

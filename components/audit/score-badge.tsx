@@ -11,11 +11,11 @@ export function ScoreBadge({
   const text = size === 'sm' ? 18 : size === 'lg' ? 36 : 28
 
   let bg = 'var(--color-red)'
-  if (score >= 80) bg = 'var(--color-green)'
-  else if (score >= 60) bg = 'var(--color-blue)'
+  if (score >= 90) bg = 'var(--color-accent)'
+  else if (score >= 70) bg = 'var(--color-green)'
   else if (score >= 40) bg = 'var(--color-amber)'
 
-  const textColor = score >= 40 && score < 60 ? '#1a1a1a' : '#fff'
+  const textColor = score >= 40 && score < 70 ? '#1a1a1a' : '#fff'
 
   return (
     <div
