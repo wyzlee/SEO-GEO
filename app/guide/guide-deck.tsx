@@ -361,9 +361,9 @@ function Slide9() {
       <Eyebrow>08 — Pour qui ?</Eyebrow>
       <Heading>3 personas.<br />Un même outil.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 14, marginTop: 8 }}>
-        <PersonaCard color={IND} Icon={Building2} name="Agence SEO" desc="5–30 personnes. Veut ajouter une offre GEO à ses prestations sans recruter un expert IA." need="«\u00a0Mes clients demandent pourquoi ils n'apparaissent pas dans ChatGPT.\u00a0»" />
-        <PersonaCard color={VIO} Icon={Briefcase} name="Dir. marketing B2B" desc="Son trafic organique stagne. Veut comprendre pourquoi ses concurrents apparaissent dans les IA." need="«\u00a0Mon site est bien ranké sur Google mais invisible sur Perplexity.\u00a0»" />
-        <PersonaCard color={CYN} Icon={Monitor} name="Studio dev / Freelance" desc="Développe des sites clients. Veut livrer un produit optimisé dès le départ." need="«\u00a0Le rapport d'audit est devenu un argument de vente différenciant.\u00a0»" />
+        <PersonaCard color={IND} Icon={Building2} name="Agence SEO" desc="5–30 personnes. Veut ajouter une offre GEO à ses prestations sans recruter un expert IA." need={`«\u00a0Mes clients demandent pourquoi ils n'apparaissent pas dans ChatGPT.\u00a0»`} />
+        <PersonaCard color={VIO} Icon={Briefcase} name="Dir. marketing B2B" desc="Son trafic organique stagne. Veut comprendre pourquoi ses concurrents apparaissent dans les IA." need={`«\u00a0Mon site est bien ranké sur Google mais invisible sur Perplexity.\u00a0»`} />
+        <PersonaCard color={CYN} Icon={Monitor} name="Studio dev / Freelance" desc="Développe des sites clients. Veut livrer un produit optimisé dès le départ." need={`«\u00a0Le rapport d'audit est devenu un argument de vente différenciant.\u00a0»`} />
       </div>
     </div>
   )
