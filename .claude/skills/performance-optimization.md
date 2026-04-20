@@ -26,34 +26,82 @@ CREATE INDEX audits_org_created_idx ON audits (organization_id, created_at DESC)
 
 **Workflow** : via `/db-migrate` → `drizzle-kit generate` → review SQL → apply Neon dev branch → merge prod.
 
-## PDF Puppeteer — Fix timing recharts (S1.7)
+## PDF Puppeteer — Fix timing (S3.3 Quick Win)
 
-### Problème actuel
-Charts recharts absents du PDF. Root cause : Puppeteer prend le screenshot avant que React ait rendu les SVG recharts.
+### Fix immédiat (10 min) — waitUntil: 'load'
+Pour HTML self-contained (rapport généré localement), `networkidle0` attend inutilement des requêtes réseau inexistantes.
 
-### Fix dans `app/r/[slug]/pdf/route.ts`
 ```ts
+// Avant (lent sur HTML local) :
 await page.goto(reportUrl, { waitUntil: 'networkidle0' })
-// Attendre le sélecteur explicitement
+
+// Après (correct pour HTML self-contained) :
+await page.goto(reportUrl, { waitUntil: 'load' })
+```
+
+**Chercher dans** `lib/report/` (fichier PDF render) le `waitUntil`.
+
+### Fix avancé — wait recharts pour charts SVG
+Si les charts recharts sont absents du PDF (root cause : React pas fini de rendre les SVG) :
+
+```ts
+await page.goto(reportUrl, { waitUntil: 'load' })
 await page.waitForSelector('[data-chart-ready]', { timeout: 10_000 })
 await page.pdf({ format: 'A4', printBackground: true })
 ```
 
-### Attribut côté composant recharts
 ```tsx
 // components/audit/radar-chart.tsx
-<div ref={(el) => {
-  if (el) el.setAttribute('data-chart-ready', 'true')
-}}>
+<div ref={(el) => { if (el) el.setAttribute('data-chart-ready', 'true') }}>
   <RadarChart ... />
 </div>
 ```
 
 ### Config Vercel Function PDF
 ```ts
-// app/r/[slug]/pdf/route.ts
 export const maxDuration = 60      // secondes
-export const memory = 3008         // MB — CPU Performance requis
+export const memory = 2048         // MB (vercel.json déjà configuré)
+```
+
+### Cold start 4-8s
+Acceptable en V1. Si problème UX → pré-warm via ping `/api/health` toutes les 5min (Vercel cron). Moyen terme : browserless.io ($0.02/min) ou PDFShift ($0.004/page).
+
+## LLM Briefs — Optimisations Anthropic (S3.2, S3.8, S3.9)
+
+### S3.2 — maxRetries: 2 (30 min)
+Ajouter dans `lib/audit/briefs.ts` lors de l'instanciation du client :
+```ts
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY!, maxRetries: 2 })
+```
+Protège contre les erreurs 529 "overloaded" intermittentes.
+
+### S3.8 — Structured outputs via tool_use (3h)
+Plus robuste que `JSON.parse + stripCodeFences` (actuellement fragile si Claude préfixe le JSON) :
+```ts
+const message = await client.messages.create({
+  tools: [{ name: 'generate_brief', input_schema: zodToJsonSchema(briefSchema) }],
+  tool_choice: { type: 'tool', name: 'generate_brief' },
+  model: 'claude-haiku-4-5-20251001',
+  max_tokens: 4096,
+  system: [{ type: 'text', text: BRIEF_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+  messages: [{ role: 'user', content: buildUserPrompt(findings) }]
+})
+// Extraction garantie sans JSON.parse fragile :
+const toolUse = message.content.find(b => b.type === 'tool_use')
+const brief = briefSchema.parse(toolUse?.input)
+```
+
+### S3.9 — Token cost logging (1h)
+Logger après chaque appel Claude pour monitoring coût réel :
+```ts
+logger.info('claude.brief.cost', {
+  audit_id: auditId,
+  phase: 'briefs',
+  input_tokens: message.usage.input_tokens,
+  output_tokens: message.usage.output_tokens,
+  cache_read_input_tokens: message.usage.cache_read_input_tokens ?? 0,
+  cache_creation_input_tokens: message.usage.cache_creation_input_tokens ?? 0,
+})
 ```
 
 ## LLM Synthesis — Prompt Caching Anthropic (S2.4)

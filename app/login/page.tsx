@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
+    <main id="main-content" className="min-h-screen flex items-center justify-center px-6">
       <form
         onSubmit={onSubmit}
         className="w-full max-w-sm card-premium space-y-5"

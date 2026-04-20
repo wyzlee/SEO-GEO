@@ -54,7 +54,7 @@ export default async function PublicReportPage({
       retry_after_s: rl.retryAfterSeconds,
     })
     return (
-      <main className="min-h-screen flex items-center justify-center px-6">
+      <main id="main-content" className="min-h-screen flex items-center justify-center px-6">
         <div className="text-center max-w-md">
           <h1
             className="text-3xl font-bold font-[family-name:var(--font-display)]"
@@ -79,7 +79,7 @@ export default async function PublicReportPage({
 
   if (report.shareExpiresAt && new Date(report.shareExpiresAt) < new Date()) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-6">
+      <main id="main-content" className="min-h-screen flex items-center justify-center px-6">
         <div className="text-center max-w-md">
           <h1
             className="text-3xl font-bold font-[family-name:var(--font-display)]"
@@ -101,7 +101,7 @@ export default async function PublicReportPage({
 
   if (!report.contentHtml) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-6">
+      <main id="main-content" className="min-h-screen flex items-center justify-center px-6">
         <p style={{ color: 'var(--color-muted)' }}>Rapport vide.</p>
       </main>
     )

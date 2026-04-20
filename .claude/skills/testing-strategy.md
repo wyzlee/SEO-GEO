@@ -9,10 +9,10 @@ type: skill
 ## État actuel
 
 - **62/62 tests Vitest passing** — `npm run test`
-- **351 fichiers** de tests
+- **41 fichiers** de tests (Vitest) + 1 test E2E Playwright
 - 0 erreurs TypeScript, 0 erreurs lint
-- Pas de tests Playwright E2E encore
-- Coverage non mesurée explicitement
+- Coverage thresholds différenciés : 85% security, 80% phases
+- MSW **absent** — priorité Sprint 4 (S4.6) : mocks API Anthropic/Stripe/Perplexity fragiles sans MSW
 
 ## Pyramide de tests recommandée
 

@@ -8,7 +8,7 @@ export default function GlobalError({
   reset: () => void
 }) {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+    <main id="main-content" className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
       <h1 className="text-3xl font-bold font-[family-name:var(--font-display)]">
         Une erreur est survenue
       </h1>

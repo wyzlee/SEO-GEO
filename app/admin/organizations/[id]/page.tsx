@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useState } from 'react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import {
@@ -349,13 +350,13 @@ function InfoSection({
                   className="input-modern text-sm font-[family-name:var(--font-sans)] flex-1"
                 />
                 {logoPreviewValid ? (
-                  <img
+                  <Image
                     src={logoUrl}
                     alt="Prévisualisation du logo"
+                    width={40}
+                    height={40}
                     className="rounded object-contain shrink-0"
                     style={{
-                      width: 40,
-                      height: 40,
                       border: '1px solid var(--color-border)',
                       background: 'var(--color-bgAlt)',
                     }}
@@ -438,13 +439,13 @@ function InfoSection({
                   Logo
                 </dt>
                 <dd className="mt-1">
-                  <img
+                  <Image
                     src={organization.logoUrl}
                     alt={`Logo de ${organization.name}`}
+                    width={48}
+                    height={48}
                     className="rounded object-contain"
                     style={{
-                      width: 48,
-                      height: 48,
                       border: '1px solid var(--color-border)',
                       background: 'var(--color-bgAlt)',
                     }}
@@ -883,7 +884,7 @@ function MembersSection({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {member.avatarUrl ? (
-                        <img
+                        <Image
                           src={member.avatarUrl}
                           alt=""
                           aria-hidden="true"
@@ -1408,11 +1409,13 @@ export default function AdminOrgDetailPage({
       {/* Header */}
       <div className="flex flex-wrap items-start gap-3">
         {organization.logoUrl ? (
-          <img
+          <Image
             src={organization.logoUrl}
             alt={`Logo de ${organization.name}`}
+            width={32}
+            height={32}
             className="rounded object-contain shrink-0"
-            style={{ width: 32, height: 32, border: '1px solid var(--color-border)', marginTop: 4 }}
+            style={{ border: '1px solid var(--color-border)', marginTop: 4 }}
           />
         ) : (
           <Building2 size={20} style={{ color: 'var(--color-muted)', marginTop: 4 }} aria-hidden="true" />

@@ -14,28 +14,38 @@ Exécute un sprint complet du roadmap SEO-GEO.
 Lire `.claude/plans/roadmap.md` → extraire tous les items du sprint demandé.
 Lire `.claude/plans/status.md` → identifier les items déjà complétés (ne pas ré-exécuter).
 
-**Sprint 1 items** (référence) :
-- S1.1 — Env vars prod (30 min) — aucune dépendance
-- S1.2 — Smoke test prod (2h) — dépend de S1.1
-- S1.3 — Monitoring Sentry (2h) — aucune dépendance
-- S1.4 — Legal sous-traitants (1h) — aucune dépendance
-- S1.5 — Canal support (30 min) — aucune dépendance
-- S1.6 — Tests régression rapport (3h) — aucune dépendance
-- S1.7 — Fix PDF charts (4h) — dépend de S1.2
-- S1.8 — Section Forces rapport (2h) — dépend de S1.6
-- S1.9 — 3 index DB (2h) — aucune dépendance
-- S1.10 — SSRF DNS check (2h) — aucune dépendance
+**Sprint 3 — Quick Wins (référence actuelle)** :
+- S3.1 — console.log → logger.info crawl.ts (20 min) — aucune dépendance
+- S3.2 — maxRetries: 2 Anthropic briefs.ts (30 min) — aucune dépendance
+- S3.3 — waitUntil: 'load' PDF (10 min) — aucune dépendance
+- S3.4 — Skip link layout.tsx (30 min) — aucune dépendance
+- S3.5 — next/image + alt admin pages (1h) — aucune dépendance
+- S3.6 — Guard last owner deletion (1h) — aucune dépendance
+- S3.7 — Fix org-admins /api/admin/org/audits (2h) — aucune dépendance
+- S3.8 — Structured outputs Claude tool_use (3h) — dépend de S3.2
+- S3.9 — Token cost logging Anthropic (1h) — dépend de S3.2
+- S3.10 — Sentry tag audit_id worker (1h) — aucune dépendance
+
+**Sprint 4 — Structurant (référence)** :
+- S4.1 — CSP Content-Security-Policy-Report-Only next.config.ts (4h)
+- S4.2 — Partial results UI dashboard/audits/[id]/page.tsx (1j)
+- S4.3 — Score ring animé SVG components/audit/score-badge.tsx (4h)
+- S4.4 — Cache CrUX + Wikidata Upstash TTL (3h)
+- S4.5 — Rate limit global audits running/org (2h)
+- S4.6 — MSW pour tests API externes (4h)
+
+**Source** : `.claude/plans/roadmap.md` — toujours lire ce fichier pour avoir les items à jour.
 
 ## Étape 2 — Présenter le plan d'exécution
 
 Avant de commencer, afficher :
 ```
-Sprint 1 — Plan d'exécution
+Sprint [N] — Plan d'exécution
 
-Groupe 1 (parallèle) : S1.1, S1.3, S1.4, S1.5, S1.6, S1.9, S1.10
-Groupe 2 (dépend Groupe 1) : S1.2, S1.7, S1.8
+Groupe 1 (parallèle) : [items sans dépendances]
+Groupe 2 (dépend Groupe 1) : [items avec dépendances]
 
-Durée estimée : ~19h
+Durée estimée : ~Xh
 Items déjà complétés : [liste depuis status.md]
 
 Veux-tu que je procède ?
@@ -60,8 +70,8 @@ Une fois le Groupe 1 terminé, exécuter les items qui avaient des dépendances.
 ## Étape 5 — Validation sprint
 
 ```bash
-npm run test        # tous les tests passent (62+ expected)
-npm run typecheck   # 0 erreur
+npm run test        # tous les tests passent (62/62 expected)
+npm run typecheck   # 0 erreur TypeScript
 npm run build       # build clean
 ```
 

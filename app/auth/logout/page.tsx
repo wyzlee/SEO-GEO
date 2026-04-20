@@ -15,7 +15,7 @@ export default function LogoutPage() {
   }, [logout, router])
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
+    <main id="main-content" className="min-h-screen flex items-center justify-center">
       <p
         className="text-sm font-[family-name:var(--font-sans)]"
         style={{ color: 'var(--color-muted)' }}

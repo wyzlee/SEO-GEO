@@ -44,17 +44,19 @@ Afficher :
 - S1.X — [description] 🔴 BLOQUÉ : [raison]
 
 ## Ce qui reste (par priorité)
-Sprint 1 :
-- [ ] S1.X — [description] (~Xh) — [impact]
-- [ ] S1.X — [description] (~Xh) — [impact]
+Sprint 3 — Quick Wins (~8h, démarrage immédiat) :
+- [ ] S3.X — [description] (~Xh) — [impact]
 
-Sprint 2 (horizon 1-2 semaines) :
-- [ ] S2.X — [description]
+Sprint 4 — Structurant (2-3 jours) :
+- [ ] S4.X — [description]
 
-## Palier commercial actuel
-- Palier A (Agency Ready) : 🟠 XX% — manque : [liste]
-- Palier B (Quality Gate) : 🟡 XX% — manque : [liste]
-- Palier C (Self-serve) : 🔴 XX% — manque : [liste]
+Sprint 5 — Stratégique (1-2 semaines) :
+- [ ] Sprint 08 complet (Stripe + landing) — PRIORITÉ BUSINESS
+
+## Sprint 08 status
+- Stripe prod activé : [oui/non]
+- Landing publique live : [oui/non]
+- RGPD complet : [oui/non]
 
 ## 3 actions recommandées aujourd'hui
 1. [action prioritaire — BLOQUANT ou sécurité]

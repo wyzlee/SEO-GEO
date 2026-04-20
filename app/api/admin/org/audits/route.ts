@@ -29,20 +29,23 @@ export async function GET(request: Request) {
     throw error
   }
 
-  if (!resolvedOrgId) {
-    return NextResponse.json({ error: 'x-org-id requis pour un super-admin' }, { status: 400 })
-  }
+  // Super-admin sans header x-org-id → accès global (toutes les orgs)
+  // Org-admin → resolvedOrgId est toujours défini (scopé à son org)
+  const orgId: string | null = resolvedOrgId
 
-  const orgId: string = resolvedOrgId
+  // Lookup du nom d'org uniquement si scopé à une org
+  let organizationName: string | null = null
+  if (orgId) {
+    const org = await db
+      .select({ name: organizations.name })
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1)
 
-  const org = await db
-    .select({ name: organizations.name })
-    .from(organizations)
-    .where(eq(organizations.id, orgId))
-    .limit(1)
-
-  if (!org.length) {
-    return NextResponse.json({ error: 'Organisation introuvable' }, { status: 404 })
+    if (!org.length) {
+      return NextResponse.json({ error: 'Organisation introuvable' }, { status: 404 })
+    }
+    organizationName = org[0].name
   }
 
   const rows = await db
@@ -57,12 +60,12 @@ export async function GET(request: Request) {
       errorMessage: audits.errorMessage,
     })
     .from(audits)
-    .where(eq(audits.organizationId, orgId))
+    .where(orgId ? eq(audits.organizationId, orgId) : undefined)
     .orderBy(desc(audits.createdAt))
     .limit(200)
 
   return NextResponse.json({
-    organizationName: org[0].name,
+    organizationName,
     audits: rows.map((a) => ({
       ...a,
       createdAt: a.createdAt.toISOString(),

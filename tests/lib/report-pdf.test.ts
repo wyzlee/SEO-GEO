@@ -93,7 +93,7 @@ describe('renderPdf (Puppeteer + @sparticuz/chromium)', () => {
     expect(buf.slice(0, 4).toString()).toBe('%PDF')
     expect(pageStub.setContent).toHaveBeenCalledWith(
       '<h1>ok</h1>',
-      expect.objectContaining({ waitUntil: 'networkidle0' }),
+      expect.objectContaining({ waitUntil: 'load' }),
     )
     expect(pageStub.pdf).toHaveBeenCalledWith(
       expect.objectContaining({ format: 'A4', printBackground: true }),

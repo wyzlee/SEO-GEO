@@ -53,7 +53,7 @@ export async function renderPdf(input: RenderPdfInput): Promise<Buffer> {
 
     const page = await browser.newPage()
     await page.setContent(input.html, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'load',
       timeout: timeoutMs,
     })
     await page.evaluate(() => document.fonts.ready)

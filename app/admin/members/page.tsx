@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Image from 'next/image'
 import { toast } from 'sonner'
 import { UserPlus, Search, ChevronDown, Trash2 } from 'lucide-react'
 import {
@@ -61,12 +62,13 @@ function Avatar({ member }: { member: OrgMember }) {
 
   if (member.avatarUrl) {
     return (
-      <img
+      <Image
         src={member.avatarUrl}
         alt=""
         aria-hidden="true"
+        width={32}
+        height={32}
         className="rounded-full object-cover"
-        style={{ width: 32, height: 32 }}
       />
     )
   }

@@ -22,6 +22,20 @@ import { config as loadEnv } from 'dotenv'
 import { resolve } from 'node:path'
 loadEnv({ path: resolve(process.cwd(), '.env.local') })
 
+// Sentry — init conditionnel : actif uniquement si SENTRY_DSN est fourni dans
+// l'env du worker (Vercel env var, Docker, etc.). Sans SENTRY_DSN, les appels
+// Sentry.withScope() sont de simples no-ops.
+// Note : org_id n'est pas disponible sur PendingAudit sans requête supplémentaire ;
+// il est récupéré via findNextQueuedAudit() (champ organizationId).
+import * as Sentry from '@sentry/nextjs'
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV ?? 'production',
+    tracesSampleRate: 0.05,
+  })
+}
+
 import { eq, sql, asc } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { audits, benchmarks } from '@/lib/db/schema'
@@ -54,6 +68,7 @@ async function ping(): Promise<void> {
 
 interface PendingAudit {
   id: string
+  organizationId: string
 }
 
 interface PendingBenchmark {
@@ -69,7 +84,7 @@ interface PendingBenchmark {
  */
 async function findNextQueuedAudit(): Promise<PendingAudit | null> {
   const rows = await db
-    .select({ id: audits.id })
+    .select({ id: audits.id, organizationId: audits.organizationId })
     .from(audits)
     .where(eq(audits.status, 'queued'))
     .orderBy(asc(audits.queuedAt))
@@ -171,7 +186,12 @@ async function loop(): Promise<void> {
         currentBenchmarkId = pendingBenchmark.id
         log.info('worker.benchmark.picked', { benchmark_id: pendingBenchmark.id })
         try {
-          await processBenchmark(pendingBenchmark)
+          await Sentry.withScope(async (scope) => {
+            scope.setTag('benchmark_id', pendingBenchmark.id)
+            scope.setTag('org_id', pendingBenchmark.organizationId)
+            scope.setTag('component', 'worker')
+            await processBenchmark(pendingBenchmark)
+          })
         } catch (error) {
           log.error('worker.benchmark.unexpected_error', {
             benchmark_id: pendingBenchmark.id,
@@ -201,7 +221,12 @@ async function loop(): Promise<void> {
         // processAudit fait le claim atomique (markAuditRunning) ; si l'API
         // after() handler a déjà claim, processAudit return early et le
         // duration_ms ci-dessous reflète juste le no-op (~quelques ms).
-        await processAudit(pending.id)
+        await Sentry.withScope(async (scope) => {
+          scope.setTag('audit_id', pending.id)
+          scope.setTag('org_id', pending.organizationId)
+          scope.setTag('component', 'worker')
+          await processAudit(pending.id)
+        })
         log.info('worker.audit.processed', {
           audit_id: pending.id,
           duration_ms: Date.now() - startedAt,

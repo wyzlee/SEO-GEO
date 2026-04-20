@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { memberships, users } from '@/lib/db/schema'
@@ -23,7 +23,7 @@ type RouteParams = { params: Promise<{ userId: string }> }
 async function resolveContext(
   request: Request,
   targetUserId: string,
-): Promise<{ orgId: string; membershipId: string } | NextResponse> {
+): Promise<{ orgId: string; membershipId: string; targetRole: string } | NextResponse> {
   let ctx
   try {
     ctx = await requireAdmin(request)
@@ -62,7 +62,7 @@ async function resolveContext(
     return NextResponse.json({ error: 'Membre introuvable dans cette organisation' }, { status: 404 })
   }
 
-  return { orgId, membershipId: memberRow[0].id }
+  return { orgId, membershipId: memberRow[0].id, targetRole: memberRow[0].role }
 }
 
 /**
@@ -86,6 +86,23 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   const { role } = parsed.data
+
+  // Guard : empêcher la rétrogradation du dernier owner
+  if (resolved.targetRole === 'owner' && role !== 'owner') {
+    const ownerCount = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(memberships)
+      .where(and(
+        eq(memberships.organizationId, resolved.orgId),
+        eq(memberships.role, 'owner'),
+      ))
+    if (ownerCount[0].count <= 1) {
+      return NextResponse.json(
+        { error: 'Impossible de rétrograder le dernier propriétaire de l\'organisation' },
+        { status: 400 },
+      )
+    }
+  }
 
   const [updated] = await db
     .update(memberships)
@@ -122,14 +139,30 @@ export async function PATCH(request: Request, { params }: RouteParams) {
  * DELETE /api/admin/org/members/[userId]
  *
  * Retire un membre de l'org courante.
- *
- * TODO: ajouter une garde pour empêcher la suppression du dernier owner.
+ * Guard : impossible de supprimer le dernier owner.
  */
 export async function DELETE(request: Request, { params }: RouteParams) {
   const { userId: targetUserId } = await params
 
   const resolved = await resolveContext(request, targetUserId)
   if (resolved instanceof NextResponse) return resolved
+
+  // Guard : empêcher la suppression du dernier owner
+  if (resolved.targetRole === 'owner') {
+    const ownerCount = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(memberships)
+      .where(and(
+        eq(memberships.organizationId, resolved.orgId),
+        eq(memberships.role, 'owner'),
+      ))
+    if (ownerCount[0].count <= 1) {
+      return NextResponse.json(
+        { error: 'Impossible de supprimer le dernier propriétaire de l\'organisation' },
+        { status: 400 },
+      )
+    }
+  }
 
   await db
     .delete(memberships)

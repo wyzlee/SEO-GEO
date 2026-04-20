@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import * as cheerio from 'cheerio'
 import { assertSafeDnsUrl, UnsafeUrlError } from '@/lib/security/url-guard'
+import { logger } from '@/lib/observability/logger'
 import type { CrawlSnapshot, SubPageSnapshot } from './types'
 
 const USER_AGENT =
@@ -382,14 +383,13 @@ export async function crawlMultiPage(
 
         if (snap) {
           results.push(snap)
-          console.log(JSON.stringify({
-            event: 'bfs.page.crawled',
+          logger.info('bfs.page.crawled', {
             url: snap.url,
             status: snap.status,
             wordCount: snap.wordCount ?? 0,
             index: results.length,
             total: maxPages,
-          }))
+          })
 
           // Enqueue les liens internes découverts
           for (const link of snap.internalLinks ?? []) {
@@ -407,11 +407,10 @@ export async function crawlMultiPage(
           }
         } else {
           // Page inaccessible — log mais ne pas crasher
-          console.log(JSON.stringify({
-            event: 'bfs.page.failed',
+          logger.warn('bfs.page.failed', {
             url,
             index: results.length,
-          }))
+          })
         }
       }
     }

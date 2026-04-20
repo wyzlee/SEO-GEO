@@ -62,16 +62,6 @@ Format de réponse OBLIGATOIRE (JSON uniquement, aucun texte autour, aucun bloc 
 }`
 }
 
-/**
- * Retire les balises code Markdown (``` ou ```json) d'une réponse LLM
- * avant le JSON.parse.
- */
-function stripCodeFences(raw: string): string {
-  return raw
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```\s*$/, '')
-    .trim()
-}
 
 /**
  * Sélectionne les 3 gaps prioritaires depuis les findings topical + freshness.
@@ -113,12 +103,41 @@ async function generateOneBrief(
     `Recommandation : ${gap.recommendation}`,
   ].join('\n')
 
-  let rawContent: string
   try {
     const message = await client.messages.create(
       {
         model,
         max_tokens: 2048,
+        tools: [
+          {
+            name: 'generate_brief',
+            description: 'Generate a structured content brief from an SEO gap',
+            input_schema: {
+              type: 'object' as const,
+              properties: {
+                title: { type: 'string', minLength: 1, maxLength: 500 },
+                targetKeyword: { type: 'string', minLength: 1, maxLength: 200 },
+                searchIntent: { type: 'string', enum: ['informational', 'commercial', 'navigational'] },
+                contentType: { type: 'string', enum: ['pillar', 'cluster', 'update'] },
+                wordCountTarget: { type: 'integer', minimum: 300, maximum: 10000 },
+                outline: {
+                  type: 'object',
+                  properties: {
+                    h2: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 20 },
+                    h3_per_h2: { type: 'array', items: { type: 'array', items: { type: 'string' } }, maxItems: 20 },
+                  },
+                  required: ['h2', 'h3_per_h2'],
+                  additionalProperties: false,
+                },
+                eeatAngle: { type: 'string', maxLength: 1000 },
+                semanticKeywords: { type: 'array', items: { type: 'string' }, maxItems: 50 },
+              },
+              required: ['title', 'targetKeyword', 'searchIntent', 'contentType', 'wordCountTarget', 'outline', 'semanticKeywords'],
+              additionalProperties: false,
+            },
+          },
+        ],
+        tool_choice: { type: 'tool', name: 'generate_brief' },
         system: [
           {
             type: 'text',
@@ -136,8 +155,30 @@ async function generateOneBrief(
       { timeout: 30_000 },
     )
 
-    const block = message.content.find((b) => b.type === 'text')
-    rawContent = block?.type === 'text' ? block.text : ''
+    logger.info('briefs.claude.tokens', {
+      input_tokens: message.usage.input_tokens,
+      output_tokens: message.usage.output_tokens,
+      cache_read_input_tokens: (message.usage as unknown as Record<string, unknown>).cache_read_input_tokens ?? 0,
+      cache_creation_input_tokens: (message.usage as unknown as Record<string, unknown>).cache_creation_input_tokens ?? 0,
+    })
+
+    const toolUseBlock = message.content.find((b) => b.type === 'tool_use')
+    if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
+      logger.warn('briefs.claude.no_tool_use', { gap_title: gap.title.slice(0, 80) })
+      return null
+    }
+
+    // Valider avec Zod (toolUseBlock.input est typé unknown dans le SDK)
+    const validated = contentBriefClaudeResponseSchema.safeParse(toolUseBlock.input)
+    if (!validated.success) {
+      logger.warn('briefs.claude.zod_invalid', {
+        gap_title: gap.title.slice(0, 80),
+        issues_count: validated.error.issues.length,
+      })
+      return null
+    }
+
+    return validated.data
   } catch (err) {
     logger.error('briefs.claude.error', {
       gap_title: gap.title.slice(0, 80),
@@ -145,33 +186,6 @@ async function generateOneBrief(
     })
     return null
   }
-
-  // Retirer les balises code Markdown potentielles
-  const cleaned = stripCodeFences(rawContent)
-
-  // Parser JSON
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(cleaned)
-  } catch {
-    logger.warn('briefs.claude.json_parse_error', {
-      gap_title: gap.title.slice(0, 80),
-      raw_length: rawContent.length,
-    })
-    return null
-  }
-
-  // Valider avec Zod
-  const validated = contentBriefClaudeResponseSchema.safeParse(parsed)
-  if (!validated.success) {
-    logger.warn('briefs.claude.zod_invalid', {
-      gap_title: gap.title.slice(0, 80),
-      issues_count: validated.error.issues.length,
-    })
-    return null
-  }
-
-  return validated.data
 }
 
 /**
@@ -191,7 +205,7 @@ export async function generateContentBriefs(
   }
 
   const model = process.env.ANTHROPIC_DEFAULT_MODEL ?? 'claude-sonnet-4-6'
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 2 })
 
   logger.info('briefs.generation.start', {
     audit_id: auditId,
