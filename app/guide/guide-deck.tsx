@@ -335,7 +335,7 @@ function Slide8() {
             desc: "Entrez l'URL d'un site en production. L'audit crawle le site en temps réel, analyse les contenus visibles, les performances, les signaux IA.\n\nIdéal pour les audits clients existants et les suivis trimestriels.",
           },
           {
-            color: VIO, Icon: Package, name: 'Code source', tag: 'V2 — Prochainement', tagStyle: { background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)', color: AMB },
+            color: VIO, Icon: Package, name: 'Code source', tag: 'V1 — Disponible', tagStyle: { background: 'rgba(57,211,83,0.1)', border: '1px solid rgba(57,211,83,0.25)', color: GRN },
             desc: "Uploadez un ZIP ou connectez un repo GitHub. L'audit analyse le code avant que le site soit en ligne — audit pre-launch.\n\nIdéal pour les studios dev qui livrent un site optimisé dès le départ.",
           },
         ].map(({ color, Icon, name, tag, tagStyle, desc }) => (
@@ -440,8 +440,8 @@ function Slide11() {
       <Heading>Agency tool V1.<br />SaaS public V2.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20, marginTop: 8 }}>
         {[
-          { color: IND, label: 'Maintenant — V1', title: 'Agency Mode', items: ['Dashboard multi-org pour lancer les audits', 'Rapports white-label PDF + lien partageable', 'Audit URL live — crawl jusqu\'à 50 pages', 'Score 100 pts sur 11 dimensions', 'Benchmark concurrent (jusqu\'à 5 sites)', 'Surveillance citations IA (Perplexity, OpenAI)', 'Audits planifiés + alertes de régression', 'Content briefs IA post-audit'] },
-          { color: VIO, label: 'Prochainement — V2', title: 'Self-serve SaaS', items: ['Signup public + onboarding automatisé', 'Dashboard client self-serve', 'Plans Free / Pro / Agence (Stripe)', 'Audit sur code source (ZIP + GitHub)'] },
+          { color: IND, label: 'Maintenant — V1', title: 'Agency Mode', items: ['Dashboard multi-org pour lancer les audits', 'Rapports white-label PDF + lien partageable', 'Audit URL live — crawl jusqu\'à 50 pages', 'Audit code source ZIP + GitHub — pre-launch', 'Score 100 pts sur 11 dimensions — ring animé SVG', 'Progression temps réel — stepper des 11 phases', 'Benchmark concurrent (jusqu\'à 5 sites)', 'Surveillance citations IA (Perplexity, OpenAI)', 'Audits planifiés + alertes de régression', 'Content briefs IA post-audit (propulsé par Claude)'] },
+          { color: VIO, label: 'Prochainement — V2', title: 'Self-serve SaaS', items: ['Signup public + onboarding automatisé', 'Dashboard client self-serve', 'Plans Free / Pro / Agence (Stripe)', 'Alertes régression + email notifications', 'Benchmarks sectoriels dans le rapport'] },
         ].map(({ color, label, title, items }) => (
           <div key={title} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 10, padding: 26 }}>
             <div style={{ fontSize: '0.62rem', color, textTransform: 'uppercase' as const, letterSpacing: '0.15em', marginBottom: 8 }}>{label}</div>
@@ -524,6 +524,22 @@ function Slide12() {
       desc: 'Génération automatique de briefs de contenu après l\'audit — structure, angle, mots-clés cibles, signaux E-E-A-T à inclure. Propulsé par Claude.',
       tag: 'Disponible',
     },
+    {
+      Icon: Activity,
+      color: IND,
+      label: 'Dashboard — UX',
+      title: 'Progression temps réel',
+      desc: 'Le stepper des 11 phases s\'affiche pendant l\'audit. Voyez chaque phase se terminer en temps réel — fini l\'attente avec un spinner opaque.',
+      tag: 'Nouveau',
+    },
+    {
+      Icon: Trophy,
+      color: GRN,
+      label: 'Dashboard — Score',
+      title: 'Score ring animé',
+      desc: 'Le score /100 s\'affiche dans un anneau SVG animé avec code couleur : vert ≥ 70, orange 40–69, rouge < 40. Lisible en un coup d\'œil pour le client.',
+      tag: 'Nouveau',
+    },
   ]
 
   return (
@@ -533,7 +549,7 @@ function Slide12() {
         Ce qui est arrivé<br />en <span style={{ color: IND }}>2026</span>.
       </Heading>
       <p style={{ fontSize: '0.72rem', color: 'var(--color-muted)', marginBottom: 20, lineHeight: 1.6 }}>
-        3 améliorations des phases existantes · 3 nouvelles capacités
+        5 améliorations des phases existantes · 3 nouvelles capacités UX
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 10 }}>
         {features.map(({ Icon, color, label, title, desc, tag }) => (

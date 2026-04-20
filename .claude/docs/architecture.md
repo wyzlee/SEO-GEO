@@ -56,6 +56,9 @@
   - Server state : `@tanstack/react-query` (audits list, audit detail)
   - Client state : `zustand` (filtres UI, modales)
 - Design system : Cabinet Grotesk (display) + Fira Code (body), palette sémantique CSS vars (voir `ui-conventions.md`)
+- Composants audit temps réel :
+  - `components/audit/score-ring.tsx` — anneau SVG animé affichant le score global
+  - `components/audit/phase-progress.tsx` — stepper des 11 phases en temps réel (polling React Query)
 
 ### API routes (Next.js 16)
 
@@ -102,6 +105,14 @@ Lock-free multi-worker possible V2 (ajouter workers si queue backlog).
 - Schema défini dans `lib/db/schema.ts` via Drizzle — voir `data-model.md`
 - Migrations via `drizzle-kit`, workflow dans `.claude/commands/db-migrate.md`
 - Neon branching : `main` = prod, branches éphémères pour dev / preview
+
+### Cache (Upstash Redis)
+
+- `lib/redis.ts` — singleton Redis Upstash centralisé (jamais instancié en dehors de ce module)
+- Utilisé par :
+  - `lib/audit/crux.ts` — cache résultats CrUX TTL 24h
+  - `lib/audit/wikidata.ts` — cache entités Wikidata TTL 7j
+- Réduit les appels aux APIs externes d'un facteur ~10 sur les audits répétés
 
 ## Flux d'un audit URL (bout en bout)
 
@@ -160,6 +171,20 @@ Un user peut être membre de plusieurs orgs (table `memberships` avec role). L'o
 - Cache layer : Redis pour résultats d'audit récents (si re-runs fréquents)
 - Storage long-terme : S3-compat pour PDF rapports, HTML snapshots archivés
 - CDN : Cloudflare ou Vercel pour assets statiques (fonts Cabinet Grotesk, etc.)
+
+## Tests
+
+- `tests/mocks/` — infrastructure MSW (Mock Service Worker) avec 6 handlers pour mocker les APIs externes (Anthropic, Stripe, Perplexity) sans réseau réel
+- `tests/integration/briefs.test.ts` — 6 tests d'intégration sur la génération de briefs
+- État Sprint 4 : 353/353 tests passing, 0 erreur TypeScript
+
+## Sécurité
+
+### Content Security Policy
+
+- `next.config.ts` : header `Content-Security-Policy-Report-Only` actif depuis Sprint 4
+- Mode report-only : collecte les violations sans bloquer (surveillance 30 jours recommandée)
+- Passage en mode enforced prévu en Backlog après validation prod
 
 ## Décisions non-discutables
 

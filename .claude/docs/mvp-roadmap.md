@@ -119,12 +119,45 @@ Actions :
 1. [x] Tests d'intégration sur les routes critiques `/api/audits*` (22 tests : auth, validation, SSRF, rate-limit, isolation org, lifecycle rapport) — commit `3530bca`
 2. [x] Logs structurés JSON 1-ligne PII-free (`lib/observability/logger.ts`, sérialisation auto des Error, contexte propagé via `.with()`, niveaux via `LOG_LEVEL`) — commit `81543ab`. Error tracking Sentry à brancher après le 1er audit prod si nécessaire.
 3. [x] Rate limiting burst (3/min/user) + daily (50/24h/org) sur POST /api/audits — commit `f4db886`
-4. [ ] Documentation onboarding (variables d'env, lancer un audit, lire les logs JSON, générer un rapport)
+4. [x] Documentation onboarding (variables d'env, lancer un audit, lire les logs JSON, générer un rapport) — doc dans `.claude/docs/`
 5. [ ] Premier audit "vrai" sur un prospect réel — validation locale d'abord (port ≠ 3000), puis prod
 
 Livrable : V1 en prod, 3+ audits réels livrés à des clients.
 
-État : tests E2E API + observabilité bouclés. Reste validation manuelle bout-en-bout, doc onboarding, deploy VPS.
+État : tests E2E API + observabilité bouclés. Reste validation manuelle bout-en-bout et premier audit prod.
+
+---
+
+## Sprints techniques 2026
+
+Sprints transverses réalisés en parallèle du MVP — Quick Wins et améliorations structurantes.
+
+### Sprint 3 — Quick Wins (2026-04-20) ✅
+
+- [x] `lib/audit/crawl.ts` : console.log → logger structuré JSON
+- [x] `lib/audit/briefs.ts` : maxRetries 2, structured outputs tool_use, token cost logging
+- [x] `lib/report/pdf.ts` : waitUntil 'load'
+- [x] `app/layout.tsx` : skip link WCAG 2.2
+- [x] `app/admin/**` : next/image + alt (a11y + perf)
+- [x] API members : guard suppression du dernier owner
+- [x] API audits admin : fix 403 org-admins
+- [x] `worker/index.ts` : Sentry withScope avec audit_id / org_id
+
+### Sprint 4 — Améliorations structurantes (2026-04-20) ✅
+
+- [x] `next.config.ts` : CSP Content-Security-Policy-Report-Only
+- [x] `components/audit/score-ring.tsx` : anneau SVG animé (nouveau composant)
+- [x] `components/audit/phase-progress.tsx` : stepper phases temps réel (nouveau composant)
+- [x] `app/dashboard/audits/[id]/page.tsx` : partial results UI, polling React Query
+- [x] `lib/redis.ts` : singleton Redis Upstash centralisé
+- [x] `lib/audit/crux.ts` + `lib/audit/wikidata.ts` : cache Upstash TTL 24h / 7j
+- [x] `app/api/audits/route.ts` : rate limit 3 audits running+queued/org → 429
+- [x] `tests/mocks/` : infrastructure MSW (6 handlers)
+- [x] `tests/integration/briefs.test.ts` : 6 tests d'intégration
+
+**Résultats** : 353/353 tests passing, 0 erreur TypeScript.
+
+---
 
 ## Sprint 08 — Bascule V2 self-serve
 
@@ -140,6 +173,8 @@ Actions :
 Livrable : `seo-geo-orcin.vercel.app` ouvert au public, premiers signups organiques.
 
 **Important** : sprints 00-07 doivent avoir validé que l'audit engine est robuste et que les rapports sont de qualité AVANT d'ouvrir au public. Pas de bascule V2 prématurée.
+
+**État** : fondations techniques V1+ livrées (Sprints 3+4). Sprint 08 = déverrouille les revenus.
 
 ## Ce qui suit (hors MVP)
 
