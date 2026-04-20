@@ -1,0 +1,12 @@
+title = "gitleaks config SEO-GEO"
+
+[allowlist]
+description = "Faux positifs — clé localStorage UI et fixtures JWT de tests"
+
+# STORAGE_KEY dans nouveautes-banner.tsx est une clé localStorage (pas une clé API).
+# Le JWT dans tests/observability/logger.test.ts est une fixture fictive
+# explicitement conçue pour tester la redaction des secrets dans les logs.
+paths = [
+  '''components/dashboard/nouveautes-banner\.tsx''',
+  '''tests/observability/logger\.test\.ts''',
+]
