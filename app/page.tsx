@@ -31,47 +31,57 @@ const phases: Array<{ num: number; title: string; weight: number }> = [
   { num: 11, title: 'Synthèse cross-phase', weight: 0 },
 ]
 
-const packages: Array<{
+const saasPlans: Array<{
   name: string
   price: string
+  priceDetail?: string
   description: string
   features: string[]
+  cta: string
+  ctaHref: string
   featured?: boolean
 }> = [
   {
-    name: 'Audit unique',
-    price: '1 500 – 3 500 €',
-    description: 'Audit complet + débrief 1h + rapport white-label.',
+    name: 'Découverte',
+    price: 'Gratuit',
+    description: 'Pour tester la plateforme et découvrir l\'audit SEO-GEO.',
     features: [
-      '11 phases d\'analyse',
-      'Rapport HTML + PDF téléchargeable',
-      'Debrief 1h en visio',
-      'Livré sous 3 à 5 jours',
+      '1 audit / mois',
+      'Rapport HTML complet',
+      'Score sur 100 pts',
+      'Findings par phase',
     ],
+    cta: 'Commencer gratuitement',
+    ctaHref: '/signup',
   },
   {
-    name: 'Retainer Growth',
-    price: '5 000 – 7 500 € / mois',
-    description: 'Audit trimestriel + refresh mensuels + conseils continus.',
+    name: 'Studio',
+    price: '490 €',
+    priceDetail: '/ mois',
+    description: 'Pour les équipes marketing et agences actives.',
     features: [
-      '1 audit complet / trimestre',
-      '2–4 refresh ciblés / mois',
-      'Suivi mention rate IA',
-      'Pillar content + entity building',
+      '20 audits / mois',
+      'Export PDF white-label',
+      'Rapport partageable 60j',
+      'Synthèse IA cross-phase',
     ],
+    cta: 'Essayer Studio',
+    ctaHref: '/signup',
     featured: true,
   },
   {
-    name: 'White-label agence',
-    price: 'Tarif wholesale',
-    description:
-      'Pour agences SEO : branding dynamique, rapport sous votre marque.',
+    name: 'Agency',
+    price: '990 €',
+    priceDetail: '/ mois',
+    description: 'Pour les agences SEO avec volume et branding client.',
     features: [
-      'Logo + couleurs agence',
-      'API + webhooks (V2)',
-      'Remise volume',
-      'Formation équipe',
+      'Audits illimités',
+      'White-label complet',
+      'Accès API + webhooks',
+      'Support prioritaire',
     ],
+    cta: 'Contacter',
+    ctaHref: 'mailto:contact@wyzlee.com?subject=Plan%20Agency%20SEO-GEO',
   },
 ]
 
@@ -109,7 +119,7 @@ export default function LandingPage() {
             <Link href="/login" className="btn-secondary">
               Connexion
             </Link>
-            <Link href="/onboarding" className="btn-primary">
+            <Link href="/signup" className="btn-primary">
               Commencer gratuitement
             </Link>
           </nav>
@@ -141,7 +151,7 @@ export default function LandingPage() {
             agence partenaire.
           </p>
           <div className="mt-10 flex flex-wrap gap-3 justify-center">
-            <Link href="/onboarding" className="btn-primary">
+            <Link href="/signup" className="btn-primary">
               Commencer gratuitement
             </Link>
             <Link href="/guide" className="btn-secondary">
@@ -267,75 +277,85 @@ export default function LandingPage() {
               tag="Benchmark"
               title="Comparatif concurrent"
               body="Comparez jusqu'à 5 sites simultanément — tableau de scores par phase, détection des écarts. Sachez exactement où vous en êtes face à vos concurrents."
-              href="/onboarding"
+              href="/signup"
             />
             <NewCapabilityCard
               tag="Citations IA"
               title="AI Citation Monitoring"
               body="Vérifiez si votre domaine est cité par Perplexity et ChatGPT sur vos requêtes cibles. Suivi de la mention rate IA en continu, phase GEO enrichie."
-              href="/onboarding"
+              href="/signup"
             />
             <NewCapabilityCard
               tag="Briefs de contenu"
               title="Content Briefs IA"
               body="Génération automatique de briefs post-audit — structure, angle, mots-clés, signaux E-E-A-T à inclure. Propulsé par Claude, livrable immédiatement."
-              href="/onboarding"
+              href="/signup"
             />
           </div>
         </section>
 
-        {/* ---- Offres ---- */}
+        {/* ---- Pricing ---- */}
         <section
           id="offres"
           className="max-w-5xl mx-auto px-6 py-20 border-t"
           style={{ borderColor: 'var(--color-border)' }}
         >
           <h2 className="text-3xl font-[family-name:var(--font-display)] font-bold text-center">
-            Trois formats d&apos;engagement
+            Tarifs simples, sans surprise
           </h2>
           <p
             className="mt-3 text-sm text-center font-[family-name:var(--font-sans)]"
             style={{ color: 'var(--color-muted)' }}
           >
-            V1 agency — facturation sur contrat.
+            Commencez gratuitement — passez au plan supérieur quand vous avez besoin de plus.
           </p>
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {packages.map((pkg) => (
+            {saasPlans.map((plan) => (
               <div
-                key={pkg.name}
+                key={plan.name}
                 className="rounded-xl p-6 flex flex-col"
                 style={{
-                  background: pkg.featured
+                  background: plan.featured
                     ? 'color-mix(in srgb, var(--color-accent) 8%, var(--color-surface))'
                     : 'var(--color-surface)',
-                  border: `1px solid ${pkg.featured ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                  border: `1px solid ${plan.featured ? 'var(--color-accent)' : 'var(--color-border)'}`,
                 }}
               >
-                {pkg.featured ? (
+                {plan.featured ? (
                   <span
                     className="text-xs uppercase tracking-wider font-[family-name:var(--font-display)] font-semibold mb-2"
                     style={{ color: 'var(--color-accent)' }}
                   >
-                    Recommandé
+                    Populaire
                   </span>
                 ) : null}
                 <h3 className="text-xl font-[family-name:var(--font-display)] font-bold">
-                  {pkg.name}
+                  {plan.name}
                 </h3>
-                <div
-                  className="mt-2 text-lg font-[family-name:var(--font-sans)] font-semibold"
-                  style={{ color: 'var(--color-accent)' }}
-                >
-                  {pkg.price}
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span
+                    className="text-2xl font-[family-name:var(--font-display)] font-bold"
+                    style={{ color: 'var(--color-text)' }}
+                  >
+                    {plan.price}
+                  </span>
+                  {plan.priceDetail && (
+                    <span
+                      className="text-sm font-[family-name:var(--font-sans)]"
+                      style={{ color: 'var(--color-muted)' }}
+                    >
+                      {plan.priceDetail}
+                    </span>
+                  )}
                 </div>
                 <p
                   className="mt-2 text-sm font-[family-name:var(--font-sans)]"
                   style={{ color: 'var(--color-muted)' }}
                 >
-                  {pkg.description}
+                  {plan.description}
                 </p>
                 <ul className="mt-4 space-y-1.5 text-sm font-[family-name:var(--font-sans)] flex-1">
-                  {pkg.features.map((f) => (
+                  {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
                       <span
                         aria-hidden="true"
@@ -347,12 +367,12 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="mailto:contact@wyzlee.com?subject=Devis%20SEO-GEO"
-                  className={pkg.featured ? 'btn-primary mt-6' : 'btn-secondary mt-6'}
+                <Link
+                  href={plan.ctaHref}
+                  className={plan.featured ? 'btn-primary mt-6' : 'btn-secondary mt-6'}
                 >
-                  Demander un devis
-                </a>
+                  {plan.cta}
+                </Link>
               </div>
             ))}
           </div>
@@ -367,15 +387,14 @@ export default function LandingPage() {
             className="mt-3 text-sm font-[family-name:var(--font-sans)]"
             style={{ color: 'var(--color-muted)' }}
           >
-            Vérifions-le ensemble. Un audit en 3 à 5 jours, livré en français,
-            avec une roadmap concrète sur 90 jours.
+            Lancez votre premier audit gratuitement — résultat en moins de 10 minutes.
           </p>
-          <a
-            href="mailto:contact@wyzlee.com?subject=Audit%20SEO-GEO"
+          <Link
+            href="/signup"
             className="btn-primary mt-6 inline-flex"
           >
-            Discuter d&apos;un audit
-          </a>
+            Commencer gratuitement
+          </Link>
         </section>
       </main>
 

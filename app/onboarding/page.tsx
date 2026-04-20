@@ -192,6 +192,17 @@ export default function OnboardingPage() {
               Commençons par donner un nom à votre espace de travail.
             </p>
 
+            <p
+              className="text-xs font-[family-name:var(--font-sans)] mb-6 px-3 py-2 rounded-md"
+              style={{
+                background: 'color-mix(in srgb, var(--color-accent) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)',
+                color: 'var(--color-muted)',
+              }}
+            >
+              Vous démarrez sur le plan <strong style={{ color: 'var(--color-text)' }}>Découverte</strong> — 1 audit offert, sans carte bancaire. Upgradez depuis les paramètres à tout moment.
+            </p>
+
             <form onSubmit={handleStep1Submit} noValidate>
               <div className="space-y-2 mb-6">
                 <label

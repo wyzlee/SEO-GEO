@@ -22,6 +22,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   loading: boolean
   login: (email: string, password: string) => Promise<void>
+  signup: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   getToken: () => Promise<string | null>
@@ -129,6 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refreshUser()
   }
 
+  const signup = async (email: string, password: string) => {
+    await stackAuth.signUpWithCredential({ email, password })
+    await refreshUser()
+  }
+
   const logout = async () => {
     const currentUser = await stackAuth.getUser()
     if (currentUser) await currentUser.signOut()
@@ -144,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         loading,
         login,
+        signup,
         logout,
         refreshUser,
         getToken: getTokenFn,

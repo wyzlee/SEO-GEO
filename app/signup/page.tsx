@@ -2,29 +2,36 @@
 
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth/context'
 
-export default function LoginPage() {
-  const { login } = useAuth()
+export default function SignupPage() {
+  const { signup } = useAuth()
   const router = useRouter()
-  const search = useSearchParams()
-  const redirect = search.get('redirect') || '/dashboard'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (password !== confirm) {
+      toast.error('Les mots de passe ne correspondent pas.')
+      return
+    }
+    if (password.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères.')
+      return
+    }
     setSubmitting(true)
     try {
-      await login(email, password)
-      toast.success('Connexion réussie')
-      router.push(redirect)
+      await signup(email, password)
+      toast.success('Compte créé — bienvenue !')
+      router.push('/onboarding')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Connexion impossible')
+      toast.error(err instanceof Error ? err.message : 'Inscription impossible')
     } finally {
       setSubmitting(false)
     }
@@ -38,10 +45,10 @@ export default function LoginPage() {
       >
         <div className="space-y-1">
           <h1 className="text-2xl font-bold font-[family-name:var(--font-display)]">
-            Se connecter
+            Créer un compte
           </h1>
           <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
-            Connectez-vous à votre espace.
+            Gratuit — 1 audit offert, sans carte bancaire.
           </p>
         </div>
 
@@ -73,23 +80,41 @@ export default function LoginPage() {
             <input
               id="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               required
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="input-modern"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="confirm"
+              className="block text-xs font-medium mb-1 font-[family-name:var(--font-display)]"
+            >
+              Confirmer le mot de passe
+            </label>
+            <input
+              id="confirm"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
               className="input-modern"
             />
           </div>
         </div>
 
         <button type="submit" disabled={submitting} className="btn-primary w-full">
-          {submitting ? 'Connexion…' : 'Se connecter'}
+          {submitting ? 'Création du compte…' : 'Créer mon compte'}
         </button>
 
         <p className="text-center text-xs" style={{ color: 'var(--color-muted)' }}>
-          Pas encore de compte ?{' '}
-          <Link href="/signup" style={{ color: 'var(--color-accent)' }}>
-            Créer un compte gratuitement →
+          Déjà un compte ?{' '}
+          <Link href="/login" style={{ color: 'var(--color-accent)' }}>
+            Se connecter →
           </Link>
         </p>
       </form>
