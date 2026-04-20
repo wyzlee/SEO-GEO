@@ -1,148 +1,83 @@
 # Diagnostic SWOT — SEO-GEO
-> Avril 2026 — Synthèse des analyses codebase, concurrentielle, growth, UX et tech
+> Mis à jour le 2026-04-20 (Phase 1 re-run)
 
 ---
 
-## FORCES — Ce que le projet fait déjà mieux que la concurrence
+## Forces
 
-### F1. Seul outil natif SEO + GEO + llms.txt en français
-Aucun concurrent ne combine en un seul rapport : audit SEO technique (11 phases, 100pt) + audit GEO (llms.txt, AI bots, E-E-A-T) + rapport white-label en français. Semrush facture $139 + $99 d'add-on GEO. SEO-GEO le fait nativement.
-
-### F2. Architecture multi-tenant propre dès V1
-`organization_id` sur toutes les tables métier, plan-gating via `organizations.plan`, memberships avec rôles — fondation agency-ready sans refactoring.
-
-### F3. Stack technique Golden Stack Wyzlee (53/53 checks)
-Next.js 16 + React 19 + Drizzle + Neon HTTP driver + Stack Auth + Zod v4 + Tailwind 4 — aucune dette technique, stack actuelle 2026, déploiement Vercel natif.
-
-### F4. Moteur d'audit fonctionnel en production
-11 phases, 3 modes (flash 15s / standard 120s / full 600s), 100pt scoring, crawl URL + zip upload + GitHub clone — tout opérationnel.
-
-### F5. Rapport white-label FR opérationnel
-HTML + PDF via Puppeteer, share public 30j TTL, logo injection fonctionnel — différenciateur commercial majeur pour agences.
-
-### F6. Tests exhaustifs (62/62, 351 fichiers)
-Vitest + RTL, lint 0 erreur, typecheck strict — base pour évolution sans régression.
+1. **Moteur d'audit le plus complet du marché** : 11 phases, scoring 100pts, rubric sourcée — aucun concurrent ne combine cette granularité + GEO intégré
+2. **Input code unique** (ZIP/GitHub) : fonctionnalité introuvable chez tous les concurrents y compris enterprise — ouvre le segment "studios dev pre-launch"
+3. **Rapport white-label FR jargon-free** : livrable directement au client final, bilingue tech/marketing (TechView / MarketingView)
+4. **Architecture robuste V1** : 0 erreurs TS, 62/62 tests, org isolation systématique, SSRF guard multi-couche
+5. **GEO au cœur** (18pts/100) : le GEO n'est pas un add-on mais la phase la plus pondérée — différenciant structurel
+6. **Stack Golden Stack conforme** : upgrade zero-friction si besoin
+7. **Prompt caching Anthropic** : coût LLM optimisé dès V1
+8. **Citation tracking** (Perplexity/OpenAI) : feature rare, uniquement chez les GEO purs à $90-300/m
 
 ---
 
-## FAIBLESSES — Ce qui manque ou est en retard
+## Faiblesses
 
-### W1. Palier A bloqué (non livrable commercialement cette semaine)
-5 gaps identifiés dans `vendable-analyse-globale.md` :
-- `RESEND_API_KEY` absent en prod → email post-audit silencieux
-- Aucun smoke test end-to-end documenté sur prod réel
-- Zéro monitoring/alerting (audits échouent silencieusement)
-- Pages legal incomplètes (sous-traitants non listés)
-- Aucun canal support client
-
-### W2. Charts React non rendus dans le PDF
-`recharts` (DOM-dependent) ne se rend pas via Puppeteer server-side → le PDF livré au client n'a pas de visualisations. Problème de timing Puppeteer, pas architectural.
-
-### W3. Phase performance (CrUX) sur heuristiques sans clé API
-`GOOGLE_CRUX_API_KEY` absent en prod → Phase 8 tourne sans données réelles → rapport peu crédible pour un client payant 1500€+.
-
-### W4. Phase synthesis (11) = placeholder vide
-Aucun LLM call en prod → la section synthesis est absente du rapport.
-
-### W5. Queue worker fragile (fire-and-forget Next.js `after()`)
-Audit >60s peut être silencieusement tué sur Vercel. Pas de retry, pas de durabilité. Single-instance only.
-
-### W6. Landing page inexistante
-`/` redirige vers `/login` → aucun visiteur organique ne peut s'inscrire ou comprendre le produit.
-
-### W7. Signup public désactivé
-Impossible de créer un compte sans Olivier manuellement → bloque tout modèle self-serve.
-
-### W8. 5 régressions qualité rapport connues (non testées)
-Dédup sémantique, titres "zéro-value", sections vides, sprints vides, casse noms propres — cf. memory `feedback_report_quality.md`.
-
-### W9. Pas de Stripe / billing
-Impossible de facturer automatiquement.
-
-### W10. SSRF DNS-based check absent
-`crawl.ts` n'implémente pas la résolution DNS + blocage RFC-1918 post-DNS — vecteur SSRF résiduel documenté dans `security.md`.
+1. **Pas encore en production** : app opérationnelle mais déploiement prod repoussé (Neon dev branch, Stack Auth test credentials)
+2. **Sprint 08 incomplet** : Stripe non activé en prod, landing publique manquante — bloque l'acquisition self-serve
+3. **CSP absent** : seul trou de sécurité notable — commenté "à définir progressivement" dans next.config.ts
+4. **Wikidata et CrUX = stubs** : phases entity et performance partiellement implémentées (fallback static)
+5. **Worker séparé** : infrastructure séparée pour les audits longs, complexifie le déploiement Vercel-only
+6. **Crawl JS-rendered** : fetch+cheerio ne rend pas le JS — ~35% des sites SPA détectés mais non crawlés correctement
+7. **UX d'attente sous-optimale** : les phases terminées ne sont pas affichées pendant que le crawl continue
+8. **Pas de Cmd+K** : attendu des users B2B 2025
+9. **Pas de MSW dans les tests** : mocks API externes fragiles
+10. **TODO org-admins /api/admin/org/audits** : 403 pour org-admins (non-bloquant V1, bloquant multi-org)
 
 ---
 
-## OPPORTUNITÉS QUICK-WIN (< 1 jour)
+## Opportunités Quick-Win (< 1 jour)
 
-### QW1. Configurer env vars prod manquantes (30 min)
-`RESEND_API_KEY`, `EMAIL_FROM`, `GOOGLE_CRUX_API_KEY` dans Vercel Dashboard → débloque Palier A + phase performance.
-
-### QW2. Fix PDF charts — timing Puppeteer (4h)
-`waitUntil: 'networkidle0'` + `waitForSelector` ciblé → charts recharts apparaissent dans le PDF.
-
-### QW3. 3 index DB manquants (2h)
-`audits(status, queued_at)` partial, `findings(audit_id, phase_key)`, `audits(org_id, created_at DESC)` → requêtes dashboard et rapport x2-3 plus rapides.
-
-### QW4. 5 tests régression rapport (3h)
-`tests/lib/report-quality.test.ts` → protège les 5 régressions connues.
-
-### QW5. Canal support minimal (30 min)
-`support@wyzlee.cloud` dans le footer + mentions légales.
-
-### QW6. Smoke test prod documenté (2h)
-Login → audit → rapport → PDF → share → email notification sur `seo-geo-orcin.vercel.app`.
-
-### QW7. Sentry free tier (2h)
-Errors + performance monitoring → alertes si Puppeteer crash ou Neon timeout.
-
-### QW8. Section "Forces" avant findings dans le rapport (2h)
-3-5 forces détectées avant la liste de problèmes → churn psychologique des agences réduit.
+| Item | Fichier | Effort |
+|------|---------|--------|
+| console.log → logger.info | lib/audit/crawl.ts L~385, L~405 | 20 min |
+| maxRetries: 2 client Anthropic | lib/audit/briefs.ts | 30 min |
+| waitUntil: 'load' PDF | lib/report/ (render PDF) | 10 min |
+| Skip link #main-content | app/layout.tsx | 30 min |
+| next/image + alt images admin | app/admin/organizations/[id]/page.tsx, app/admin/members/page.tsx | 1h |
+| Guard last owner deletion | app/api/admin/org/members/[userId]/route.ts | 1h |
+| Fix org-admins /api/admin/org/audits | app/api/admin/org/audits/route.ts | 2h |
+| Structured outputs Claude tool_use | lib/audit/briefs.ts | 3h |
+| Token cost logging Anthropic | lib/audit/briefs.ts | 1h |
+| Sentry tag audit_id dans worker | worker/index.ts | 1h |
 
 ---
 
-## OPPORTUNITÉS STRATÉGIQUES (> 1 jour)
+## Opportunités Stratégiques (> 1 jour)
 
-### OS1. Landing page marketing (2 jours)
-`/` avec pitch, démo interactive, CTA "Essai gratuit 14j" → prérequis pour toute acquisition organique ou outbound.
-
-### OS2. Signup public + trial 14j (3 jours)
-Stack Auth signup + wizard onboarding 3 étapes → aha moment = premier rapport white-label en < 5 min.
-
-### OS3. Stripe 3 plans + feature gating (3 jours)
-Free (1 audit flash/mois) → Pro $49 (10/mois) → Agency $149 (illimité + white-label) → webhooks Stripe → update `organizations.plan`.
-
-### OS4. Vercel Workflow WDK — queue durable (3-5 jours)
-Migration `processAudit()` → `"use workflow"` + steps → GA avril 2026, zero infra, retry natif, observabilité intégrée.
-
-### OS5. Phase synthesis — Claude Haiku 4.5 (2 jours)
-Coût estimé <€2/mois pour 50 audits/mois agency tier. Prompt caching Anthropic sur system prompt. SSE streaming vers UI via Next.js App Router.
-
-### OS6. Affiliate program 30% récurrent (1 jour setup)
-Ahrefs a fermé son programme en 2024 → la communauté SEO FR/EU cherche une alternative. Opportunité directe avec audience LinkedIn SEO.
-
-### OS7. White-label Silver tier — custom domain + email (5 jours)
-Logo + couleurs (V1 OK) → custom domain rapports + email expéditeur agence → standard pour fermer les deals agence en 2026.
-
-### OS8. Audit scheduling cron (2 jours)
-Clients retainer veulent des audits mensuels automatiques → Vercel Cron simple.
+1. **Finir Sprint 08** : Stripe prod + landing publique → débloque revenus (priorité absolue)
+2. **CSP en report-only** puis enforced → différenciant sécurité enterprise + conformité EAA
+3. **Partial results UI** : afficher phases terminées pendant crawl (pattern GitHub Actions) → réduit abandon
+4. **Score ring animé SVG** sur l'audit detail → différenciant visuel immédiat
+5. **Stepper de phases** pendant l'audit en cours → réduit anxiété sur les audits 5-10 min
+6. **Cmd+K command palette** (cmdk/shadcn-ui) → standard B2B 2025 attendu
+7. **Cache CrUX + Wikidata** en Upstash (TTL 24h/7j) → divise ×10 les appels API externes
+8. **MSW** pour mocks API externes dans les tests → tests Anthropic/Stripe/Perplexity sans dépendance réseau
+9. **Alertes régression** (score baisse > X pts → email) → rétention mécanique, "sentinel"
+10. **Crawl JS/SPA** via Firecrawl API optionnel → couvre ~35% des sites SPA non crawlés
 
 ---
 
-## MENACES — Risques si on ne fait rien
+## Menaces
 
-### T1. Semrush One accélère sur GEO
-Semrush bascule vers un bundle SEO+GEO à $199/mo. Avec la distribution d'une acquisition Adobe ($1.9 Md closing H1 2026), la fenêtre de différenciation se ferme.
-
-### T2. Search Atlas est le concurrent le plus proche
-SEO complet + LLM visibility + white-label à $99/mo. Cible les agences déçues d'AgencyAnalytics. Si SEO-GEO ne livre pas de white-label premium et de pricing compétitif dans 3-6 mois, Search Atlas capture le segment.
-
-### T3. AgencyAnalytics déplacement crée une opportunité mais aussi un appel d'offres
-La vague de mécontentement post-repricing octobre 2025 cherche une alternative NOW. Fenêtre d'opportunité limitée à 6-12 mois.
-
-### T4. Queue fragile = risque réputation
-Un audit silencieusement raté chez un premier client payant peut tuer les références agence.
-
-### T5. Communauté SEO FR sous-adressée
-Aucun acteur US n'a vraiment localisé le contenu GEO en français. Si SEO-GEO n'occupe pas ce terrain en 2026, un concurrent local le fera.
+1. **Semrush** approfondit son AI Search Health score en 2026-2027 (ressources illimitées)
+2. **Profound/AthenaHQ** ajoutent un module d'audit technique pour compléter leur offre GEO
+3. **Retard go-to-market** : chaque mois sans landing publique = mois sans acquisition organique
+4. **European Accessibility Act** (EAA, juin 2025) : sans CSP et skip link, risque légal EU B2B
+5. **Dépendance @sparticuz/chromium** : bundle 50-70MB, cold start 4-8s sur Vercel
+6. **DNS rebinding TOCTOU** : fenêtre théorique entre validation SSRF et fetch réel
 
 ---
 
-## Score de maturité commerciale actuelle
+## Synthèse
 
-| Palier | État | Bloquants |
-|--------|------|-----------|
-| A — Agency Ready (client direct) | 🟠 75% | Email notif, smoke test, monitoring, legal, support |
-| B — Quality Gate ($1500+) | 🟡 50% | Charts PDF, CrUX API, 5 régressions rapport |
-| C — Self-serve (scale) | 🔴 10% | Landing, signup, Stripe, onboarding |
+**SEO-GEO occupe un vide de marché réel** : aucun concurrent ne combine audit SEO complet + GEO intégré + input code + rapport FR white-label.
+
+**Fenêtre d'opportunité 12-18 mois** avant que Semrush ou un GEO pur comble le fossé.
+
+**Priorité absolue** : déverrouiller Sprint 08 (Stripe + landing). Les Quick Wins techniques peuvent être faits en parallèle ou juste avant.
