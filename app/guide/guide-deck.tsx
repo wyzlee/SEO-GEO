@@ -128,7 +128,7 @@ function PersonaCard({ color, Icon, name, desc, need }: { color: string; Icon: R
 // ─── SLIDE 1 : COVER ──────────────────────────────────────────────────────────
 function Slide1() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>◆ Wyzlee — Produit SEO-GEO</Eyebrow>
       <h1 style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.03em', fontSize: 'clamp(2.8rem, 8vw, 7rem)', marginBottom: 20 }}>
         <span style={{ color: IND }}>SEO</span><span style={{ color: VIO }}>-GEO</span><br />
@@ -161,7 +161,7 @@ function Slide1() {
 // ─── SLIDE 2 : LE CONTEXTE ────────────────────────────────────────────────────
 function Slide2() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>01 — Le contexte</Eyebrow>
       <Heading>Le trafic organique<br />ne suffit plus.</Heading>
       <Lead>Le marché a basculé. Les outils SEO classiques n&apos;ont pas suivi.</Lead>
@@ -178,7 +178,7 @@ function Slide2() {
 // ─── SLIDE 3 : LA DOUBLE PEINE ────────────────────────────────────────────────
 function Slide3() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>02 — Le problème</Eyebrow>
       <Heading>La double peine<br />de vos clients.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10, marginTop: 8 }}>
@@ -193,7 +193,7 @@ function Slide3() {
 // ─── SLIDE 4 : LA SOLUTION ────────────────────────────────────────────────────
 function Slide4() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>03 — La solution</Eyebrow>
       <Heading>Un audit.<br />Deux dimensions.</Heading>
       <Lead>SEO-GEO est le premier outil d&apos;audit qui couvre simultanément les deux types de visibilité qui comptent en 2026.</Lead>
@@ -252,7 +252,7 @@ function Slide6({ isMobile }: { isMobile: boolean }) {
     { Icon: Clock, title: 'Fraîcheur des signaux', desc: 'Les IA privilégient les sources récentes. Vos dernières publications ont-elles moins de 30 jours ?' },
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>05 — La dimension GEO</Eyebrow>
       <Heading>Le signal le plus important.<br /><span style={{ color: VIO }}>18 pts sur 100.</span></Heading>
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 16 : 48, alignItems: 'flex-start', marginTop: 8 }}>
@@ -286,7 +286,7 @@ function Slide7() {
     { Icon: CalendarClock, title: 'Audits planifiés', desc: 'Re-audits automatiques hebdo / mensuel. Alerte email si le score régresse de plus de 5 pts.' },
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>06 — Le livrable</Eyebrow>
       <Heading>Un rapport client-ready.<br />En moins de 10 minutes.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 20, marginTop: 8 }}>
@@ -325,7 +325,7 @@ function Slide7() {
 // ─── SLIDE 8 : INPUT MODES ────────────────────────────────────────────────────
 function Slide8() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>07 — Modes d&apos;entrée</Eyebrow>
       <Heading>URL live ou code source.<br />Votre choix.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20, marginTop: 16 }}>
@@ -355,7 +355,7 @@ function Slide8() {
 // ─── SLIDE 9 : POUR QUI ───────────────────────────────────────────────────────
 function Slide9() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>08 — Pour qui ?</Eyebrow>
       <Heading>3 personas.<br />Un même outil.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 14, marginTop: 8 }}>
@@ -435,7 +435,7 @@ function Slide10({ isMobile }: { isMobile: boolean }) {
 // ─── SLIDE 11 : ROADMAP ───────────────────────────────────────────────────────
 function Slide11() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto', paddingBottom: 100 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto', paddingBottom: 100 }}>
       <Eyebrow>10 — Roadmap</Eyebrow>
       <Heading>Agency tool V1.<br />SaaS public V2.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20, marginTop: 8 }}>
@@ -564,7 +564,7 @@ function Slide12() {
 // ─── SLIDE 13 : CTA ───────────────────────────────────────────────────────────
 function Slide13({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px)', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto' }}>
       <Eyebrow>Prochaine étape</Eyebrow>
       <div style={{ fontFamily: 'var(--font-display), sans-serif', fontWeight: 900, fontSize: 'clamp(2rem, 5vw, 4rem)', lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 20, color: 'var(--color-text)' }}>
         Prêt à lancer<br />
@@ -601,7 +601,7 @@ export function GuideDeck() {
   const [current, setCurrent] = useState(1)
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const touchStart = useRef<{ x: number; y: number; scrollEl: HTMLElement | null; initialScrollTop: number } | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -662,15 +662,37 @@ export function GuideDeck() {
   }, [current, goTo])
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    let scrollEl: HTMLElement | null = null
+    let el = e.target as HTMLElement | null
+    while (el && el !== document.body) {
+      const ov = window.getComputedStyle(el).overflowY
+      if ((ov === 'auto' || ov === 'scroll') && el.scrollHeight > el.clientHeight + 2) {
+        scrollEl = el
+        break
+      }
+      el = el.parentElement
+    }
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, scrollEl, initialScrollTop: scrollEl ? scrollEl.scrollTop : 0 }
   }, [])
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (!touchStart.current) return
     const dx = e.changedTouches[0].clientX - touchStart.current.x
     const dy = e.changedTouches[0].clientY - touchStart.current.y
+    const { scrollEl, initialScrollTop } = touchStart.current
+    touchStart.current = null
+
     // Swipe vertical dominant → navigation entre slides
     if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
+      if (scrollEl) {
+        // Le contenu a scrollé pendant le swipe → pas de navigation
+        if (Math.abs(scrollEl.scrollTop - initialScrollTop) > 4) return
+        // Pas encore au bord dans la direction du swipe → laisser scroller
+        const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 4
+        const atTop = scrollEl.scrollTop <= 4
+        if (dy < 0 && !atBottom) return
+        if (dy > 0 && !atTop) return
+      }
       if (dy < 0) goTo(current + 1)
       else goTo(current - 1)
     }
@@ -679,7 +701,6 @@ export function GuideDeck() {
       if (dx < 0) goTo(current + 1)
       else goTo(current - 1)
     }
-    touchStart.current = null
   }, [current, goTo])
 
   const showCTA = mounted && !loading && !isAuthenticated
