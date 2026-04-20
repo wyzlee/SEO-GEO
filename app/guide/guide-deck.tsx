@@ -233,11 +233,13 @@ function Slide5() {
     { n: '11', name: 'Synthèse', pts: 'Plan d\'action', sub: '5 recommandations priorisées bénéfice / effort', color: AMB },
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '36px clamp(20px, 6vw, 80px) 24px', overflowY: 'auto', paddingBottom: 100 }}>
-      <Eyebrow>04 — L&apos;audit</Eyebrow>
-      <Heading style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', marginBottom: 16 }}>11 dimensions d&apos;analyse.</Heading>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 8 }}>
-        {phases.map(p => <PhaseItem key={p.n} {...p} />)}
+    <div style={{ height: '100%', overflowY: 'auto' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100%', padding: '36px clamp(20px, 6vw, 80px) 100px' }}>
+        <Eyebrow>04 — L&apos;audit</Eyebrow>
+        <Heading style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', marginBottom: 16 }}>11 dimensions d&apos;analyse.</Heading>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 8 }}>
+          {phases.map(p => <PhaseItem key={p.n} {...p} />)}
+        </div>
       </div>
     </div>
   )
@@ -378,7 +380,8 @@ function Slide10({ isMobile }: { isMobile: boolean }) {
     { name: 'White-label Delivery', price: '-40–60 %', unit: 'wholesale', livrable: "Livraison sous la marque de l'agence partenaire", duree: 'Variable' },
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '36px clamp(20px, 6vw, 80px) 24px', overflowY: 'auto', paddingBottom: 100 }}>
+    <div style={{ height: '100%', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100%', padding: '36px clamp(20px, 6vw, 80px) 100px' }}>
       <Eyebrow>09 — Les offres</Eyebrow>
       <Heading style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', marginBottom: 8 }}>Tripwire, Retainer, White-label.</Heading>
       {isMobile ? (
@@ -429,13 +432,15 @@ function Slide10({ isMobile }: { isMobile: boolean }) {
         </table>
       )}
     </div>
+    </div>
   )
 }
 
 // ─── SLIDE 11 : ROADMAP ───────────────────────────────────────────────────────
 function Slide11() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', height: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px', overflowY: 'auto', paddingBottom: 100 }}>
+    <div style={{ height: '100%', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px' }}>
       <Eyebrow>10 — Roadmap</Eyebrow>
       <Heading>Agency tool V1.<br />SaaS public V2.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20, marginTop: 8 }}>
@@ -462,6 +467,7 @@ function Slide11() {
         <StatBlock color={VIO} value="3+ retainers" label="conversions tripwire" />
         <StatBlock color={GRN} value="4.3/5" label="CSAT rapport minimum" />
       </div>
+    </div>
     </div>
   )
 }
@@ -543,7 +549,8 @@ function Slide12() {
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '36px clamp(20px, 6vw, 80px) 24px', overflowY: 'auto', paddingBottom: 100 }}>
+    <div style={{ height: '100%', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100%', padding: '36px clamp(20px, 6vw, 80px) 100px' }}>
       <Eyebrow>11 — Nouvelles fonctionnalités</Eyebrow>
       <Heading style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', marginBottom: 8 }}>
         Ce qui est arrivé<br />en <span style={{ color: IND }}>2026</span>.
@@ -573,6 +580,7 @@ function Slide12() {
           </div>
         ))}
       </div>
+    </div>
     </div>
   )
 }
