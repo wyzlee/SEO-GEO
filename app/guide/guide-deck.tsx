@@ -361,7 +361,7 @@ function Slide9() {
       <Eyebrow>08 — Pour qui ?</Eyebrow>
       <Heading>3 personas.<br />Un même outil.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 14, marginTop: 8 }}>
-        <PersonaCard color={IND} Icon={Building2} name="Agence SEO" desc="5–30 personnes. Veut ajouter une offre GEO à son retainer sans recruter un expert IA." need="«\u00a0Mes clients demandent pourquoi ils n'apparaissent pas dans ChatGPT.\u00a0»" />
+        <PersonaCard color={IND} Icon={Building2} name="Agence SEO" desc="5–30 personnes. Veut ajouter une offre GEO à ses prestations sans recruter un expert IA." need="«\u00a0Mes clients demandent pourquoi ils n'apparaissent pas dans ChatGPT.\u00a0»" />
         <PersonaCard color={VIO} Icon={Briefcase} name="Dir. marketing B2B" desc="Son trafic organique stagne. Veut comprendre pourquoi ses concurrents apparaissent dans les IA." need="«\u00a0Mon site est bien ranké sur Google mais invisible sur Perplexity.\u00a0»" />
         <PersonaCard color={CYN} Icon={Monitor} name="Studio dev / Freelance" desc="Développe des sites clients. Veut livrer un produit optimisé dès le départ." need="«\u00a0Le rapport d'audit est devenu un argument de vente différenciant.\u00a0»" />
       </div>
@@ -372,18 +372,15 @@ function Slide9() {
 // ─── SLIDE 10 : PACKAGES ──────────────────────────────────────────────────────
 function Slide10({ isMobile }: { isMobile: boolean }) {
   const rows = [
-    { name: 'Tripwire Audit', sub: '→ 35 % conversion retainer', price: '1 500–3 500 €', unit: 'one-shot', livrable: 'Audit 11 dimensions + debrief 1h', duree: '3–5 jours' },
-    { name: 'Retainer Starter', price: '2 500–3 500 €', unit: '/mois', livrable: 'Audit trimestriel + refresh mensuel', duree: '3 mois min' },
-    { name: 'Retainer Growth', price: '5 000–7 500 €', unit: '/mois', livrable: 'Starter + pillar content + entity building', duree: '6 mois min' },
-    { name: 'Retainer Enterprise', price: '10 000–15 000 €', unit: '/mois', livrable: 'Growth + content prod + link building + conseil', duree: '12 mois min' },
-    { name: 'SEO+GEO Add-on', price: '+25 %', unit: 'sur retainer existant', livrable: 'Layer GEO greffé sur retainer SEO actuel', duree: 'Aligné' },
-    { name: 'White-label Delivery', price: '-40–60 %', unit: 'wholesale', livrable: "Livraison sous la marque de l'agence partenaire", duree: 'Variable' },
+    { name: 'Découverte', sub: 'Idéal pour tester', price: 'Gratuit', unit: 'pour toujours', livrable: 'Rapport HTML complet', duree: '1 audit/mois' },
+    { name: 'Studio', sub: 'Agences & freelances', price: '490 €', unit: '/mois', livrable: 'PDF exportable · rapport 60 j · synthèse IA', duree: '20 audits/mois' },
+    { name: 'Agency', sub: 'White-label complet', price: '990 €', unit: '/mois', livrable: 'White-label · API · support prioritaire', duree: 'Illimité' },
   ]
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100%', padding: '36px clamp(20px, 6vw, 80px) 100px' }}>
       <Eyebrow>09 — Les offres</Eyebrow>
-      <Heading style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', marginBottom: 8 }}>Tripwire, Retainer, White-label.</Heading>
+      <Heading style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', marginBottom: 8 }}>Découverte, Studio, Agency.</Heading>
       {isMobile ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {rows.map(r => (
@@ -441,12 +438,12 @@ function Slide11() {
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100%', padding: '48px clamp(20px, 6vw, 80px) 100px' }}>
-      <Eyebrow>10 — Roadmap</Eyebrow>
-      <Heading>Agency tool V1.<br />SaaS public V2.</Heading>
+      <Eyebrow>10 — Ce qui est live</Eyebrow>
+      <Heading>Agency + Self-serve.<br />Les deux sont là.</Heading>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20, marginTop: 8 }}>
         {[
-          { color: IND, label: 'Maintenant — V1', title: 'Agency Mode', items: ['Dashboard multi-org pour lancer les audits', 'Rapports white-label PDF + lien partageable', 'Audit URL live — crawl jusqu\'à 50 pages', 'Audit code source ZIP + GitHub — pre-launch', 'Score 100 pts sur 11 dimensions — ring animé SVG', 'Progression temps réel — stepper des 11 phases', 'Benchmark concurrent (jusqu\'à 5 sites)', 'Surveillance citations IA (Perplexity, OpenAI)', 'Audits planifiés + alertes de régression', 'Content briefs IA post-audit (propulsé par Claude)'] },
-          { color: VIO, label: 'Prochainement — V2', title: 'Self-serve SaaS', items: ['Signup public + onboarding automatisé', 'Dashboard client self-serve', 'Plans Free / Pro / Agence (Stripe)', 'Alertes régression + email notifications', 'Benchmarks sectoriels dans le rapport'] },
+          { color: IND, label: 'Live — Agency Mode', title: 'Pour les agences', items: ['Dashboard multi-org pour lancer les audits', 'Rapports white-label PDF + lien partageable', 'Audit URL live — crawl jusqu\'à 50 pages', 'Audit code source ZIP + GitHub — pre-launch', 'Score 100 pts sur 11 dimensions — ring animé SVG', 'Progression temps réel — stepper des 11 phases', 'Benchmark concurrent (jusqu\'à 5 sites)', 'Surveillance citations IA (Perplexity, OpenAI)', 'Audits planifiés + alertes de régression', 'Content briefs IA post-audit (propulsé par Claude)'] },
+          { color: VIO, label: 'Live — Self-serve', title: 'Pour tout le monde', items: ['Signup public + onboarding en 3 étapes', 'Dashboard client self-serve', 'Plans Découverte (gratuit) · Studio · Agency (Stripe)', 'Alertes régression + email notifications', 'Benchmarks sectoriels dans le rapport'] },
         ].map(({ color, label, title, items }) => (
           <div key={title} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 10, padding: 26 }}>
             <div style={{ fontSize: '0.62rem', color, textTransform: 'uppercase' as const, letterSpacing: '0.15em', marginBottom: 8 }}>{label}</div>
@@ -464,7 +461,7 @@ function Slide11() {
       </div>
       <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' as const }}>
         <StatBlock color={IND} value="10+ audits" label="livrés en 90 jours" />
-        <StatBlock color={VIO} value="3+ retainers" label="conversions tripwire" />
+        <StatBlock color={VIO} value="3 plans" label="Découverte · Studio · Agency" />
         <StatBlock color={GRN} value="4.3/5" label="CSAT rapport minimum" />
       </div>
     </div>

@@ -58,6 +58,35 @@ Schéma multi-tenant dès V1 pour ne pas refactorer plus tard.
 - Tracking dashboard continu avec alertes — V2+
 - Marketplace de consultants / freelances — hors scope
 
+## Workflow utilisateur V2 (self-serve — implémenté Sprint 08)
+
+```txt
+Landing (/signup CTA)
+  → /signup          — création compte email/password (Stack Auth)
+  → /onboarding      — 3 étapes :
+      ① Nom de l'organisation  → org créée, plan = "discovery" (gratuit)
+      ② URL à auditer          → audit mis en queue (ou skip)
+      ③ Confirmation
+  → /dashboard       — suivi audit, rapport disponible
+                       ⚠️ 2ème audit → 429 si plan discovery (1/mois)
+  → /dashboard/settings/billing
+                     — grille plans → Stripe Checkout → webhook → plan DB mis à jour
+```
+
+### Plans SaaS (Stripe)
+
+| Plan          | Prix        | Audits/mois | Extras                                        |
+|---------------|-------------|-------------|-----------------------------------------------|
+| **Découverte**  | Gratuit    | 1           | Rapport HTML                                  |
+| **Studio**    | 490 €/mois  | 20          | PDF, rapport 60j, synthèse IA                 |
+| **Agency**    | 990 €/mois  | Illimité    | White-label complet, API, support prioritaire |
+
+- Plan par défaut à la création d'org : `discovery`
+- Upgrade : Stripe Checkout Session (mode subscription, metadata `organizationId`)
+- Downgrade / résiliation : Stripe Customer Portal (`/api/stripe/portal`)
+- Webhook `customer.subscription.{created,updated,deleted}` → met à jour `org.plan` + `org.subscriptionStatus` en DB
+- `invoice.payment_failed` → `subscriptionStatus = "past_due"` → bannière d'alerte dans le billing dashboard
+
 ## Métriques de succès V1
 
 - ≥ 10 audits livrés en 90 jours

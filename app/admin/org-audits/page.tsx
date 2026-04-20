@@ -157,8 +157,8 @@ export default function AdminOrgAuditsPage() {
               Accès non disponible
             </p>
             <p className="text-xs font-[family-name:var(--font-sans)] mt-1" style={{ color: 'var(--color-muted)' }}>
-              La vue des audits par organisation est en cours de déploiement pour les admins d'organisation.
-              Revenez prochainement ou contactez un super-admin.
+              Cette vue est réservée aux super-admins.
+              Contactez un super-admin pour accéder aux audits d'une organisation.
             </p>
           </div>
         </div>

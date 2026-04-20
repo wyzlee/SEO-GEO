@@ -59,7 +59,7 @@ export default function BlogPage() {
             fontSize: '0.9rem',
           }}
         >
-          Aucun article pour le moment. Revenez bientôt.
+          Aucun article publié pour le moment.
         </p>
       ) : (
         <ul
